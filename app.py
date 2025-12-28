@@ -4,35 +4,34 @@ from google.oauth2.service_account import Credentials
 import datetime
 import json
 
-# --- 1. 設定セクション ---
+# --- 設定 ---
 SPREADSHEET_NAME = 'MyKakeibo'
 CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
 
-# --- 2. 認証と接続（エラー回避版） ---
+# --- 認証と接続 ---
 scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
 
 try:
-    # A. Streamlit CloudのSecretsから読み込む
+    # A. Streamlit Cloud (本番)
     if "gcp_service_account" in st.secrets:
         secret_val = st.secrets["gcp_service_account"]
         
-        # 【ここが重要】データが「文字」ならJSON変換、「辞書」ならそのまま使う
+        # データが「文字」ならJSON変換、「辞書」ならそのまま使う
         if isinstance(secret_val, str):
             key_dict = json.loads(secret_val)
         else:
-            # AttrDictなどの場合は、普通の辞書に変換する
             key_dict = dict(secret_val)
 
-        # private_keyの改行文字(\n)が文字列のままになっている場合の対策
+        # 改行コードの修正
         if "private_key" in key_dict:
             key_dict["private_key"] = key_dict["private_key"].replace("\\n", "\n")
 
         credentials = Credentials.from_service_account_info(key_dict, scopes=scopes)
     
-    # B. 手元の secrets.json から読み込む (開発用)
+    # B. ローカル (開発用)
     else:
         credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
 
@@ -44,7 +43,7 @@ except Exception as e:
     st.error(f"接続エラー: {e}")
     st.stop()
 
-# --- 3. アプリの画面デザイン ---
+# --- アプリ画面 ---
 st.title('💰 私の家計簿アプリ')
 
 with st.form(key='entry_form'):
