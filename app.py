@@ -2,32 +2,39 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 import datetime
-import json # これを追加
+import json
 
 # --- 1. 設定セクション ---
-SPREADSHEET_NAME = 'MyKakeibo' # あなたのスプレッドシート名に合わせてください
+SPREADSHEET_NAME = 'MyKakeibo'
 CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
 
-# --- 2. 認証と接続（ここが進化！） ---
+# --- 2. 認証と接続（最強版） ---
 scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
 
 try:
-    # A. クラウド上の「金庫」に鍵があるか確認
+    # A. Streamlit CloudのSecretsから読み込む
     if "gcp_service_account" in st.secrets:
-        # 文字列として保存されたJSONを辞書に変換して読み込む
-        key_dict = json.loads(st.secrets["gcp_service_account"])
+        secret_val = st.secrets["gcp_service_account"]
+        
+        # 辞書（dict）ならそのまま使う、文字（str）なら変換する
+        if isinstance(secret_val, dict):
+            key_dict = secret_val
+        else:
+            key_dict = json.loads(secret_val)
+            
         credentials = Credentials.from_service_account_info(key_dict, scopes=scopes)
     
-    # B. なければ、手元の「secrets.json」を探す（開発用）
+    # B. 手元の secrets.json から読み込む
     else:
         credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
 
     gc = gspread.authorize(credentials)
     sh = gc.open(SPREADSHEET_NAME)
     worksheet = sh.sheet1
+
 except Exception as e:
     st.error(f"接続エラー: {e}")
     st.stop()
