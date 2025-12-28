@@ -8,7 +8,7 @@ import json
 SPREADSHEET_NAME = 'MyKakeibo'
 CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
 
-# --- 2. 認証と接続（完全無欠版） ---
+# --- 2. 認証と接続（エラー回避版） ---
 scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
@@ -17,17 +17,22 @@ scopes = [
 try:
     # A. Streamlit CloudのSecretsから読み込む
     if "gcp_service_account" in st.secrets:
-        # 【ここが修正ポイント】
-        # AttrDictでも何でも、強制的に標準の辞書(dict)に変換する
-        key_dict = dict(st.secrets["gcp_service_account"])
+        secret_val = st.secrets["gcp_service_account"]
         
+        # 【ここが重要】データが「文字」ならJSON変換、「辞書」ならそのまま使う
+        if isinstance(secret_val, str):
+            key_dict = json.loads(secret_val)
+        else:
+            # AttrDictなどの場合は、普通の辞書に変換する
+            key_dict = dict(secret_val)
+
         # private_keyの改行文字(\n)が文字列のままになっている場合の対策
         if "private_key" in key_dict:
             key_dict["private_key"] = key_dict["private_key"].replace("\\n", "\n")
 
         credentials = Credentials.from_service_account_info(key_dict, scopes=scopes)
     
-    # B. 手元の secrets.json から読み込む
+    # B. 手元の secrets.json から読み込む (開発用)
     else:
         credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
 
