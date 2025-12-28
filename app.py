@@ -44,7 +44,7 @@ except Exception as e:
     st.stop()
 
 # --- アプリ画面 ---
-st.title('💰 私の家計簿アプリ')
+st.title('マイ家計簿')
 
 with st.form(key='entry_form'):
     date = st.date_input('日付', datetime.date.today())
