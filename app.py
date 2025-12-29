@@ -51,9 +51,8 @@ except Exception as e:
 st.title('マイ家計簿')
 
 # 入力フォーム
+balance_type = st.radio("区分",["支出","収入"], horizontal=True)
 with st.form(key='entry_form'):
-    # 収支の切り替えスイッチ
-    balance_type = st.radio("区分",["支出","収入"], horizontal=True)
     date = st.date_input('日付', datetime.date.today())
     if balance_type == "支出":
         category = st.radio('カテゴリー', EXPENSE_CATEGORIES)
