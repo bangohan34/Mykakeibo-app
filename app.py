@@ -5,8 +5,11 @@ import datetime
 import json
 
 # --- 設定 ---
+# 接続するスプレッドシートの名前
 SPREADSHEET_NAME = 'MyKakeibo'
-CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
+# カテゴリのリスト　ラジオボタンにしたい
+EXPENSE_CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
+INCOME_CATEGORIES = ['給与','賞与','臨時収入','その他']
 
 # --- 認証と接続 ---
 scopes = [
@@ -35,6 +38,7 @@ try:
     else:
         credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
 
+    # ログインして、スプレッドシートを開く
     gc = gspread.authorize(credentials)
     sh = gc.open(SPREADSHEET_NAME)
     worksheet = sh.sheet1
@@ -46,9 +50,15 @@ except Exception as e:
 # --- アプリ画面 ---
 st.title('マイ家計簿')
 
+# 入力フォーム
 with st.form(key='entry_form'):
+    # 収支の切り替えスイッチ
+    balance_type = st.radio("区分",["支出","収入"], horizontal=True)
     date = st.date_input('日付', datetime.date.today())
-    category = st.selectbox('費目', CATEGORIES)
+    if balance_type == "支出":
+        category = st.radio('カテゴリー', EXPENSE_CATEGORIES)
+    else:
+        category = st.radio('カテゴリー', INCOME_CATEGORIES)
     amount = st.number_input('金額', min_value=0, step=1)
     memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
@@ -58,9 +68,11 @@ if submit_btn:
         st.warning('金額が0円です。入力してください。')
     else:
         try:
-            row_data = [str(date), category, amount, memo]
+            # スプレッドシート用にデータを並べる
+            row_data = [str(date), balance_type, category, amount, memo]
+            # スプレッドシートの一番下の行に追加する
             worksheet.append_row(row_data)
-            st.success(f'{category} : {amount}円 を登録しました！')
+            st.success(f'{balance_type} - {category} : {amount}円 を登録しました！')
             st.balloons()
         except Exception as e:
             st.error(f'書き込みエラー: {e}')
