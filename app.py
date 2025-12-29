@@ -72,7 +72,11 @@ if submit_btn:
             row_data = [str(date), balance_type, category, amount, memo]
             # スプレッドシートの一番下の行に追加する
             worksheet.append_row(row_data)
-            st.success(f'{balance_type} - {category} : {amount}円 を登録しました！')
+            # 登録完了メッセージ
+            if balance_type =="収入":
+                st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
+            else:
+                st.info(f'{category} : {amount}円を登録しました。')
             st.balloons()
         except Exception as e:
             st.error(f'書き込みエラー: {e}')
