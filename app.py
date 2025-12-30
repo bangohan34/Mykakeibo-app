@@ -85,7 +85,7 @@ total_expense = df[df['区分'] == '支出']['金額'].sum()
 total_assets = total_income - total_expense
 st.metric(label="現在の合計資産", value=f"￥{total_assets:,}")
 
-# 入力フォー￥
+# 入力フォーム
 balance_type = st.radio("区分",["支出","収入"], horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
@@ -96,6 +96,7 @@ with st.form(key='entry_form', clear_on_submit=True):
     amount = st.number_input('金額', min_value=0, step=1)
     memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
+    st.rerun()
 
 if submit_btn:
     if amount == 0:
