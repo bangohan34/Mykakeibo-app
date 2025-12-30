@@ -5,9 +5,8 @@ import datetime
 import json
 import pandas as pd
 
-# ページ設定
+# --- 設定 ---
 st.set_page_config(page_title="家計簿", page_icon="💰")
-# UIの非表示設定
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -24,8 +23,6 @@ hide_streamlit_style = """
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-
-# --- 設定 ---
 SPREADSHEET_NAME = 'MyKakeibo'
 EXPENSE_CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
 INCOME_CATEGORIES = ['給与','賞与','臨時収入','その他']
@@ -35,7 +32,6 @@ scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
-
 try:
     # A. Streamlit Cloud (本番)
     if "gcp_service_account" in st.secrets:
@@ -61,12 +57,12 @@ try:
     gc = gspread.authorize(credentials)
     sh = gc.open(SPREADSHEET_NAME)
     worksheet = sh.sheet1
-
 except Exception as e:
     st.error(f"接続エラー: {e}")
     st.stop()
 
-# --- 関数：データ読み込み ---
+# --- 関数 ---
+#データ読み込み
 def load_data():
     all_rows = worksheet.get_all_values()
     if len(all_rows) < 2:
@@ -81,7 +77,15 @@ def load_data():
 # --- アプリ画面 ---
 st.title('マイ家計簿')
 
-# 入力フォーム
+df = load_data()
+
+# --- 資産合計 ---
+total_income = df[df['区分'] == '収入']['金額'].sum()
+total_expense = df[df['区分'] == '支出']['金額'].sum()
+total_assets = total_income - total_expense
+st.metric(lebel="現在の合計資産", value=f"￥{total_assets:,}")
+
+# 入力フォー￥
 balance_type = st.radio("区分",["支出","収入"], horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
@@ -111,11 +115,9 @@ if submit_btn:
         except Exception as e:
             st.error(f'書き込みエラー: {e}')
 
-# 履歴表示
+# --- 履歴表示 ---
 st.divider()
 st.subheader("入力履歴")
-
-df = load_data()
 
 if not df.empty:
     # インデックスを1からに変更
