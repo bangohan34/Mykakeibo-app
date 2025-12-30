@@ -7,11 +7,23 @@ import pandas as pd
 
 # ページ設定
 st.set_page_config(page_title="家計簿", page_icon="💰")
+# UIの非表示設定
+hide_streamlit_style = """
+            <style>
+            /* 右上のハンバーガーメニュー（3点リーダー）を消す */
+            #MainMenu {visibility: hidden;}
+            
+            /* 下の 'Made with Streamlit' フッターを消す */
+            footer {visibility: hidden;}
+            
+            /* 上部のヘッダー（色の帯やDeployボタンなど）を消す */
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # --- 設定 ---
-# 接続するスプレッドシートの名前
 SPREADSHEET_NAME = 'MyKakeibo'
-# カテゴリのリスト　ラジオボタンにしたい
 EXPENSE_CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
 INCOME_CATEGORIES = ['給与','賞与','臨時収入','その他']
 
@@ -122,7 +134,6 @@ with st.expander("削除メニューを開く"):
         try:
             target_row = selected_row + 1
             worksheet.delete_rows(int(target_row))
-            st.success("削除しました！リロードしてください。")
             st.rerun()
         except Exception as e:
             st.error(f"削除エラー: {e}")
