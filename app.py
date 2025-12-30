@@ -103,7 +103,11 @@ st.subheader("入力履歴")
 df = load_data()
 
 if not df.empty:
-    # データの並び方
+    # インデックスを1からに変更
+    df.index = df.index + 1
+    # 日付列を見やすいように
+    df['日付'] = pd.to_datetime(df['日付']).dt.strftime('%Y-%m-%d')
+    # データの並び方（新しい順）
     st.dataframe(df.iloc[::-1], use_container_width=True)
 else:
     st.info("まだデータがありません。")
@@ -111,7 +115,7 @@ else:
 # データの削除
 st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
-    delete_options = df.index + 2
+    delete_options = df.index + 1
     selected_row = st.selectbox("削除する行番号を選択", delete_options)
     # 削除の実行
     if st.button("削除実行"):
