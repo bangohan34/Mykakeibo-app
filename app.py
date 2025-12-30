@@ -57,6 +57,8 @@ def load_data():
     if len(all_rows) < 2:
         return pd.DataFrame(columns=['日付','区分','カテゴリー','金額','メモ'])
     df = pd.DataFrame(all_rows[1:], columns=all_rows[0])
+    # 金額の列を文字列ではなく数値に変換
+    df['金額'] = pd.to_numeric(df['金額'].astype(str).str.replace(',', ''), errors='coerce').fillna(0).astype(int)
     return df
 
 # --- アプリ画面 ---
@@ -99,6 +101,7 @@ st.subheader("入力履歴")
 df = load_data()
 
 if not df.empty:
+    # データの並び方
     st.dataframe(df.iloc[::-1], use_container_width=True)
 else:
     st.info("まだデータがありません。")
