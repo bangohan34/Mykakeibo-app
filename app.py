@@ -115,11 +115,13 @@ else:
 # データの削除
 st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
-    selected_row = st.selectbox("削除する行番号を選択", df.index)
+    delete_options = df.index + 1
+    selected_row = st.selectbox("削除する行番号を選択", delete_options)
     # 削除の実行
     if st.button("削除実行"):
         try:
             worksheet.delete_rows(int(selected_row))
             st.success("削除しました！リロードしてください。")
+            st.rerun()
         except Exception as e:
             st.error(f"削除エラー: {e}")
