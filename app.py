@@ -144,18 +144,20 @@ with st.expander("削除メニューを開く"):
             st.error(f"削除エラー: {e}")
 
 # --- いろいろメモ ---
-with st.sidebar:
-    st.header("いろいろメモ")
-    try:
-        current_memo = worksheet.acell('G2').value
-        if current_memo is None:
-            current_memo = ""
-    except:
+st.divider()
+st.subheader("いろいろメモ")
+try:
+    current_memo = worksheet.acell('G2').value
+    if current_memo is None:
         current_memo = ""
-    new_memo = st.text_area("ToDoや買い物リストなど", value=current_memo, height=200)
-    if st.button("メモを保存"):
-        try:
-            worksheet.update_acell('G2',new_memo)
-            st.success("保存しました！")
-        except Exception as e:
-            st.error(f"保存失敗：{e}")
+except:
+    current_memo = ""
+# メモ入力欄を表示
+new_memo = st.text_area("ToDoや買い物リストなど（保存ボタンで記録されます）", value=current_memo, height=150)
+# 保存ボタンが押されたら書き込む
+if st.button("メモを保存"):
+    try:
+        worksheet.update_acell('G2', new_memo)
+        st.success("保存しました！")
+    except Exception as e:
+        st.error(f"保存失敗: {e}")
