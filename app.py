@@ -64,7 +64,7 @@ def load_data():
     return df
 
 # --- アプリ画面 ---
-st.title('マイ家計簿💰')
+st.title('マイ家計簿')
 
 # 入力フォーム
 balance_type = st.radio("区分",["支出","収入"], horizontal=True)
@@ -115,8 +115,7 @@ else:
 # データの削除
 st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
-    delete_options = df.index + 1
-    selected_row = st.selectbox("削除する行番号を選択", delete_options)
+    selected_row = st.selectbox("削除する行番号を選択", df.index)
     # 削除の実行
     if st.button("削除実行"):
         try:
