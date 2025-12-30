@@ -16,6 +16,11 @@ hide_streamlit_style = """
             /*タイトル上の余白を消す*/
             .block-container {
                 padding-top: 1rem;
+            }
+            /* 数値入力の＋－ボタンを消す */
+            [data-testid="stNumberInput"] button {
+                display: none;
+            }
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
