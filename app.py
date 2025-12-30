@@ -83,7 +83,7 @@ df = load_data()
 total_income = df[df['区分'] == '収入']['金額'].sum()
 total_expense = df[df['区分'] == '支出']['金額'].sum()
 total_assets = total_income - total_expense
-st.metric(lebel="現在の合計資産", value=f"￥{total_assets:,}")
+st.metric(label="現在の合計資産", value=f"￥{total_assets:,}")
 
 # 入力フォー￥
 balance_type = st.radio("区分",["支出","収入"], horizontal=True)
