@@ -129,7 +129,7 @@ if not df.empty:
 else:
     st.info("まだデータがありません。")
 
-# データの削除
+# --- データの削除 ---
 st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
     delete_options = df.index
@@ -142,3 +142,20 @@ with st.expander("削除メニューを開く"):
             st.rerun()
         except Exception as e:
             st.error(f"削除エラー: {e}")
+
+# --- いろいろメモ ---
+with st.sidebar:
+    st.header("いろいろメモ")
+    try:
+        current_memo = worksheet.acell('G2').value
+        if current_memo is None:
+            current_memo = ""
+    except:
+        current_memo = ""
+    new_memo = st.text_area("ToDoや買い物リストなど", value=current_memo, height=200)
+    if st.button("メモを保存"):
+        try:
+            worksheet.update_acell('G2',new_memo)
+            st.success("保存しました！")
+        except Exception as e:
+            st.error(f"保存失敗：{e}")
