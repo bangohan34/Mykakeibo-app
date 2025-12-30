@@ -159,5 +159,6 @@ if st.button("メモを保存"):
     try:
         worksheet.update_acell('G2', new_memo)
         st.success("保存しました！")
+        st.rerun()
     except Exception as e:
         st.error(f"保存失敗: {e}")
