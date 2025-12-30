@@ -3,6 +3,10 @@ import gspread
 from google.oauth2.service_account import Credentials
 import datetime
 import json
+import pandas as pd
+
+# ページ設定
+st.set_page_config(page_title="家計簿", page_icon="💰")
 
 # --- 設定 ---
 # 接続するスプレッドシートの名前
@@ -47,6 +51,14 @@ except Exception as e:
     st.error(f"接続エラー: {e}")
     st.stop()
 
+# --- 関数：データ読み込み ---
+def load_data():
+    all_rows = worksheet.get_all_values()
+    if len(all_rows) < 2:
+        return pd.DataFrame(columns=['日付','区分','カテゴリー','金額','メモ'])
+    df = pd.DataFrame(all_rows[1:], columns=all_rows[0])
+    return df
+
 # --- アプリ画面 ---
 st.title('マイ家計簿')
 
@@ -79,3 +91,14 @@ if submit_btn:
             st.balloons()
         except Exception as e:
             st.error(f'書き込みエラー: {e}')
+
+# 履歴表示
+st.divider()
+st.subheader("入力履歴")
+
+df = load_data()
+
+if not df.empty:
+    st.dataframe(df.iloc[::-1], use_container_width=True)
+else:
+    st.info("まだデータがありません。")
