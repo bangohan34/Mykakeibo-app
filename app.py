@@ -64,7 +64,7 @@ def load_data():
     return df
 
 # --- アプリ画面 ---
-st.title('マイ家計簿')
+st.title('マイ家計簿💰')
 
 # 入力フォーム
 balance_type = st.radio("区分",["支出","収入"], horizontal=True)
