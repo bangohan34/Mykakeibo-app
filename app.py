@@ -10,14 +10,12 @@ st.set_page_config(page_title="家計簿", page_icon="💰")
 # UIの非表示設定
 hide_streamlit_style = """
             <style>
-            /* 右上のハンバーガーメニュー（3点リーダー）を消す */
             #MainMenu {visibility: hidden;}
-            
-            /* 下の 'Made with Streamlit' フッターを消す */
             footer {visibility: hidden;}
-            
-            /* 上部のヘッダー（色の帯やDeployボタンなど）を消す */
             header {visibility: hidden;}
+            /*タイトル上の余白を消す*/
+            .block-container {
+                padding-top: 1rem;
             </style>
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
