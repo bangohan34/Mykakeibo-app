@@ -80,47 +80,118 @@ def load_data():
     df['日付'] = pd.to_datetime(df['日付'])
     return df
 
+# 仮想通貨データの読み込み
+def load_crypto_data():
+    raw_data = worksheet.get('I:J')
+    if len(raw_data) < 2:
+        return pd.DataFrame(columns=['銘柄','保有量'])
+    df_crypto = pd.DataFrame(raw_data[1:],columns=['銘柄','保有量'])
+    df_crypto['保有量'] = pd.to_numeric(df_crypto['保有量'], errors='coerce').fillna(0.0)
+    return df_crypto
+
+# 仮想通貨データの保存
+def save_crypto_data(df_crypto):
+    data_to_save = [df_crypto.columns.tolist()] + df_crypto.values.tolist()
+    worksheet.batch_clear(['I:J'])
+    worksheet.update('I1', data_to_save)
+
 # --- アプリ画面 ---
 st.title('マイ家計簿')
 
 df = load_data()
 
-# --- 資産合計 ---
+# --- 資産合計表示 ---
 total_income = df[df['区分'] == '収入']['金額'].sum()
 total_expense = df[df['区分'] == '支出']['金額'].sum()
 total_assets = total_income - total_expense
 st.metric(label="現在の合計資産", value=f"￥{total_assets:,}")
+# 仮想通貨の表示
+df_crypto = load_crypto_data()
+if not df_crypto.empty:
+    display_df = df_crypto.copy()
+    display_df['保有量'] = display_df['保有量'].apply(lambda x: f"{x:.8f}") 
+    st.table(display_df)
+else:
+    st.info("仮想通貨の登録はまだありません。")
 
 # 入力フォーム
-balance_type = st.radio("区分",["支出","収入"], horizontal=True)
+balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
-    if balance_type == "支出":
-        category = st.radio('カテゴリー', EXPENSE_CATEGORIES)
+    # 資産移動
+    if balance_type == "資産移動":
+        st.caption("円を使って仮想通貨を購入します")
+        col1, col2 = st.columns(2)
+        with col1:
+            crypto_name = st.text_input("銘柄名（例: BTC, Pi）")
+        with col2:
+            crypto_amount = st.number_input("増える量（通貨）", min_value=0.0, step=0.0001, format="%.8f")
+        # 支払う日本円
+        amount = st.number_input('支払った日本円', min_value=0, step=1, help="家計簿には「支出」として記録されます")
+        memo = st.text_input('メモ', value=f"{crypto_name}購入")
+        # 家計簿用のカテゴリーは自動で「投資」などにする
+        category = "投資"
     else:
-        category = st.radio('カテゴリー', INCOME_CATEGORIES)
-    amount = st.number_input('金額', min_value=0, step=1)
-    memo = st.text_input('メモ（任意）')
+        if balance_type == "支出":
+            category = st.radio('カテゴリー', EXPENSE_CATEGORIES)
+        else:
+            category = st.radio('カテゴリー', INCOME_CATEGORIES)
+        amount = st.number_input('金額', min_value=0, step=1)
+        memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
 
 if submit_btn:
-    if amount == 0:
-        st.warning('金額が0円です。入力してください。')
+    # 資産移動
+    if balance_type == "資産移動":
+        if not crypto_name:
+            st.warning("銘柄名を入力してください")
+        elif crypto_amount == 0 and amount == 0:
+            st.warning("数量または金額を入力してください")
+        else:
+            try:
+                # 処理1：仮想通貨の保有量を増やす
+                df_curr = load_crypto_data()
+                # 既存の保有量を取得（なければ0）
+                if crypto_name in df_curr['銘柄'].values:
+                    current_val = df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'].values[0]
+                    new_val = current_val + crypto_amount
+                    df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'] = new_val
+                else:
+                    new_row = pd.DataFrame({'銘柄': [crypto_name], '保有量': [crypto_amount]})
+                    df_curr = pd.concat([df_curr, new_row], ignore_index=True)
+                save_crypto_data(df_curr)
+                # 処理2：家計簿に「支出」として記録する（金額が1円以上の場合）
+                if amount > 0:
+                    # 区分はわかりやすく「支出」にするか、あえて「資産移動」と記録するか選べます
+                    # ここでは資産集計の計算を合わせるため「支出」として記録します
+                    row_data = [str(date), "支出", category, amount, memo]
+                    worksheet.append_row(row_data)
+                    msg = f"💰 {amount:,}円で {crypto_name} を {crypto_amount} 購入しました。"
+                else:
+                    msg = f"💎 {crypto_name} が {crypto_amount} 増えました。"
+                st.success(msg)
+                st.balloons()
+            except Exception as e:
+                st.error(f"資産移動エラー: {e}")
+
     else:
-        try:
-            # スプレッドシート用にデータを並べる
-            row_data = [str(date), balance_type, category, amount, memo]
-            # スプレッドシートの一番下の行に追加する
-            worksheet.append_row(row_data)
-            # 登録完了メッセージ
-            if balance_type =="収入":
-                st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
-            else:
-                st.info(f'{category} : {amount}円を登録しました。')
-            st.balloons()
-            st.rerun()
-        except Exception as e:
-            st.error(f'書き込みエラー: {e}')
+        if amount == 0:
+            st.warning('金額が0円です。入力してください。')
+        else:
+            try:
+                # スプレッドシート用にデータを並べる
+                row_data = [str(date), balance_type, category, amount, memo]
+                # スプレッドシートの一番下の行に追加する
+                worksheet.append_row(row_data)
+                # 登録完了メッセージ
+                if balance_type =="収入":
+                    st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
+                else:
+                    st.info(f'{category} : {amount}円を登録しました。')
+                st.balloons()
+                st.rerun()
+            except Exception as e:
+                st.error(f'書き込みエラー: {e}')
 
 # --- 履歴表示 ---
 st.divider()
