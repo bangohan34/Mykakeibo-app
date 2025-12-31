@@ -223,20 +223,31 @@ with st.expander("削除メニューを開く"):
 
 # --- いろいろメモ ---
 st.divider()
-st.subheader("いろいろメモ")
-try:
-    current_memo = worksheet.acell('G2').value
-    if current_memo is None:
-        current_memo = ""
-except:
-    current_memo = ""
-# メモ入力欄を表示
-new_memo = st.text_area("ToDoや買い物リストなど（保存ボタンで記録されます）", value=current_memo, height=150)
-# 保存ボタンが押されたら書き込む
-if st.button("保存"):
+st.subheader("なんでもメモ")
+# キャッシュに残っていないときだけ読み込む
+if 'my_memo_content' not in st.session_state:
     try:
+        current_memo = worksheet.acell('G2').value
+        if current_memo is None:
+            current_memo = ""
+    except:
+        current_memo = ""
+    # 読み込んだデータを「記憶」に保存
+    st.session_state['my_memo_content'] = current_memo
+# 入力欄を表示（初期値は「記憶」から取り出す）
+# key='my_memo_content' を指定することで、入力内容とセッション状態が同期します
+new_memo = st.text_area(
+    "ToDoや買い物リストなど", 
+    value=st.session_state['my_memo_content'], 
+    height=150
+)
+# 保存ボタンが押されたときだけ書き込む
+if st.button("メモを保存"):
+    try:
+        # スプレッドシートを更新
         worksheet.update_acell('G2', new_memo)
+        # キャッシュを新しい内容で上書き更新しておく
+        st.session_state['my_memo_content'] = new_memo
         st.success("保存しました！")
-        st.rerun()
     except Exception as e:
         st.error(f"保存失敗: {e}")
