@@ -65,9 +65,15 @@ except Exception as e:
 #データ読み込み
 def load_data():
     all_rows = worksheet.get_all_values()
+    columns=['日付','区分','カテゴリー','金額','メモ']
     if len(all_rows) < 2:
-        return pd.DataFrame(columns=['日付','区分','カテゴリー','金額','メモ'])
-    df = pd.DataFrame(all_rows[1:], columns=all_rows[0])
+        return pd.DataFrame(columns=columns)
+    fixed_rows = [row[:5] for row in all_rows]
+    if fixed_rows[0][0] =='日付':
+        data = fixed_rows[1:]
+    else:
+        data = fixed_rows
+    df = pd.DataFrame(data, columns=columns)
     # 金額を数値に変換
     df['金額'] = pd.to_numeric(df['金額'].astype(str).str.replace(',', ''), errors='coerce').fillna(0).astype(int)
     # 日付を日付型へ変換
@@ -156,7 +162,7 @@ except:
 # メモ入力欄を表示
 new_memo = st.text_area("ToDoや買い物リストなど（保存ボタンで記録されます）", value=current_memo, height=150)
 # 保存ボタンが押されたら書き込む
-if st.button("メモを保存"):
+if st.button("保存"):
     try:
         worksheet.update_acell('G2', new_memo)
         st.success("保存しました！")
