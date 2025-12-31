@@ -213,7 +213,7 @@ st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
     if not df.empty:
         delete_options = df.index
-        selected_index = st.selectbox("削除する行番号を選択",format_func=lambda x: x + 1)
+        selected_index = st.selectbox("削除する行番号を選択", delete_options, format_func=lambda x: x + 1)
         # 削除の実行
         if st.button("削除実行"):
             try:
