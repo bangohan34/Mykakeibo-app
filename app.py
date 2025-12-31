@@ -32,34 +32,32 @@ scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
-try:
-    # A. Streamlit Cloud (本番)
-    if "gcp_service_account" in st.secrets:
-        secret_val = st.secrets["gcp_service_account"]
-        
-        # データが「文字」ならJSON変換、「辞書」ならそのまま使う
-        if isinstance(secret_val, str):
-            key_dict = json.loads(secret_val)
+# キャッシュを使って認証を高速化
+def get_worksheet():
+    try:
+        # A. Streamlit Cloud (本番)
+        if "gcp_service_account" in st.secrets:
+            secret_val = st.secrets["gcp_service_account"]
+            # データが「文字」ならJSON変換、「辞書」ならそのまま使う
+            if isinstance(secret_val, str):
+                key_dict = json.loads(secret_val)
+            else:
+                key_dict = dict(secret_val)
+            # 改行コードの修正
+            if "private_key" in key_dict:
+                key_dict["private_key"] = key_dict["private_key"].replace("\\n", "\n")
+            credentials = Credentials.from_service_account_info(key_dict, scopes=scopes)
+        # B. ローカル (開発用)
         else:
-            key_dict = dict(secret_val)
-
-        # 改行コードの修正
-        if "private_key" in key_dict:
-            key_dict["private_key"] = key_dict["private_key"].replace("\\n", "\n")
-
-        credentials = Credentials.from_service_account_info(key_dict, scopes=scopes)
-    
-    # B. ローカル (開発用)
-    else:
-        credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
-
-    # ログインして、スプレッドシートを開く
-    gc = gspread.authorize(credentials)
-    sh = gc.open(SPREADSHEET_NAME)
-    worksheet = sh.sheet1
-except Exception as e:
-    st.error(f"接続エラー: {e}")
-    st.stop()
+            credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
+        # ログインして、スプレッドシートを開く
+        gc = gspread.authorize(credentials)
+        sh = gc.open(SPREADSHEET_NAME)
+        return sh.sheet1
+    except Exception as e:
+        st.error(f"接続エラー: {e}")
+        st.stop()
+worksheet = get_worksheet()
 
 # --- 関数 ---
 #データ読み込み
