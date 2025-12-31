@@ -74,8 +74,6 @@ def load_data():
     df = pd.DataFrame(data, columns=columns)
     # 金額を数値に変換
     df['金額'] = pd.to_numeric(df['金額'].astype(str).str.replace(',', ''), errors='coerce').fillna(0).astype(int)
-    # 日付を日付型へ変換
-    df['日付'] = pd.to_datetime(df['日付'])
     return df
 
 # 仮想通貨データの読み込み
@@ -99,9 +97,13 @@ st.title('マイ家計簿')
 df = load_data()
 
 # --- 資産合計表示 ---
-total_income = df[df['区分'] == '収入']['金額'].sum()
-total_expense = df[df['区分'] == '支出']['金額'].sum()
-total_assets = total_income - total_expense
+if not df.empty:
+    df['日付_dt'] = pd.to_datetime(df['日付'])
+    total_income = df[df['区分'] == '収入']['金額'].sum()
+    total_expense = df[df['区分'] == '支出']['金額'].sum()
+    total_assets = total_income - total_expense
+else:
+    total_assets = 0
 st.metric(label="現在の合計資産", value=f"￥{total_assets:,}")
 # 仮想通貨の表示
 df_crypto = load_crypto_data()
@@ -113,17 +115,18 @@ else:
     st.info("仮想通貨の登録はまだありません。")
 
 # 入力フォーム
+st.divider()
 balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
     # 資産移動
     if balance_type == "資産移動":
-        st.caption("円を使って仮想通貨を購入します")
+        st.caption("資産を移動します")
         col1, col2 = st.columns(2)
         with col1:
-            crypto_name = st.text_input("銘柄名（例: BTC, Pi）")
+            crypto_name = st.text_input("銘柄名")
         with col2:
-            crypto_amount = st.number_input("増える量（通貨）", min_value=0.0, step=0.0001, format="%.8f")
+            crypto_amount = st.number_input("増える量", min_value=0.0, step=0.0001, format="%.8f")
         # 支払う日本円
         amount = st.number_input('支払った日本円', min_value=0, step=1, help="家計簿には「支出」として記録されます")
         memo = st.text_input('メモ', value=f"{crypto_name}購入")
@@ -169,6 +172,7 @@ if submit_btn:
                     msg = f"💎 {crypto_name} が {crypto_amount} 増えました。"
                 st.success(msg)
                 st.balloons()
+                st.rerun()
             except Exception as e:
                 st.error(f"資産移動エラー: {e}")
 
@@ -194,10 +198,9 @@ if submit_btn:
 # --- 履歴表示 ---
 st.divider()
 st.subheader("入力履歴")
-
 if not df.empty:
-    # インデックスを1からに変更
-    df.index = df.index + 1
+    df_display = df.copy()
+    df_display.index = df_display.index + 1
     # 日付列を見やすいように
     df['日付'] = pd.to_datetime(df['日付']).dt.strftime('%Y-%m-%d')
     # データの並び方（新しい順）
@@ -208,16 +211,20 @@ else:
 # --- データの削除 ---
 st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
-    delete_options = df.index
-    selected_row = st.selectbox("削除する行番号を選択", delete_options)
-    # 削除の実行
-    if st.button("削除実行"):
-        try:
-            target_row = selected_row + 1
-            worksheet.delete_rows(int(target_row))
-            st.rerun()
-        except Exception as e:
-            st.error(f"削除エラー: {e}")
+    if not df.empty:
+        delete_options = df.index
+        selected_index = st.selectbox("削除する行番号を選択",format_func=lambda x: x + 1)
+        # 削除の実行
+        if st.button("削除実行"):
+            try:
+                target_row = selected_index + 2
+                worksheet.delete_rows(int(target_row))
+                st.success("削除しました。")
+                st.rerun()
+            except Exception as e:
+                st.error(f"削除エラー: {e}")
+    else:
+        st.info("削除できるデータがありません。")
 
 # --- いろいろメモ ---
 st.divider()
