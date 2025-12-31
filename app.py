@@ -204,7 +204,7 @@ if not df.empty:
     # 日付列を見やすいように
     df['日付'] = pd.to_datetime(df['日付']).dt.strftime('%Y-%m-%d')
     # データの並び方（新しい順）
-    st.dataframe(df.iloc[::-1], use_container_width=True)
+    st.dataframe(df_display.iloc[::-1], use_container_width=True)
 else:
     st.info("まだデータがありません。")
 
