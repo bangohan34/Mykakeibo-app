@@ -212,12 +212,12 @@ else:
 st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
     if not df.empty:
-        delete_options = df.index.tolist()
-        selected_index = st.selectbox("削除する行番号を選択", delete_options, format_func=lambda x: x + 1)
+        delete_options = df.index +1
+        selected_index = st.selectbox("削除する行番号を選択", delete_options)
         # 削除の実行
         if st.button("削除実行"):
             try:
-                target_row = selected_index + 2
+                target_row = selected_index + 1
                 worksheet.delete_rows(int(target_row))
                 st.success("削除しました。")
                 st.rerun()
