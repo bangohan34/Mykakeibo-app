@@ -96,7 +96,6 @@ with st.form(key='entry_form', clear_on_submit=True):
     amount = st.number_input('金額', min_value=0, step=1)
     memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
-    st.rerun()
 
 if submit_btn:
     if amount == 0:
@@ -113,6 +112,7 @@ if submit_btn:
             else:
                 st.info(f'{category} : {amount}円を登録しました。')
             st.balloons()
+            st.rerun()
         except Exception as e:
             st.error(f'書き込みエラー: {e}')
 
