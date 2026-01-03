@@ -44,8 +44,6 @@ st.metric(
     delta=f"うち仮想通貨: ￥{int(crypto_total_val):,}"
 )
 
-st.write("デバッグ確認:", current_prices)
-
 # 資産割合バー
 if total_all_assets > 0:
     st.write("")
