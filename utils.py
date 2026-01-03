@@ -72,7 +72,7 @@ def load_crypto_data():
     df_crypto['保有量'] = pd.to_numeric(df_crypto['保有量'], errors='coerce').fillna(0.0)
     return df_crypto
 
-def save_cryto_data(df_crypto):
+def save_crypto_data(df_crypto):
     data_to_save = [df_crypto.columns.tolist()] + df_crypto.values.tolist()
     worksheet.batch_clear(['I:J'])
     worksheet.update('I1', data_to_save)
@@ -108,6 +108,7 @@ def get_anything_memo():
             current_memo = ""
     except:
         current_memo = ""
+    return current_memo
 
 def update_anything_memo(text):
     worksheet.update_acell('G2', text)
