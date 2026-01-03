@@ -79,25 +79,31 @@ def save_crypto_data(df_crypto):
 
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
-    ids = [c.CRYPTO_ID_MAP.get(s.upper(), s.lower()) for s in symbols]
-    ids_str = ",".join(ids)
-    url = "https://api.coingecko.com/api/v3/simple/price"
+    upper_symbols = list(set([s.upper() for s in symbols]))
+    if not upper_symbols:
+        return {}
+    fsyms = ",".join(upper_symbols)
+    url = "https://min-api.cryptocompare.com/data/pricemulti"
     params = {
-        'ids': ids_str,
-        'vs_currencies': 'jpy'
+        'fsyms': fsyms,
+        'tsyms': 'JPY'
     }
     try:
         response = requests.get(url, params=params)
         data = response.json()
+        if 'Response' in data and data['Response'] == 'Error':
+            st.error(f"API Error: {data.get('Message', 'Unknown')}")
+            return {}
         prices = {}
-        for sym in symbols:
-            c_id = c.CRYPTO_ID_MAP.get(sym.upper(), sym.lower())
-            if c_id in data:
-                prices[sym] = data[c_id]['jpy']
+        for sym in symbols: # 元のシンボルリスト順に処理
+            key = sym.upper()
+            if key in data and 'JPY' in data[key]:
+                prices[sym] = data[key]['JPY']
             else:
                 prices[sym] = 0
         return prices
     except Exception as e:
+        st.error(f"通信エラー: {e}")
         return {}
 
 # --- なんでもメモの操作 ---
