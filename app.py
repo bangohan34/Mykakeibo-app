@@ -98,7 +98,7 @@ CRYPTO_ID_MAP = {
     'ETH': 'ethereum',
     'XRP': 'ripple',
     'PI': 'pi-network',  # PiはIOU価格（先物的な価格）を取得
-    'IOST': 'iost'
+    'IOST': 'iostoken'
 }
 @st.cache_data(ttl=600) # 10分間（600秒）キャッシュする（API制限対策）
 def get_crypto_prices(symbols):
