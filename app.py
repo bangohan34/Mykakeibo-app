@@ -50,22 +50,36 @@ st.metric(
 if total_all_assets > 0:
     st.write("")
     st.caption("📊 資産内訳")
-    # 色のリスト
-    colors = ['#DB4437','#F4B400', '#9079ad','#afafb0', '#00c8c8', '#9600ff']
+    # 色の指定
+    COLOR_YEN = '#DB4437'
+    SYMBOL_COLORS = {
+        'BTC':'#F4B400',
+        'ETH':'#9079ad',
+        'XRP':'#afafb0',
+        'IOST':'#00c8c8',
+        'PI':'#9600ff'
+    }
+    # 指定がない銘柄用の予備カラー（順番に使われます）
+    DEFAULT_COLORS = ['#F4B400', '#0F9D58', '#4285F4', '#AB47BC', '#00ACC1']
     # ベースのHTML
     yen_ratio = (yen_assets / total_all_assets) * 100
-    bars_html = f'<div style="width: {yen_ratio}%; background-color: #4285F4;" title="日本円: {yen_ratio:.1f}%"></div>'
-    legend_html = f'<span style="color:#4285F4">■</span> 日本円 '
-    # 仮想通貨をループして追加
+    bars_html = f'<div style="width: {yen_ratio}%; background-color:{COLOR_YEN};" title="日本円: {yen_ratio:.1f}%"></div>'
+    legend_html = f'<span style="color:{COLOR_YEN}">■</span> 日本円 '
+    # 2. 仮想通貨のバー作成（ループ）
     if not df_crypto.empty:
+        default_color_index = 0
         for i, row in df_crypto.iterrows():
-            ratio = (row['評価額(円)'] / total_all_assets) * 100
-            if ratio > 0: # 0より大きいものだけ表示
-                color = colors[i % len(colors)] # 色を順番に使う
+            if '評価額(円)' in row and row['評価額(円)'] > 0:
+                ratio = (row['評価額(円)'] / total_all_assets) * 100
                 name = row['銘柄']
-                # バーに追加
+                # 色を決定するロジック
+                # 辞書に設定があればその色、なければ予備リストから順番に使う
+                if name.upper() in SYMBOL_COLORS:
+                    color = SYMBOL_COLORS[name.upper()]
+                else:
+                    color = DEFAULT_COLORS[default_color_index % len(DEFAULT_COLORS)]
+                    default_color_index += 1
                 bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{name}: {ratio:.1f}%"></div>'
-                # 凡例に追加
                 legend_html += f' <span style="color:{color}; margin-left:10px;">■</span> {name}'
     # 全体枠と合体
     final_html = f"""
