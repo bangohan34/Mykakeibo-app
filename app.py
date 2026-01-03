@@ -43,6 +43,9 @@ st.metric(
     value=f"￥{int(total_all_assets):,}",
     delta=f"うち仮想通貨: ￥{int(crypto_total_val):,}"
 )
+
+st.write("デバッグ確認:", current_prices)
+
 # 資産割合バー
 if total_all_assets > 0:
     st.write("")
@@ -53,7 +56,6 @@ if total_all_assets > 0:
     yen_ratio = (yen_assets / total_all_assets) * 100
     bars_html = f'<div style="width: {yen_ratio}%; background-color: #4285F4;" title="日本円: {yen_ratio:.1f}%"></div>'
     legend_html = f'<span style="color:#4285F4">■</span> 日本円 '
-
     # 仮想通貨をループして追加
     if not df_crypto.empty:
         for i, row in df_crypto.iterrows():
@@ -65,7 +67,6 @@ if total_all_assets > 0:
                 bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{name}: {ratio:.1f}%"></div>'
                 # 凡例に追加
                 legend_html += f' <span style="color:{color}; margin-left:10px;">■</span> {name}'
-
     # 全体枠と合体
     final_html = f"""
     <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 12px; overflow: hidden;">
@@ -76,6 +77,7 @@ if total_all_assets > 0:
     </div>
     """
     st.markdown(final_html, unsafe_allow_html=True)
+
 # 仮想通貨の内訳リストを表示
 if not df_crypto.empty:
     st.subheader("仮想通貨内訳")
