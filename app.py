@@ -43,6 +43,39 @@ st.metric(
     value=f"￥{int(total_all_assets):,}",
     delta=f"うち仮想通貨: ￥{int(crypto_total_val):,}"
 )
+# 資産割合バー
+if total_all_assets > 0:
+    st.write("")
+    st.caption("📊 資産内訳")
+    # 色のリスト
+    colors = ['#DB4437','#F4B400', '#9079ad','#afafb0', '#00c8c8', '#9600ff']
+    # ベースのHTML
+    yen_ratio = (yen_assets / total_all_assets) * 100
+    bars_html = f'<div style="width: {yen_ratio}%; background-color: #4285F4;" title="日本円: {yen_ratio:.1f}%"></div>'
+    legend_html = f'<span style="color:#4285F4">■</span> 日本円 '
+
+    # 仮想通貨をループして追加
+    if not df_crypto.empty:
+        for i, row in df_crypto.iterrows():
+            ratio = (row['評価額(円)'] / total_all_assets) * 100
+            if ratio > 0: # 0より大きいものだけ表示
+                color = colors[i % len(colors)] # 色を順番に使う
+                name = row['銘柄']
+                # バーに追加
+                bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{name}: {ratio:.1f}%"></div>'
+                # 凡例に追加
+                legend_html += f' <span style="color:{color}; margin-left:10px;">■</span> {name}'
+
+    # 全体枠と合体
+    final_html = f"""
+    <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 12px; overflow: hidden;">
+        {bars_html}
+    </div>
+    <div style="font-size: 12px; margin-top: 5px; color: #333;">
+        {legend_html}
+    </div>
+    """
+    st.markdown(final_html, unsafe_allow_html=True)
 # 仮想通貨の内訳リストを表示
 if not df_crypto.empty:
     st.subheader("仮想通貨内訳")
