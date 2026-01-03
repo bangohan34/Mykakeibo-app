@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 import datetime
 import json
 import pandas as pd
+import requests
 
 # --- 設定 ---
 st.set_page_config(page_title="家計簿", page_icon="💰")
@@ -91,6 +92,40 @@ def save_crypto_data(df_crypto):
     worksheet.batch_clear(['I:J'])
     worksheet.update('I1', data_to_save)
 
+# 仮想通貨の現在価格の取得
+CRYPTO_ID_MAP = {
+    'BTC': 'bitcoin',
+    'ETH': 'ethereum',
+    'XRP': 'ripple',
+    'PI': 'pi-network',  # PiはIOU価格（先物的な価格）を取得
+    'IOST': 'iost'
+}
+@st.cache_data(ttl=600) # 10分間（600秒）キャッシュする（API制限対策）
+def get_crypto_prices(symbols):
+    # シンボル(BTC)をID(bitcoin)に変換
+    ids = [CRYPTO_ID_MAP.get(s.upper(), s.lower()) for s in symbols]
+    ids_str = ",".join(ids)
+    url = "https://api.coingecko.com/api/v3/simple/price"
+    params = {
+        'ids': ids_str,
+        'vs_currencies': 'jpy'
+    }
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        # 使いやすい辞書形式 { 'BTC': 12000000, 'PI': 5000 } に変換して返す
+        prices = {}
+        for sym in symbols:
+            c_id = CRYPTO_ID_MAP.get(sym.upper(), sym.lower())
+            if c_id in data:
+                prices[sym] = data[c_id]['jpy']
+            else:
+                prices[sym] = 0 # 取得できなかったら0
+        return prices
+    except Exception as e:
+        # エラー時は空の辞書を返す（アプリを止めないため）
+        return {}
+
 # --- アプリ画面 ---
 st.title('マイ家計簿')
 
@@ -101,15 +136,36 @@ if not df.empty:
     df['日付_dt'] = pd.to_datetime(df['日付'])
     total_income = df[df['区分'] == '収入']['金額'].sum()
     total_expense = df[df['区分'] == '支出']['金額'].sum()
-    total_assets = total_income - total_expense
+    yen_assets = total_income - total_expense
 else:
-    total_assets = 0
-st.metric(label="現在の合計資産", value=f"￥{total_assets:,}")
+    yen_assets = 0
 # 仮想通貨の表示
 df_crypto = load_crypto_data()
+crypto_total_val = 0 
 if not df_crypto.empty:
+    # 現在価格を取得
+    symbols = df_crypto['銘柄'].tolist()
+    current_prices = get_crypto_prices(symbols)
+    # データフレームに価格情報を結合
+    # map関数を使って、銘柄に対応する価格を列に追加
+    df_crypto['現在レート'] = df_crypto['銘柄'].map(current_prices).fillna(0)
+    df_crypto['評価額(円)'] = df_crypto['保有量'] * df_crypto['現在レート']
+    # 合計を計算
+    crypto_total_val = df_crypto['評価額(円)'].sum()
+# 総合計を表示（円 + 仮想通貨）
+total_all_assets = yen_assets + crypto_total_val
+st.metric(
+    label="💰 総資産（円＋仮想通貨）", 
+    value=f"￥{int(total_all_assets):,}",
+    delta=f"うち仮想通貨: ￥{int(crypto_total_val):,}"
+)
+# 仮想通貨の内訳リストを表示
+if not df_crypto.empty:
+    st.subheader("仮想通貨内訳")
     display_df = df_crypto.copy()
-    display_df['保有量'] = display_df['保有量'].apply(lambda x: f"{x:.8f}") 
+    display_df['保有量'] = display_df['保有量'].apply(lambda x: f"{x:.4f}")
+    display_df['現在レート'] = display_df['現在レート'].apply(lambda x: f"¥{x:,.0f}")
+    display_df['評価額(円)'] = display_df['評価額(円)'].apply(lambda x: f"¥{x:,.0f}")
     st.table(display_df)
 else:
     st.info("仮想通貨の登録はまだありません。")
