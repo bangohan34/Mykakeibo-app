@@ -163,10 +163,10 @@ st.metric(
 if not df_crypto.empty:
     st.subheader("仮想通貨内訳")
     display_df = df_crypto.copy()
-    display_df['保有量'] = display_df['保有量'].apply(lambda x: f"{x:.4f}")
-    display_df['現在レート'] = display_df['現在レート'].apply(lambda x: f"¥{x:,.0f}")
+    display_df['保有量'] = display_df['保有量'].apply(lambda x: f"{x:.8f}")
+    display_df['現在レート'] = display_df['現在レート'].apply(lambda x: f"¥{x:,.4f}")
     display_df['評価額(円)'] = display_df['評価額(円)'].apply(lambda x: f"¥{x:,.0f}")
-    st.table(display_df)
+    st.dataframe(display_df, hide_index=True, use_container_width=True)
 else:
     st.info("仮想通貨の登録はまだありません。")
 
@@ -257,8 +257,8 @@ st.subheader("入力履歴")
 if not df.empty:
     df_display = df.copy()
     df_display.index = df_display.index + 1
-    # 日付列を見やすいように
-    df['日付'] = pd.to_datetime(df['日付']).dt.strftime('%Y-%m-%d')
+    # 金額にカンマをつける
+    df_display['金額'] = df_display['金額'].apply(lambda x: f"{x:,}")
     # データの並び方（新しい順）
     st.dataframe(df_display.iloc[::-1], use_container_width=True)
 else:
