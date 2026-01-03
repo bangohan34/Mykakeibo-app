@@ -12,6 +12,8 @@ st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 # --- データの準備 ---
 df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
+if not df_crypto.empty:
+    df_crypto = df_crypto.sort_values(by='評価額(円)', ascending=False)
 
 # --- アプリ画面 ---
 st.title('マイ家計簿')
