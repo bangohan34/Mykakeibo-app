@@ -97,21 +97,16 @@ st.write("")
 if not df_crypto.empty:
     with st.expander("仮想通貨の内訳を見る", expanded=False):
         display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
+        display_df = display_df.rename(columns={'評価額(円)': '評価額'})
         display_df['保有量'] = display_df['保有量'].astype(float)
         display_df['評価額(円)'] = display_df['評価額(円)'].astype(int)
         st.dataframe(
-            display_df, 
+            display_df.style.format({
+                "保有量": "{:.8f}",
+                "評価額": "{:,} 円" 
+            }),
             hide_index=True,
-            use_container_width=True,
-            column_config={
-                "銘柄": st.column_config.TextColumn("銘柄"),
-                "保有量": st.column_config.NumberColumn(
-                    "保有量", format="%.8f"
-                ),
-                "評価額(円)": st.column_config.NumberColumn(
-                    "評価額", format="%d 円"
-                )
-            }
+            use_container_width=True
         )
 else:
     st.info("仮想通貨の登録はまだありません。")
@@ -202,12 +197,12 @@ if not df.empty:
     df_display = df.copy()
     df_display.index = df_display.index + 1
     st.dataframe(
-        df_display.iloc[::1],
-        use_container_width=True,
-        column_config={
-            "金額": st.column_config.NumberColumn("金額", format="%,d 円")
-        }
-    )
+            display_df.style.format({
+                "金額": "{:,} 円"
+            }),
+            hide_index=True,
+            use_container_width=True
+        )
     # データの並び方（新しい順）
     st.dataframe(df_display.iloc[::-1], use_container_width=True)
 else:
