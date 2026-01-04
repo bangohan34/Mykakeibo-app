@@ -61,6 +61,11 @@ def add_entry(date, balance_type,category, amount, memo):
     worksheet.append_row(row_data)
 
 def delete_entry(row_index):
+    current_data = worksheet.get('A:E')
+    if 0 <= row_index < len(current_data):
+        current_data.pop(row_index)
+        worksheet.batch_clear(['A:E'])
+        worksheet.update('A1', current_data)
     worksheet.delete_rows(int(row_index))
 
 # --- 仮想通貨データの操作 ---

@@ -132,7 +132,7 @@ with st.form(key='entry_form', clear_on_submit=True):
         amount = st.number_input('金額', min_value=0, step=1)
         memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
-
+    
 if submit_btn:
     # 資産移動
     if balance_type == "資産移動":
