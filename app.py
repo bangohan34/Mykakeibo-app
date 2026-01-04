@@ -97,6 +97,8 @@ st.write("")
 if not df_crypto.empty:
     with st.expander("仮想通貨の内訳を見る", expanded=False):
         display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
+        display_df['保有量'] = display_df['保有量'].astype(float)
+        display_df['評価額(円)'] = display_df['評価額(円)'].astype(int)
         st.dataframe(
             display_df, 
             hide_index=True,
