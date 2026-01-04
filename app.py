@@ -132,7 +132,7 @@ with st.form(key='entry_form', clear_on_submit=True):
         amount = st.number_input('金額', min_value=0, step=1)
         memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
-    
+
 if submit_btn:
     # 資産移動
     if balance_type == "資産移動":
@@ -188,8 +188,13 @@ st.subheader("入力履歴")
 if not df.empty:
     df_display = df.copy()
     df_display.index = df_display.index + 1
-    # 金額にカンマをつける
-    df_display['金額'] = df_display['金額'].apply(lambda x: f"{x:,}")
+    st.dataframe(
+        df_display.iloc[::1],
+        use_container_width=True,
+        column_config={
+            "金額": st.column_config.NumberColumn("金額", format="%,d 円")
+        }
+    )
     # データの並び方（新しい順）
     st.dataframe(df_display.iloc[::-1], use_container_width=True)
 else:
