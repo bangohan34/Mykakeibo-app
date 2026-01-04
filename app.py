@@ -197,14 +197,13 @@ if not df.empty:
     df_display = df.copy()
     df_display.index = df_display.index + 1
     st.dataframe(
-            display_df.style.format({
+            df_display.iloc[::-1],
+            df_display.style.format({
                 "金額": "{:,} 円"
             }),
             hide_index=True,
             use_container_width=True
         )
-    # データの並び方（新しい順）
-    st.dataframe(df_display.iloc[::-1], use_container_width=True)
 else:
     st.info("まだデータがありません。")
 
