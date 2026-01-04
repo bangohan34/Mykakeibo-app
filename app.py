@@ -197,8 +197,7 @@ if not df.empty:
     df_display = df.copy()
     df_display.index = df_display.index + 1
     st.dataframe(
-            df_display.iloc[::-1],
-            df_display.style.format({
+            df_display.iloc[::-1].style.format({
                 "金額": "{:,} 円"
             }),
             use_container_width=True
