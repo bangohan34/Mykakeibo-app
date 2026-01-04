@@ -93,6 +93,7 @@ if total_all_assets > 0:
     st.markdown(final_html, unsafe_allow_html=True)
 
 # 仮想通貨の内訳リストを表示
+st.write("")
 if not df_crypto.empty:
     with st.expander("仮想通貨の内訳を見る", expanded=False):
         display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
