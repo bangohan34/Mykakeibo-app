@@ -83,7 +83,7 @@ if total_all_assets > 0:
                 legend_html += f' <span style="color:{color}; margin-left:10px;">■</span> {name}'
     # 全体枠と合体
     final_html = f"""
-    <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 12px; overflow: hidden;">
+    <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 0px; overflow: hidden;">
         {bars_html}
     </div>
     <div style="font-size: 12px; margin-top: 5px; color: #333;">
