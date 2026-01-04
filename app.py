@@ -99,7 +99,7 @@ if not df_crypto.empty:
         display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
         display_df = display_df.rename(columns={'評価額(円)': '評価額'})
         display_df['保有量'] = display_df['保有量'].astype(float)
-        display_df['評価額(円)'] = display_df['評価額(円)'].astype(int)
+        display_df['評価額'] = display_df['評価額'].astype(int)
         st.dataframe(
             display_df.style.format({
                 "保有量": "{:.8f}",
