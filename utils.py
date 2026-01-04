@@ -111,6 +111,7 @@ def get_crypto_prices(symbols):
                         prices[sym] = 0
             except:
                 pass
+    return prices
 
 @st.cache_data(ttl=3600)
 def get_usd_jpy_rate():
