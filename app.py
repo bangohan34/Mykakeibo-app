@@ -96,10 +96,12 @@ if total_all_assets > 0:
 if not df_crypto.empty:
     st.subheader("仮想通貨内訳")
     display_df = df_crypto.copy()
-    display_df['保有量'] = display_df['保有量'].apply(lambda x: f"{x:.8f}")
-    display_df['現在レート'] = display_df['現在レート'].apply(lambda x: f"¥{x:,.4f}")
-    display_df['評価額(円)'] = display_df['評価額(円)'].apply(lambda x: f"¥{x:,.0f}")
-    st.dataframe(display_df, hide_index=True, use_container_width=True)
+    #display_df['現在レート'] = display_df['現在レート'].apply(lambda x: f"¥{x:,.4f}")
+    st.dataframe(display_df, hide_index=True, use_container_width=True,
+                 column_config={
+                     "保有量": st.column_config.NumberColumn("保有量", format="%.8f"),
+                     "評価額": st.column_config.NumberColumn("評価額", format="%,d 円")
+                 })
 else:
     st.info("仮想通貨の登録はまだありません。")
 
