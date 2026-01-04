@@ -92,7 +92,7 @@ if total_all_assets > 0:
     """
     st.markdown(final_html, unsafe_allow_html=True)
 
-# 仮想通貨の内訳リストを表示
+# 仮想通貨の内訳リスト
 st.write("")
 if not df_crypto.empty:
     with st.expander("仮想通貨の内訳を見る", expanded=False):
@@ -201,7 +201,6 @@ if not df.empty:
             df_display.style.format({
                 "金額": "{:,} 円"
             }),
-            hide_index=True,
             use_container_width=True
         )
 else:
