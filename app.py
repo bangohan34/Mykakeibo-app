@@ -60,7 +60,7 @@ if total_all_assets > 0:
         'PI':'#9600ff'
     }
     # 指定がない銘柄用の予備カラー（順番に使われます）
-    DEFAULT_COLORS = ['#F4B400', '#0F9D58', '#4285F4', '#AB47BC', '#00ACC1']
+    DEFAULT_COLORS = ['#0F9D58', '#4285F4', '#F4B400', '#AB47BC', '#00ACC1']
     # ベースのHTML
     yen_ratio = (yen_assets / total_all_assets) * 100
     bars_html = f'<div style="width: {yen_ratio}%; background-color:{COLOR_YEN};" title="日本円: {yen_ratio:.1f}%"></div>'
