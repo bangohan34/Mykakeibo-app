@@ -30,7 +30,6 @@ if not df_crypto.empty:
     # 現在価格を取得
     symbols = df_crypto['銘柄'].tolist()
     current_prices = u.get_crypto_prices(symbols)
-    current_meme_price = u.get_meme_price_jpy()
     # データフレームに価格情報を結合
     # map関数を使って、銘柄に対応する価格を列に追加
     df_crypto['現在レート'] = df_crypto['銘柄'].map(current_prices).fillna(0)
