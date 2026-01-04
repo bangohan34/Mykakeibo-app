@@ -104,11 +104,12 @@ if not df_crypto.empty:
             hide_index=True,
             use_container_width=True,
             column_config={
+                "銘柄": st.column_config.TextColumn("銘柄"),
                 "保有量": st.column_config.NumberColumn(
                     "保有量", format="%.8f"
                 ),
                 "評価額(円)": st.column_config.NumberColumn(
-                    "評価額", format="%,d 円"
+                    "評価額", format="%d 円"
                 )
             }
         )
