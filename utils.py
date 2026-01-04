@@ -79,32 +79,71 @@ def save_crypto_data(df_crypto):
 
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
+    prices = {}
     upper_symbols = list(set([s.upper() for s in symbols]))
     if not upper_symbols:
         return {}
-    fsyms = ",".join(upper_symbols)
-    url = "https://min-api.cryptocompare.com/data/pricemulti"
-    params = {
-        'fsyms': fsyms,
-        'tsyms': 'JPY'
-    }
+    meme_symbols = []
+    normal_symbols = []
+    for s in symbols:
+        if s.upper() in c.MEME_CONTRACTS:
+            meme_symbols.append(s.upper())
+        else:
+            normal_symbols.append(s)
+    for sym in meme_symbols:
+        address = c.MEME_CONTRACTS[sym]
+        prices[sym] = get_meme_price(address)
+    if normal_symbols:
+        upper_symbols = list(set([s.upper() for s in normal_symbols]))
+        api_symbols = [s for s in upper_symbols if c.CRYPTO_ID_MAP.get(s) != 'FIXED_JPY']
+        if api_symbols:
+            fsyms = ",".join(api_symbols)
+            url = "https://min-api.cryptocompare.com/data/pricemulti"
+            params = {'fsyms': fsyms, 'tsyms': 'JPY'}
+            try:
+                response = requests.get(url, params=params)
+                data = response.json()
+                for sym in normal_symbols:
+                    key = sym.upper()
+                    if key in data and 'JPY' in data[key]:
+                        prices[sym] = data[key]['JPY']
+                    elif sym not in prices:
+                        prices[sym] = 0
+            except:
+                pass
+
+@st.cache_data(ttl=3600)
+def get_usd_jpy_rate():
     try:
-        response = requests.get(url, params=params)
+        url = "https://api.exchangerate-api.com/v4/latest/USD"
+        response = requests.get(url, timeout=5)
         data = response.json()
-        if 'Response' in data and data['Response'] == 'Error':
-            st.error(f"API Error: {data.get('Message', 'Unknown')}")
-            return {}
-        prices = {}
-        for sym in symbols: # 元のシンボルリスト順に処理
-            key = sym.upper()
-            if key in data and 'JPY' in data[key]:
-                prices[sym] = data[key]['JPY']
-            else:
-                prices[sym] = 0
-        return prices
+        return data["rates"]["JPY"]
+    except:
+        return 150.0 # エラー時は仮のレート
+
+# ミームコイン価格取得
+@st.cache_data(ttl=600)
+def get_meme_price(token_address):
+    dex_url = f"https://api.dexscreener.com/latest/dex/tokens/{token_address}"
+    try:
+        dex_response = requests.get(dex_url, timeout=5)
+        dex_data = dex_response.json()
+        # データがない場合
+        if dex_data.get("pairs") is None or len(dex_data["pairs"]) == 0:
+            return 0.0
+        # メインのペアからUSD価格を取り出す
+        price_usd_str = dex_data["pairs"][0].get("priceUsd")
+        if not price_usd_str:
+            return 0.0
+        price_usd = float(price_usd_str)
+        # 日本円に換算
+        usd_jpy_rate = get_usd_jpy_rate()
+        price_jpy = price_usd * usd_jpy_rate
+        return price_jpy
     except Exception as e:
-        st.error(f"通信エラー: {e}")
-        return {}
+        print(f"Meme Price Error: {e}")
+        return 0.0
 
 # --- なんでもメモの操作 ---
 def get_anything_memo():
