@@ -141,7 +141,6 @@ with st.form(key='entry_form', clear_on_submit=True):
         amount = st.number_input('金額', min_value=0, step=1)
         memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
-
 if submit_btn:
     # 資産移動
     if balance_type == "資産移動":
@@ -172,6 +171,7 @@ if submit_btn:
                     msg = f"💎 {crypto_name} が {crypto_amount} 増えました。"
                 st.success(msg)
                 st.balloons()
+                time.sleep(2)
                 st.rerun()
             except Exception as e:
                 st.error(f"資産移動エラー: {e}")
@@ -187,6 +187,7 @@ if submit_btn:
                 else:
                     st.info(f'{category} : {amount}円を登録しました。')
                 st.balloons()
+                time.sleep(2)
                 st.rerun()
             except Exception as e:
                 st.error(f'書き込みエラー: {e}')
@@ -218,7 +219,7 @@ with st.expander("削除メニューを開く", expanded=False):
                 try:
                     u.delete_entry(target_row)
                     st.success("削除しました!")
-                    time.sleep(1)
+                    time.sleep(2)
                     st.rerun()
                 except Exception as e:
                     st.error(f"削除エラー: {e}")
