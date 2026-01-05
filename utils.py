@@ -88,6 +88,10 @@ def save_crypto_data(df_crypto):
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
     prices = {}
+    valid_symbols = []
+    for s in symbols:
+        if s is not None and str(s).strip() != "":
+            valid_symbols.append(str(s))
     upper_symbols = list(set([s.upper() for s in symbols]))
     if not upper_symbols:
         return {}
