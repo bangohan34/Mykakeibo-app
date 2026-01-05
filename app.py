@@ -216,7 +216,7 @@ with st.expander("削除メニューを開く", expanded=False):
         if st.button("削除実行"):
             if target_row:
                 try:
-                    u.delete_entry(target_row)
+                    u.delete_entry(target_row + 2)
                     st.success("削除しました!")
                     time.sleep(2)
                     st.rerun()
