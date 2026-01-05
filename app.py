@@ -209,7 +209,7 @@ else:
 st.subheader("データの削除")
 with st.expander("削除メニューを開く"):
     if not df.empty:
-        delete_options = df.index +1
+        delete_options = df.index + 1
         selected_index = st.selectbox("削除する行番号を選択", delete_options)
         # 削除の実行
         if st.button("削除実行"):
@@ -229,7 +229,12 @@ st.subheader("なんでもメモ")
 # キャッシュに残っていないときだけ読み込む
 if 'my_memo_content' not in st.session_state:
     st.session_state['my_memo_content'] = u.get_anything_memo()
-new_memo = st.text_area( "", value=st.session_state['my_memo_content'], height=150 )
+new_memo = st.text_area(
+    "メモ",
+    value=st.session_state['my_memo_content'],
+    height=150,
+    label_visibility="collapsed"
+)
 # 保存ボタンが押されたときだけ書き込む
 if st.button("メモを保存"):
     u.update_anything_memo(new_memo)
