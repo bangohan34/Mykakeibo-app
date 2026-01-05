@@ -210,7 +210,6 @@ else:
 # --- データの削除 ---
 st.subheader("データの削除")
 with st.expander("削除メニューを開く", expanded=False):
-    st.write("削除する行番号を入力してください。")
     if not df.empty:
         target_row = st.number_input("削除する行番号", min_value=1, step=1, value=None, format="%d")
         # 削除の実行
