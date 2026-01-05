@@ -66,7 +66,6 @@ def delete_entry(row_index):
         current_data.pop(row_index)
         worksheet.batch_clear(['A:E'])
         worksheet.update('A1', current_data)
-    worksheet.delete_rows(int(row_index))
 
 # --- 仮想通貨データの操作 ---
 def load_crypto_data():
