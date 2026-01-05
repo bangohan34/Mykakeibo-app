@@ -211,7 +211,7 @@ else:
 st.subheader("データの削除")
 with st.expander("削除メニューを開く", expanded=False):
     if not df.empty:
-        target_row = st.number_input("削除する行番号", min_value=1, step=1, value=None, format="%d")
+        target_row = 1 + st.number_input("削除する行番号", min_value=1, step=1, value=None, format="%d")
         # 削除の実行
         if st.button("削除実行"):
             if target_row:
