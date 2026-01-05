@@ -1,6 +1,7 @@
 import streamlit as st
 import datetime
 import pandas as pd
+import time
 
 import const as c
 import utils as u
@@ -207,21 +208,22 @@ else:
 
 # --- データの削除 ---
 st.subheader("データの削除")
-with st.expander("削除メニューを開く"):
+with st.expander("削除メニューを開く", expanded=False):
+    st.write("削除する行番号を入力してください。")
     if not df.empty:
-        delete_options = df.index + 1
-        selected_index = st.selectbox("削除する行番号を選択", delete_options)
+        target_row = st.number_input("削除する行番号", min_value=1, step=1, value=None, format="%d")
         # 削除の実行
         if st.button("削除実行"):
-            try:
-                target_row = selected_index + 1
-                u.delete_entry(target_row)
-                st.success("削除しました。")
-                st.rerun()
-            except Exception as e:
-                st.error(f"削除エラー: {e}")
+            if target_row:
+                try:
+                    u.delete_entry(target_row)
+                    st.success("削除しました!")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"削除エラー: {e}")
     else:
-        st.info("削除できるデータがありません。")
+        st.info("行番号を入力してください。")
 
 # --- いろいろメモ ---
 st.divider()
