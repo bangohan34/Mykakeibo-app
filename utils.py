@@ -62,8 +62,9 @@ def add_entry(date, balance_type,category, amount, memo):
 
 def delete_entry(row_index):
     current_data = worksheet.get('A:E')
+    target_list_index = int(row_index) - 1
     if 0 <= row_index < len(current_data):
-        current_data.pop(row_index)
+        current_data.pop(target_list_index)
         worksheet.batch_clear(['A:E'])
         worksheet.update('A1', current_data)
 
