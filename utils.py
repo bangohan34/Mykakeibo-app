@@ -57,8 +57,11 @@ def load_kakeibo_data():
     return df
 
 def add_entry(date, balance_type,category, amount, memo):
+    col_a_values = worksheet.col_values(1)
+    next_row = len(col_a_values) + 1
     row_data = [str(date), balance_type, category, amount, memo]
-    worksheet.append_row(row_data)
+    range_str = f"A{next_row}:E{next_row}"
+    worksheet.update(range_name=range_str,values=row_data)
 
 def delete_entry(row_index):
     current_data = worksheet.get('A:E')
