@@ -168,6 +168,14 @@ def get_meme_price(token_address):
         print(f"Meme Price Error: {e}")
         return 0.0
 
+# --- 履歴表示 ---
+def color_coding(val):
+    if val == '収入':
+        return 'color: green; font-weight: bold;'
+    elif val == '支出':
+        return 'color: red; font-weight: bold;'
+    return ''
+
 # --- なんでもメモの操作 ---
 def get_anything_memo():
     try:
