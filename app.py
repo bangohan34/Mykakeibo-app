@@ -205,18 +205,11 @@ if not df.empty:
     df_display.index = df_display.index + 1
     df_display['日付'] = df_display['日付'].dt.strftime('%m/%d')
     st.dataframe(
-            df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
-            .format({"金額": "{:,} 円"}),
-            use_container_width=True,
-            hide_index=True,
-            height=240,
-            column_config={
-            "No": st.column_config.NumberColumn("No", width="small"),
-            "日付": st.column_config.TextColumn("日付", width="small"),
-            "区分": st.column_config.TextColumn("区分", width="small"),
-            "金額": st.column_config.TextColumn("金額"),
-            }
-        )
+        df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
+        .format({"金額": "{:,} 円"}),
+        use_container_width=True,
+        height=240
+    )
 else:
     st.info("まだデータがありません。")
 
@@ -252,8 +245,7 @@ with st.expander("削除メニューを開く", expanded=False):
                             real_row_index = int(target_no) + 1
                             u.delete_entry(real_row_index)
                             st.success(f"No.{target_no} を削除しました！")
-                            st.session_state["delete_input_no"] = None
-                            time.sleep(1)
+                            time.sleep(2)
                             st.rerun()
                         except Exception as e:
                             st.error(f"削除エラー: {e}")
