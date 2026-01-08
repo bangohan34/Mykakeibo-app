@@ -45,7 +45,7 @@ def format_money(amount, is_visible):
     if is_visible:
         return f"{int(amount):,} 円"
     else:
-        return "***,***,*** 円"
+        return "******* 円"
 
 # --- 家計簿データの操作 ---
 def load_kakeibo_data():
