@@ -86,7 +86,7 @@ def delete_callback():
     if target_no:
         try:
             real_row_index = int(target_no) + 1
-            u.delete_entry(real_row_index)
+            delete_entry(real_row_index)
             st.session_state["delete_input_no"] = None
             st.session_state["delete_msg"] = f"No.{target_no} を削除しました！"
         except Exception as e:
