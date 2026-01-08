@@ -229,7 +229,7 @@ with st.expander("削除メニューを開く", expanded=False):
             key="delete_input_no"
         )
         # 2. 確認用のチェックボックス
-        if st.checkbox("削除対象を確認する"):
+        if st.checkbox("削除対象を確認する", key="del_confirm_ckeck"):
             if target_no:
                 target_row = df[df['No'] == target_no]
                 # データが見つかった場合
