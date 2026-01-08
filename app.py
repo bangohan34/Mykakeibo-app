@@ -217,6 +217,8 @@ else:
 # --- データの削除 ---
 st.subheader("データの削除")
 # 処理完了後のメッセージ表示エリア
+if "delete_msg" not in st.session_state:
+    st.session_state["delete_msg"] = None
 if st.session_state["delete_msg"]:
     if "エラー" in st.session_state["delete_msg"]:
         st.error(st.session_state["delete_msg"])
