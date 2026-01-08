@@ -207,7 +207,15 @@ if not df.empty:
     st.dataframe(
             df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
             .format({"金額": "{:,} 円"}),
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True,
+            height=240,
+            column_config={
+            "No": st.column_config.NumberColumn("No", width="small"),
+            "日付": st.column_config.TextColumn("日付", width="small"),
+            "区分": st.column_config.TextColumn("区分", width="small"),
+            "金額": st.column_config.TextColumn("金額"),
+            }
         )
 else:
     st.info("まだデータがありません。")
