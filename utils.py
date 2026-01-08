@@ -81,6 +81,17 @@ def delete_entry(row_index):
         worksheet.batch_clear(['A:E'])
         worksheet.update('A1', current_data)
 
+def delete_callback():
+    target_no = st.session_state.get("delete_input_no")
+    if target_no:
+        try:
+            real_row_index = int(target_no) + 1
+            u.delete_entry(real_row_index)
+            st.session_state["delete_input_no"] = None
+            st.session_state["delete_msg"] = f"No.{target_no} を削除しました！"
+        except Exception as e:
+            st.session_state["delete_msg"] = f"削除エラー: {e}"
+
 # --- 仮想通貨データの操作 ---
 def load_crypto_data():
     raw_data = worksheet.get('I:J')
