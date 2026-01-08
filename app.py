@@ -50,7 +50,7 @@ with col1:
     st.markdown(f"## :blue[{u.format_money(yen_assets, show_assets)}]")
 with col2:
     st.markdown("仮想通貨")
-    st.markdown(f"## :orange[{u.format_money(crypto_total_val, show_assets)}]")
+    st.markdown(f"#### :orange[{u.format_money(crypto_total_val, show_assets)}]")
 
 # --- 資産割合バー ---
 if total_all_assets > 0:
@@ -226,7 +226,11 @@ with st.expander("削除メニューを開く", expanded=False):
     if not df.empty:
         st.write("履歴リストの **No** を確認して入力してください。")
         # 削除したいNoを入力
-        target_no = st.number_input("削除するNo", min_value=1, step=1, value=None, format="%d")
+        target_no = st.number_input(
+            "削除するNo", min_value=1, step=1,
+            label_visibility="collapsed",
+            key="delete_input_no"
+        )
         # 2. 確認用のチェックボックス
         if st.checkbox("削除対象を確認する"):
             if target_no:
@@ -246,6 +250,7 @@ with st.expander("削除メニューを開く", expanded=False):
                             real_row_index = int(target_no) + 1
                             u.delete_entry(real_row_index)
                             st.success(f"No.{target_no} を削除しました！")
+                            st.session_state["delete_input_no"] = 1
                             time.sleep(1)
                             st.rerun()
                         except Exception as e:
