@@ -17,7 +17,8 @@ df_crypto = u.load_crypto_data()
 # --- アプリ画面 ---
 st.title('マイ家計簿')
 
-# --- 資産合計表示 ---
+# --- 資産表示 ---
+show_assets = st.toggle("資産額を表示する", value=False)
 # 収支の計算
 if not df.empty:
     total_income = df[df['区分'] == '収入']['金額'].sum()
@@ -39,13 +40,16 @@ if not df_crypto.empty:
     crypto_total_val = df_crypto['評価額(円)'].sum()
     # 評価額(円)で並び替え
     df_crypto = df_crypto.sort_values(by='評価額(円)', ascending=False)
-# 総合計を表示（円 + 仮想通貨）
+# 合計の計算
 total_all_assets = yen_assets + crypto_total_val
-st.metric(
-    label="💰 総資産（円＋仮想通貨）", 
-    value=f"￥{int(total_all_assets):,}",
-    delta=f"うち仮想通貨: ￥{int(crypto_total_val):,}"
-)
+# 表示
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("現金・預金")
+    st.markdown(f"## :blue[{u.format_money(yen_assets, show_assets)}]")
+with col2:
+    st.markdown("投資")
+    st.markdown(f"## :orange[{u.format_money(crypto_total_val, show_assets)}]")
 
 # 資産割合バー
 if total_all_assets > 0:
