@@ -43,17 +43,20 @@ worksheet = get_worksheet()
 # --- 家計簿データの操作 ---
 def load_kakeibo_data():
     all_rows = worksheet.get_all_values()
-    columns=['日付','区分','カテゴリー','金額','メモ']
+    columns=['No','日付','区分','カテゴリー','金額','メモ']
     if len(all_rows) < 2:
         return pd.DataFrame(columns=columns)
-    fixed_rows = [row[:5] for row in all_rows]
-    if fixed_rows[0][0] =='日付':
-        data = fixed_rows[1:]
-    else:
-        data = fixed_rows
+    data = []
+    for i, row in enumerate(all_rows):
+        if i == 0: continue
+        row_num = i
+        row_data = [row_num] + row[:5]
+        data.append(row_data)
     df = pd.DataFrame(data, columns=columns)
-    # 金額を数値に変換
+    # 「日付」が入っていない空っぽの行を削除
+    df = df[df['日付'].astype(str).str.strip() != ""]
     df['金額'] = pd.to_numeric(df['金額'].astype(str).str.replace(',', ''), errors='coerce').fillna(0).astype(int)
+    df['日付'] = pd.to_datetime(df['日付'], errors='coerce')
     return df
 
 def add_entry(date, balance_type,category, amount, memo):
