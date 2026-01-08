@@ -217,9 +217,10 @@ else:
 # --- データの削除 ---
 st.subheader("データの削除")
 with st.expander("削除メニューを開く", expanded=False):
+    if "delete_msg" not in st.session_state:
+        st.session_state["delete_msg"] = None
     if not df.empty:
-        st.write("履歴リストの **No** を確認して入力してください。")
-        # 削除したいNoを入力
+        st.write("削除する **No** を入力してください。")
         target_no = st.number_input(
             "削除するNo", min_value=1, step=1,
             value=None,
@@ -240,22 +241,23 @@ with st.expander("削除メニューを開く", expanded=False):
                         hide_index=True
                     )
                     # 最終決定ボタン
-                    if st.button("はい、削除します"):
-                        try:
-                            # スプレッドシートの行番号に変換（No + 1）
-                            real_row_index = int(target_no) + 1
-                            u.delete_entry(real_row_index)
-                            st.success(f"No.{target_no} を削除しました！")
-                            time.sleep(2)
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"削除エラー: {e}")
+                    if st.button("はい、削除します", on_click=u.delete_callback):
                 else:
                     st.error("そのNoのデータは見つかりませんでした。")
             else:
                 st.info("Noを入力してください。")
     else:
         st.info("データがありません。")
+    # 処理完了後のメッセージ表示エリア
+    if st.session_state["delete_msg"]:
+        if "エラー" in st.session_state["delete_msg"]:
+            st.error(st.session_state["delete_msg"])
+        else:
+            st.success(st.session_state["delete_msg"])
+            # メッセージを表示したら、次回のために空にする
+            st.session_state["delete_msg"] = None
+            time.sleep(1)
+            st.rerun()
 
 # --- 資産グラフ ---
 st.divider()
