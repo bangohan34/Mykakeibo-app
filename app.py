@@ -227,6 +227,7 @@ if st.session_state["delete_msg"]:
         time.sleep(1)
         st.rerun()
 # 削除メニュー
+current_menu_key = f"del_menu_{st.session_state['menu_reset_id']}"
 with st.expander("削除メニューを開く", expanded=False):
     if "delete_msg" not in st.session_state:
         st.session_state["delete_msg"] = None
