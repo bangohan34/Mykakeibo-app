@@ -89,6 +89,7 @@ def delete_callback():
             delete_entry(real_row_index)
             st.session_state["delete_input_no"] = None
             st.session_state["del_confirm_ckeck"] = False
+            st.session_state["menu_reset_id"] += 1
             st.session_state["delete_msg"] = f"No.{target_no} を削除しました！"
         except Exception as e:
             st.session_state["delete_msg"] = f"削除エラー: {e}"
