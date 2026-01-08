@@ -240,8 +240,7 @@ with st.expander("削除メニューを開く", expanded=False):
                         target_row.style.format({"金額": "{:,} 円"}), 
                         hide_index=True
                     )
-                    # 最終決定ボタン
-                    if st.button("はい、削除します", on_click=u.delete_callback):
+                    st.button("はい、削除します", on_click=u.delete_callback)
                 else:
                     st.error("そのNoのデータは見つかりませんでした。")
             else:
