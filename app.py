@@ -247,16 +247,16 @@ with st.expander("削除メニューを開く", expanded=False):
                 st.info("Noを入力してください。")
     else:
         st.info("データがありません。")
-    # 処理完了後のメッセージ表示エリア
-    if st.session_state["delete_msg"]:
-        if "エラー" in st.session_state["delete_msg"]:
-            st.error(st.session_state["delete_msg"])
-        else:
-            st.success(st.session_state["delete_msg"])
-            # メッセージを表示したら、次回のために空にする
-            st.session_state["delete_msg"] = None
-            time.sleep(1)
-            st.rerun()
+ # 処理完了後のメッセージ表示エリア
+if st.session_state["delete_msg"]:
+    if "エラー" in st.session_state["delete_msg"]:
+        st.error(st.session_state["delete_msg"])
+    else:
+        st.success(st.session_state["delete_msg"])
+        # メッセージを表示したら、次回のために空にする
+        st.session_state["delete_msg"] = None
+        time.sleep(1)
+        st.rerun()
 
 # --- 資産グラフ ---
 st.divider()
