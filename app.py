@@ -216,20 +216,38 @@ else:
 st.subheader("データの削除")
 with st.expander("削除メニューを開く", expanded=False):
     if not df.empty:
-        target_row = st.number_input("削除する行番号", min_value=1, step=1, value=None, format="%d")
-        # 削除の実行
-        if st.button("削除を実行"):
-            if target_row:
-                try:
-                    real_row_index = target_row + 1
-                    u.delete_entry(real_row_index)
-                    st.success("削除しました!")
-                    time.sleep(2)
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"削除エラー: {e}")
+        st.write("履歴リストの **No** を確認して入力してください。")
+        # 削除したいNoを入力
+        target_no = st.number_input("削除するNo", min_value=1, step=1, value=None, format="%d")
+        # 2. 確認用のチェックボックス
+        if st.checkbox("削除対象を確認する"):
+            if target_no:
+                target_row = df[df['No'] == target_no]
+                # データが見つかった場合
+                if not target_row.empty:
+                    st.warning("⚠️ 以下のデータを本当に削除しますか？")
+                    # 削除対象をプレビュー表示
+                    st.dataframe(
+                        target_row.style.format({"金額": "{:,} 円"}), 
+                        hide_index=True
+                    )
+                    # 最終決定ボタン
+                    if st.button("はい、削除します"):
+                        try:
+                            # スプレッドシートの行番号に変換（No + 1）
+                            real_row_index = int(target_no) + 1
+                            u.delete_entry(real_row_index)
+                            st.success(f"No.{target_no} を削除しました！")
+                            time.sleep(1)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"削除エラー: {e}")
+                else:
+                    st.error("そのNoのデータは見つかりませんでした。")
+            else:
+                st.info("Noを入力してください。")
     else:
-        st.info("行番号を入力してください。")
+        st.info("データがありません。")
 
 # --- 資産グラフ ---
 st.divider()
