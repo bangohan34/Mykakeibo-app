@@ -2,6 +2,7 @@ import streamlit as st
 import datetime
 import pandas as pd
 import time
+import altair as alt
 
 import const as c
 import utils as u
@@ -229,6 +230,32 @@ with st.expander("削除メニューを開く", expanded=False):
                     st.error(f"削除エラー: {e}")
     else:
         st.info("行番号を入力してください。")
+
+# --- 資産グラフ ---
+# データの加工
+chart_df = df.copy()
+chart_df['年月'] = chart_df['日付'].dt.strftime('%Y-%m') # 年-月 の形にする
+# 支出ならマイナス、収入ならプラスにする計算
+chart_df['グラフ金額'] = chart_df.apply(
+    lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
+    axis=1
+)
+# 現金の累積を計算
+line_df = chart_df.sort_values('日付')
+line_df['現金推移'] = line_df['グラフ金額'].cumsum()
+# 棒グラフ 現金の月ごとの合計
+bars = alt.Chart(chart_df).mark_bar().encode(
+    x='年月',
+    y='sum(グラフ金額)',
+    color=alt.Color('区分', scale=alt.Scale(range=['#28a745', '#dc3545']))
+)
+# 折れ線グラフ 現金推移
+line = alt.Chart(line_df).mark_line(color='blue').encode(
+    x='年月',
+    y='max(現金推移)'
+)
+# 重ねて表示
+st.altair_chart(alt.layer(bars, line).resolve_scale(y='shared'), use_container_width=True)
 
 # --- いろいろメモ ---
 st.divider()
