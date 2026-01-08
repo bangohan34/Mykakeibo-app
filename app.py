@@ -48,10 +48,10 @@ with col1:
     st.markdown("現金・預金")
     st.markdown(f"## :blue[{u.format_money(yen_assets, show_assets)}]")
 with col2:
-    st.markdown("投資")
+    st.markdown("仮想通貨")
     st.markdown(f"## :orange[{u.format_money(crypto_total_val, show_assets)}]")
 
-# 資産割合バー
+# --- 資産割合バー ---
 if total_all_assets > 0:
     st.write("")
     st.caption("📊 資産内訳")
@@ -97,7 +97,7 @@ if total_all_assets > 0:
     """
     st.markdown(final_html, unsafe_allow_html=True)
 
-# 仮想通貨の内訳リスト
+# --- 仮想通貨の内訳リスト ---
 st.write("")
 if not df_crypto.empty:
     with st.expander("仮想通貨の内訳を見る", expanded=False):
@@ -116,7 +116,7 @@ if not df_crypto.empty:
 else:
     st.info("仮想通貨の登録はまだありません。")
 
-# 入力フォーム
+# --- 入力フォーム ---
 st.divider()
 balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
