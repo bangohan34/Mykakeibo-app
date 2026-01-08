@@ -232,6 +232,7 @@ with st.expander("削除メニューを開く", expanded=False):
         st.info("行番号を入力してください。")
 
 # --- 資産グラフ ---
+st.divider()
 # データの加工
 chart_df = df.copy()
 chart_df['年月'] = chart_df['日付'].dt.strftime('%Y-%m') # 年-月 の形にする
