@@ -208,7 +208,8 @@ if not df.empty:
         df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
         .format({"金額": "{:,} 円"}),
         use_container_width=True,
-        height=240
+        height=240,
+        hide_index=True
     )
 else:
     st.info("まだデータがありません。")
