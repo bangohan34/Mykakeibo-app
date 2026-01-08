@@ -228,6 +228,8 @@ with st.expander("削除メニューを開く", expanded=False):
         # 削除したいNoを入力
         target_no = st.number_input(
             "削除するNo", min_value=1, step=1,
+            value=None,
+            format="%d",
             label_visibility="collapsed",
             key="delete_input_no"
         )
@@ -250,7 +252,7 @@ with st.expander("削除メニューを開く", expanded=False):
                             real_row_index = int(target_no) + 1
                             u.delete_entry(real_row_index)
                             st.success(f"No.{target_no} を削除しました！")
-                            st.session_state["delete_input_no"] = 1
+                            st.session_state["delete_input_no"] = None
                             time.sleep(1)
                             st.rerun()
                         except Exception as e:
