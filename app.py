@@ -18,44 +18,44 @@ df_crypto = u.load_crypto_data()
 # --- タイトル＆資産表示・非表示 ---
 st.markdown("""
 <style>
-    /* スマホサイズ（幅が狭いとき）でも強制的に横並びにするCSS */
-    @media (max-width: 640px) {
-        /* 横並びの箱（Row）の設定 */
-        div[data-testid="stHorizontalBlock"] {
-            flex-direction: row !important; /* 強制的に横向き */
-            flex-wrap: nowrap !important;   /* 折り返し禁止 */
-        }
-        
-        /* 列（Column）の設定 */
-        div[data-testid="column"] {
-            width: auto !important; /* 100%(縦並び)になるのを防ぐ */
-            flex: 1 1 auto !important; /* 中身に合わせて伸縮させる */
-            min-width: 0 !important;   /* はみ出し防止 */
-        }
+    /* 1. 横並びのコンテナ（Row）の設定 */
+    /* スマホでも「flex-wrap: nowrap」で折り返しを禁止します */
+    [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 5px !important; /* 隙間を狭くする */
+    }
+
+    /* 2. 各カラム（Column）の設定 */
+    /* 「最低これくらいの幅が必要」という主張（min-width）を強制的に0にします */
+    [data-testid="column"] {
+        min-width: 0 !important;
+        width: auto !important;
+        flex: 1 1 auto !important; /* 中身に合わせて伸縮 */
     }
     
-    /* トグルの余白調整 */
+    /* 3. トグルスイッチ自体の余白調整 */
     .stCheckbox {
-        margin-top: -5px !important;
+        margin-top: -10px !important; /* 上にズレるのを補正 */
     }
-    /* タイトルの余白調整 */
-    h3 {
-        margin: 0 !important;
-        padding: 0 !important;
-        white-space: nowrap; /* タイトルも折り返さない */
+    .stCheckbox label {
+        display: none !important; /* ★スマホ対策：ラベル「資産」すら消して、スイッチだけにする */
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 比率は [1, 0.4] くらいがスマホで一番安定します
-col_title, col_toggle = st.columns([1, 0.4], gap="small", vertical_alignment="center")
+# 比率の指定をなくし、CSSの自動伸縮に任せます
+# gap="small" を指定
+col_title, col_toggle = st.columns(2, gap="small")
 
 with col_title:
-    # タイトル文字
-    st.markdown("### 💰 My家計簿")
+    # タイトル（文字サイズ調整）
+    st.markdown('<h3 style="margin:0; padding:0; white-space:nowrap;">💰 My家計簿</h3>', unsafe_allow_html=True)
 
 with col_toggle:
-    # トグル
+    # トグルを表示（ラベルはCSSで消しているので、スイッチだけが右に出ます）
     show_assets = st.toggle("資産", value=True)
 
 # --- 資産表示 ---
