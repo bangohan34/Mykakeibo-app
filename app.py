@@ -19,6 +19,7 @@ df_crypto = u.load_crypto_data()
 st.markdown('<h3 style="margin:0; padding:0;">💰 マイ家計簿</h3>')
 
 # --- 資産表示 ---
+show_assets = st.toggle("資産表示", value=True)
 # 収支の計算
 if not df.empty:
     total_income = df[df['区分'] == '収入']['金額'].sum()
