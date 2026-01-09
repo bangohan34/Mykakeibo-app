@@ -15,8 +15,15 @@ st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
-# --- アプリ画面 ---
+# --- タイトル ---
 st.title('マイ家計簿')
+col_title, col_toggle = st.columns([3, 1])
+with col_title:
+    st.title("マイ家計簿")
+with col_toggle:
+    st.write("")
+    st.write("") 
+    show_assets = st.toggle("資産表示", value=True)
 
 # --- 資産表示 ---
 show_assets = st.toggle("資産額を表示する", value=False)
@@ -44,13 +51,22 @@ if not df_crypto.empty:
 # 合計の計算
 total_all_assets = yen_assets + crypto_total_val
 # 表示
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown("現金・預金")
-    st.markdown(f"#### :blue[{u.format_money(yen_assets, show_assets)}]")
-with col2:
-    st.markdown("仮想通貨")
-    st.markdown(f"#### :orange[{u.format_money(crypto_total_val, show_assets)}]")
+st.markdown(f"""
+<div style="display: flex; gap: 10px; justify-content: space-between;">
+    <div style="flex: 1; padding: 10px; border: 1px solid #e6e6e6; border-radius: 8px; text-align: center;">
+        <div style="font-size: 12px; color: gray;">💴 現金・預金</div>
+        <div style="font-size: 18px; font-weight: bold; color: #0068c9;">
+            {u.format_money(yen_assets, show_assets)}
+        </div>
+    </div>
+    <div style="flex: 1; padding: 10px; border: 1px solid #e6e6e6; border-radius: 8px; text-align: center;">
+        <div style="font-size: 12px; color: gray;">📈 仮想通貨</div>
+        <div style="font-size: 18px; font-weight: bold; color: #ff8c00;">
+            {u.format_money(crypto_total_val, show_assets)}
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # --- 資産割合バー ---
 if total_all_assets > 0:
