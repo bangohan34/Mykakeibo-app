@@ -16,12 +16,19 @@ df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
 # --- タイトル ---
-col_title, col_toggle = st.columns([3, 1])
+st.markdown("""
+<style>
+    /* 画面が狭くてもカラムを折り返さないようにする設定 */
+    div[data-testid="column"] {
+        min-width: 0 !important; 
+    }
+</style>
+""", unsafe_allow_html=True)
+col_title, col_toggle = st.columns([3, 1], vertical_alignment="bottom")
 with col_title:
     st.title("マイ家計簿")
 with col_toggle:
-    st.write("")
-    st.write("") 
+    st.markdown('<div style="margin-top: 5px;"></div>', unsafe_allow_html=True)
     show_assets = st.toggle("資産表示", value=True)
 
 # --- 資産表示 ---
