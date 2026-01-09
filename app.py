@@ -18,15 +18,19 @@ df_crypto = u.load_crypto_data()
 # --- タイトル＆資産表示・非表示 ---
 st.markdown("""
 <style>
-    /* タイトルの上下余白をゼロにする */
-    h3 {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        margin: 0 !important;
+    /* 1. 画面が狭くても横並びを維持する（縦並び防止） */
+    div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
     }
-    /* トグルの余計な余白も消す */
+    /* 2. カラムが画面幅からはみ出ないように縮小可能にする（はみ出し防止） */
+    div[data-testid="column"] {
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+    }
+    /* 3. トグルの余計なマージンを消して高さを合わせる */
     .stCheckbox {
         margin-top: -5px !important;
+        white-space: nowrap !important; /* ラベルの折り返し禁止 */
     }
 </style>
 """, unsafe_allow_html=True)
