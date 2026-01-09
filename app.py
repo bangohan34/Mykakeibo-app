@@ -16,7 +16,7 @@ df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
 # --- タイトル＆資産表示・非表示 ---
-st.markdown('💰 マイ家計簿')
+st.title('💰 マイ家計簿')
 
 # --- 資産表示 ---
 show_assets = st.toggle("資産表示", value=True)
