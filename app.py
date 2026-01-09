@@ -47,7 +47,7 @@ total_all_assets = yen_assets + crypto_total_val
 col1, col2 = st.columns(2)
 with col1:
     st.markdown("現金・預金")
-    st.markdown(f"## :blue[{u.format_money(yen_assets, show_assets)}]")
+    st.markdown(f"#### :blue[{u.format_money(yen_assets, show_assets)}]")
 with col2:
     st.markdown("仮想通貨")
     st.markdown(f"#### :orange[{u.format_money(crypto_total_val, show_assets)}]")
