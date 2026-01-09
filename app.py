@@ -32,7 +32,6 @@ with col_toggle:
     show_assets = st.toggle("資産表示", value=True)
 
 # --- 資産表示 ---
-show_assets = st.toggle("資産額を表示する", value=False)
 # 収支の計算
 if not df.empty:
     total_income = df[df['区分'] == '収入']['金額'].sum()
