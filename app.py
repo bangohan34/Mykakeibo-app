@@ -36,7 +36,7 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-col_title, col_toggle = st.columns([1, 0.4])
+col_title, col_toggle = st.columns([1, 1])
 with col_title:
     st.markdown('<h2 style="margin:0; padding:0;">マイ家計簿</h2>', unsafe_allow_html=True)
 with col_toggle:
