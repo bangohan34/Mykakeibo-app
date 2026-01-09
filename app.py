@@ -216,9 +216,14 @@ else:
 
 # --- データの削除 ---
 st.subheader("データの削除")
-# 処理完了後のメッセージ表示エリア
+# 削除に関する変数の初期化
 if "delete_msg" not in st.session_state:
     st.session_state["delete_msg"] = None
+if "menu_reset_id" not in st.session_state:
+    st.session_state["menu_reset_id"] = 0
+if "del_confirm_ckeck" not in st.session_state:
+    st.session_state["del_confirm_ckeck"] = False
+# 処理完了後のメッセージ表示エリア
 if st.session_state["delete_msg"]:
     if "エラー" in st.session_state["delete_msg"]:
         st.error(st.session_state["delete_msg"])
@@ -231,8 +236,6 @@ if st.session_state["delete_msg"]:
 # 削除メニュー
 current_menu_key = f"del_menu_{st.session_state['menu_reset_id']}"
 with st.expander("削除メニューを開く", expanded=False):
-    if "delete_msg" not in st.session_state:
-        st.session_state["delete_msg"] = None
     if not df.empty:
         st.write("削除する **No** を入力してください。")
         target_no = st.number_input(
@@ -242,7 +245,7 @@ with st.expander("削除メニューを開く", expanded=False):
             label_visibility="collapsed",
             key="delete_input_no"
         )
-        # 2. 確認用のチェックボックス
+        # 確認用のチェックボックス
         if st.checkbox("削除対象を確認する", key="del_confirm_ckeck"):
             if target_no:
                 target_row = df[df['No'] == target_no]
