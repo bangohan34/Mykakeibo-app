@@ -18,27 +18,45 @@ df_crypto = u.load_crypto_data()
 # --- タイトル＆資産表示・非表示 ---
 st.markdown("""
 <style>
-    /* 1. 画面が狭くても横並びを維持する（縦並び防止） */
-    div[data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important;
+    /* スマホサイズ（幅が狭いとき）でも強制的に横並びにするCSS */
+    @media (max-width: 640px) {
+        /* 横並びの箱（Row）の設定 */
+        div[data-testid="stHorizontalBlock"] {
+            flex-direction: row !important; /* 強制的に横向き */
+            flex-wrap: nowrap !important;   /* 折り返し禁止 */
+        }
+        
+        /* 列（Column）の設定 */
+        div[data-testid="column"] {
+            width: auto !important; /* 100%(縦並び)になるのを防ぐ */
+            flex: 1 1 auto !important; /* 中身に合わせて伸縮させる */
+            min-width: 0 !important;   /* はみ出し防止 */
+        }
     }
-    /* 2. カラムが画面幅からはみ出ないように縮小可能にする（はみ出し防止） */
-    div[data-testid="column"] {
-        min-width: 0 !important;
-        flex: 1 1 auto !important;
-    }
-    /* 3. トグルの余計なマージンを消して高さを合わせる */
+    
+    /* トグルの余白調整 */
     .stCheckbox {
         margin-top: -5px !important;
-        white-space: nowrap !important; /* ラベルの折り返し禁止 */
+    }
+    /* タイトルの余白調整 */
+    h3 {
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: nowrap; /* タイトルも折り返さない */
     }
 </style>
 """, unsafe_allow_html=True)
-col_title, col_toggle = st.columns([2.5, 1], gap="small", vertical_alignment="center")
+
+# 比率は [1, 0.4] くらいがスマホで一番安定します
+col_title, col_toggle = st.columns([1, 0.4], gap="small", vertical_alignment="center")
+
 with col_title:
-    st.markdown("### マイ家計簿")
+    # タイトル文字
+    st.markdown("### 💰 My家計簿")
+
 with col_toggle:
-    show_assets = st.toggle("資産表示", value=True)
+    # トグル
+    show_assets = st.toggle("資産", value=True)
 
 # --- 資産表示 ---
 # 収支の計算
