@@ -18,27 +18,21 @@ df_crypto = u.load_crypto_data()
 # --- タイトル＆資産表示・非表示 ---
 st.markdown("""
 <style>
-    /* 横並びコンテナ（行）の設定：絶対に折り返さない */
-    [data-testid="stHorizontalBlock"] {
-        flex-wrap: nowrap !important;
-        align-items: center !important; /* 縦の真ん中に揃える */
-        gap: 10px !important; /* パーツ間の隙間 */
+    /* タイトルの上下余白をゼロにする */
+    h3 {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        margin: 0 !important;
     }
-    /* カラム個別の設定：幅を自動縮小させる */
-    [data-testid="column"] {
-        min-width: 0 !important;
-        width: auto !important;
-        flex: 1 1 auto !important;
-    }
-    /* トグルのラベル文字が改行されないようにする */
-    .stCheckbox label {
-        white-space: nowrap;
+    /* トグルの余計な余白も消す */
+    .stCheckbox {
+        margin-top: -5px !important;
     }
 </style>
 """, unsafe_allow_html=True)
-col_title, col_toggle = st.columns([5, 3])
+col_title, col_toggle = st.columns([2.5, 1], gap="small", vertical_alignment="center")
 with col_title:
-    st.markdown('<h2 style="margin:0; padding:0;">マイ家計簿</h2>', unsafe_allow_html=True)
+    st.markdown("### マイ家計簿")
 with col_toggle:
     show_assets = st.toggle("資産表示", value=True)
 
