@@ -36,7 +36,7 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-col_title, col_toggle = st.columns([1, 1])
+col_title, col_toggle = st.columns([5, 3])
 with col_title:
     st.markdown('<h2 style="margin:0; padding:0;">マイ家計簿</h2>', unsafe_allow_html=True)
 with col_toggle:
@@ -69,13 +69,13 @@ total_all_assets = yen_assets + crypto_total_val
 # 表示
 st.markdown(f"""
 <div style="display: flex; gap: 10px; justify-content: space-between;">
-    <div style="flex: 1; padding: 10px; border: 1px solid #e6e6e6; border-radius: 8px; text-align: center;">
+    <div style="flex: 1; padding: 10px; text-align: center;">
         <div style="font-size: 12px; color: gray;">💴 現金・預金</div>
         <div style="font-size: 18px; font-weight: bold; color: #0068c9;">
             {u.format_money(yen_assets, show_assets)}
         </div>
     </div>
-    <div style="flex: 1; padding: 10px; border: 1px solid #e6e6e6; border-radius: 8px; text-align: center;">
+    <div style="flex: 1; padding: 10px; text-align: center;">
         <div style="font-size: 12px; color: gray;">📈 仮想通貨</div>
         <div style="font-size: 18px; font-weight: bold; color: #ff8c00;">
             {u.format_money(crypto_total_val, show_assets)}
