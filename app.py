@@ -15,7 +15,7 @@ st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
-# --- タイトル ---
+# --- タイトル＆資産表示・非表示 ---
 st.markdown("""
 <style>
     /* 画面が狭くてもカラムを折り返さないようにする設定 */
