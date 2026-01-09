@@ -16,47 +16,7 @@ df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
 # --- タイトル＆資産表示・非表示 ---
-st.markdown("""
-<style>
-    /* 1. 横並びのコンテナ（Row）の設定 */
-    /* スマホでも「flex-wrap: nowrap」で折り返しを禁止します */
-    [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 5px !important; /* 隙間を狭くする */
-    }
-
-    /* 2. 各カラム（Column）の設定 */
-    /* 「最低これくらいの幅が必要」という主張（min-width）を強制的に0にします */
-    [data-testid="column"] {
-        min-width: 0 !important;
-        width: auto !important;
-        flex: 1 1 auto !important; /* 中身に合わせて伸縮 */
-    }
-    
-    /* 3. トグルスイッチ自体の余白調整 */
-    .stCheckbox {
-        margin-top: -10px !important; /* 上にズレるのを補正 */
-    }
-    .stCheckbox label {
-        display: none !important; /* ★スマホ対策：ラベル「資産」すら消して、スイッチだけにする */
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# 比率の指定をなくし、CSSの自動伸縮に任せます
-# gap="small" を指定
-col_title, col_toggle = st.columns(2, gap="small")
-
-with col_title:
-    # タイトル（文字サイズ調整）
-    st.markdown('<h3 style="margin:0; padding:0; white-space:nowrap;">💰 My家計簿</h3>', unsafe_allow_html=True)
-
-with col_toggle:
-    # トグルを表示（ラベルはCSSで消しているので、スイッチだけが右に出ます）
-    show_assets = st.toggle("資産", value=True)
+st.markdown('<h3 style="margin:0; padding:0;">💰 マイ家計簿</h3>')
 
 # --- 資産表示 ---
 # 収支の計算
