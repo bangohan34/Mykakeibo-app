@@ -16,7 +16,6 @@ df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
 # --- タイトル ---
-st.title('マイ家計簿')
 col_title, col_toggle = st.columns([3, 1])
 with col_title:
     st.title("マイ家計簿")
