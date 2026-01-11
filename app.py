@@ -15,11 +15,7 @@ st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
-# --- タイトル＆資産表示・非表示 ---
-st.title('💰 マイ家計簿')
-
 # --- 資産表示 ---
-show_assets = st.toggle("資産表示", value=True)
 # 収支の計算
 if not df.empty:
     total_income = df[df['区分'] == '収入']['金額'].sum()
