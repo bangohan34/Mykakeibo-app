@@ -45,13 +45,13 @@ st.markdown(f"""
     <div style="flex: 1; padding: 10px; text-align: center;">
         <div style="font-size: 14px; color: gray;">現金・預金</div>
         <div style="font-size: 30px; font-weight: bold; color: #0068c9;">
-            {yen_assets}
+            {f"{int(yen_assets):,} 円"}
         </div>
     </div>
     <div style="flex: 1; padding: 10px; text-align: center;">
         <div style="font-size: 14px; color: gray;">仮想通貨</div>
         <div style="font-size: 30px; font-weight: bold; color: #ff8c00;">
-            {crypto_total_val}
+            {f"{int(crypto_total_val):,} 円"}
         </div>
     </div>
 </div>
