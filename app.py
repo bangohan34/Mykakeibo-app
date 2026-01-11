@@ -270,6 +270,7 @@ with st.expander("削除メニューを開く", expanded=False):
 
 # --- 資産グラフ ---
 st.divider()
+st.subheader("📊 月間推移")
 # データの加工
 chart_df = df.copy()
 chart_df['年月'] = chart_df['日付'].dt.strftime('%Y-%m') # 年-月 の形にする
@@ -285,15 +286,21 @@ line_df['現金推移'] = line_df['グラフ金額'].cumsum()
 bars = alt.Chart(chart_df).mark_bar().encode(
     x='年月',
     y='sum(グラフ金額)',
-    color=alt.Color('区分', scale=alt.Scale(range=['#28a745', '#dc3545']))
+    color=alt.Color('区分', scale=alt.Scale(range=["#7dc98e", "#bb747b"]))
 )
 # 折れ線グラフ 現金推移
 line = alt.Chart(line_df).mark_line(color='blue').encode(
     x='年月',
-    y='max(現金推移)'
+    y=alt.Y('現金推移', axis=alt.Axis(title='資産残高 (円)', grid=False)),
+        tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
 )
 # 重ねて表示
-st.altair_chart(alt.layer(bars, line).resolve_scale(y='shared'), use_container_width=True)
+combo_chart = alt.layer(bars, line).resolve_scale(
+        y='independent'
+    ).properties(
+        height=300
+    )
+st.altair_chart(combo_chart, use_container_width=True)
 
 # --- いろいろメモ ---
 st.divider()
