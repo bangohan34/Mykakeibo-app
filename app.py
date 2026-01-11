@@ -270,42 +270,26 @@ with st.expander("削除メニューを開く", expanded=False):
 
 # --- 資産グラフ ---
 st.divider()
-st.subheader("📊 2026年〜 資産推移")
+st.subheader("📊 現金推移")
 
 if not df.empty:
-    # 1. 【重要】まずは「全期間」のデータで計算を行う
-    #    (いきなり絞り込むと、2025年以前の貯金が無視されて0円スタートになってしまうため)
     base_df = df.copy()
-    
-    # 支出ならマイナス、収入ならプラス
     base_df['グラフ金額'] = base_df.apply(
         lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
         axis=1
     )
-    
-    # 日付順に並べて、全期間での「累積残高」を先に計算してしまう
     base_df = base_df.sort_values('日付')
     base_df['現金推移'] = base_df['グラフ金額'].cumsum()
-    
-    # 年月カラムを作成
     base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
-
-    # 2. 計算が終わった後に、「2026年以降」のデータだけを切り出す
-    #    (計算済みの残高はそのまま残るので、正しい金額でスタートできます)
     graph_df = base_df[base_df['日付'] >= pd.to_datetime('2026-01-01')]
-
     if not graph_df.empty:
-        # 3. グラフ用データの作成
-        
+        # グラフ用データの作成
         # A. 棒グラフ用（その期間内の収支合計）
         bar_data = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
-
         # B. 折れ線グラフ用（その月の最終残高）
         line_data = graph_df.groupby('年月')['現金推移'].last().reset_index()
-
-        # --- グラフ描画 ---
+        # グラフ描画
         common_x = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
-
         # 棒グラフ
         bars = alt.Chart(bar_data).mark_bar().encode(
             x=common_x,
@@ -317,21 +301,18 @@ if not df.empty:
             ),
             tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
         )
-
         # 折れ線グラフ
         line = alt.Chart(line_data).mark_line(color='#2c3e50', point=True).encode(
             x=common_x,
             y=alt.Y('現金推移', axis=alt.Axis(title='資産残高 (円)', grid=False)),
             tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
         )
-
         # 重ね合わせ
         combo_chart = alt.layer(bars, line).resolve_scale(
             y='independent'
         ).properties(
             height=300
         )
-
         st.altair_chart(combo_chart, use_container_width=True)
     else:
         st.info("2026年以降のデータはまだありません。")
