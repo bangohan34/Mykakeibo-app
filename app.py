@@ -59,7 +59,6 @@ st.markdown(f"""
 
 # --- 資産割合バー ---
 if total_all_assets > 0:
-    st.caption("📊 資産内訳")
     # 色の指定
     COLOR_YEN = '#DB4437'
     SYMBOL_COLORS = {
