@@ -270,37 +270,69 @@ with st.expander("削除メニューを開く", expanded=False):
 
 # --- 資産グラフ ---
 st.divider()
-st.subheader("📊 月間推移")
-# データの加工
-chart_df = df.copy()
-chart_df['年月'] = chart_df['日付'].dt.strftime('%Y-%m') # 年-月 の形にする
-# 支出ならマイナス、収入ならプラスにする計算
-chart_df['グラフ金額'] = chart_df.apply(
-    lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
-    axis=1
-)
-# 現金の累積を計算
-line_df = chart_df.sort_values('日付')
-line_df['現金推移'] = line_df['グラフ金額'].cumsum()
-# 棒グラフ 現金の月ごとの合計
-bars = alt.Chart(chart_df).mark_bar().encode(
-    x='年月',
-    y='sum(グラフ金額)',
-    color=alt.Color('区分', scale=alt.Scale(range=["#7dc98e", "#bb747b"]))
-)
-# 折れ線グラフ 現金推移
-line = alt.Chart(line_df).mark_line(color='blue').encode(
-    x='年月',
-    y=alt.Y('現金推移', axis=alt.Axis(title='資産残高 (円)', grid=False)),
+st.subheader("📊 2026年〜 資産推移")
+
+# 1. データの日付フィルタリング（2026年以降のみにする）
+# 日付型にしてから比較します
+graph_df = df[df['日付'] >= pd.to_datetime('2026-01-01')].copy()
+
+if not graph_df.empty:
+    # 2. データの加工
+    graph_df['年月'] = graph_df['日付'].dt.strftime('%Y-%m') # 年-月 の文字列にする
+
+    # 支出ならマイナス、収入ならプラス
+    graph_df['グラフ金額'] = graph_df.apply(
+        lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
+        axis=1
+    )
+
+    # 3. 棒グラフ用データ（月ごと・区分ごとの合計）
+    bar_data = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
+
+    # 4. 折れ線グラフ用データ（月ごとの最終残高）
+    line_df = graph_df.sort_values('日付')
+    line_df['現金推移'] = line_df['グラフ金額'].cumsum()
+    # 各月の「最終」データを取得
+    line_data = line_df.groupby('年月')['現金推移'].last().reset_index()
+
+    # --- グラフ描画設定 ---
+    
+    # 共通のX軸設定（ここを合わせることで軸ズレを防ぎます）
+    common_x = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
+
+    # A. 棒グラフ（色変更・凡例なし）
+    # 色を変えたい場合は range=['#..., '#...'] のコードを変更してください
+    # 収入=青(#03a9f4), 支出=赤(#ff5252) に設定しました
+    bars = alt.Chart(bar_data).mark_bar().encode(
+        x=common_x,
+        y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 (円)', grid=True)),
+        color=alt.Color(
+            '区分', 
+            scale=alt.Scale(domain=['収入', '支出'], range=['#03a9f4', '#ff5252']), 
+            legend=None  # ★ここで「区分」の表示（凡例）を消しています
+        ),
+        tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
+    )
+
+    # B. 折れ線グラフ（色変更）
+    # 線を濃いネイビー(#2c3e50)に変更しました
+    line = alt.Chart(line_data).mark_line(color='#2c3e50', point=True).encode(
+        x=common_x,
+        y=alt.Y('現金推移', axis=alt.Axis(title='資産残高 (円)', grid=False)),
         tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
-)
-# 重ねて表示
-combo_chart = alt.layer(bars, line).resolve_scale(
-        y='independent'
+    )
+
+    # C. 重ね合わせ
+    combo_chart = alt.layer(bars, line).resolve_scale(
+        y='independent' # 左右のY軸を独立させる（桁が違っても大丈夫）
     ).properties(
         height=300
     )
-st.altair_chart(combo_chart, use_container_width=True)
+
+    st.altair_chart(combo_chart, use_container_width=True)
+
+else:
+    st.info("2026年以降のデータはまだありません。")
 
 # --- いろいろメモ ---
 st.divider()
