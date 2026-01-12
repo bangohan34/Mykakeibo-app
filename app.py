@@ -101,8 +101,8 @@ st.divider()
 # 収支の計算
 if not df.empty:
     df_current = df[df['日付'] <= today]
-    total_income = df[df['区分'] == '収入']['金額'].sum()
-    total_expense = df[df['区分'] == '支出']['金額'].sum()
+    total_income = df_current[df['区分'] == '収入']['金額'].sum()
+    total_expense = df_current[df['区分'] == '支出']['金額'].sum()
     yen_assets = total_income - total_expense
 else:
     yen_assets = 0
