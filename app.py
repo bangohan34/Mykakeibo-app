@@ -14,9 +14,9 @@ st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 # --- データの準備 ---
 df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
+today = pd.to_datetime("today").normalize()
 
 # --- 資産表示 ---
-today = pd.to_datetime("today").normalize()
 # 収支の計算
 if not df.empty:
     df_current = df[df['日付'] <= today]
