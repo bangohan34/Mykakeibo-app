@@ -284,7 +284,7 @@ if not df.empty:
     base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
     graph_df = base_df[
         (base_df['日付'] >= pd.to_datetime('2026-01-01')) &
-        ((base_df['日付'] <= today))
+        ((base_df['日付'] <= '2026-3-31'))
     ]
     if not graph_df.empty:
         # グラフ用データの作成
