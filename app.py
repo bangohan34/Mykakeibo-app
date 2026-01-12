@@ -329,14 +329,32 @@ st.subheader("なんでもメモ")
 # キャッシュに残っていないときだけ読み込む
 if 'my_memo_content' not in st.session_state:
     st.session_state['my_memo_content'] = u.get_anything_memo()
-new_memo = st.text_area(
+# 入力内容と保存済み内容が同じかどうか
+current_text = st.session_state["memo_area"]
+saved_text = st.session_state['my_memo_content']
+is_unsaved = (current_text != saved_text)
+if is_unsaved:
+    st.markdown(":warning: **<span style='color:#ff4b4b'>変更されています。保存ボタンを押してください。</span>**", unsafe_allow_html=True)
+    btn_type = "primary"
+    btn_label = "変更を保存する"
+else:
+    btn_type = "secondary"
+    btn_label = "保存済み"
+# 入力欄
+st.text_area(
     "メモ",
-    value=st.session_state['my_memo_content'],
+    key="memo_area",
     height=150,
     label_visibility="collapsed"
 )
 # 保存ボタンが押されたときだけ書き込む
-if st.button("メモを保存"):
-    u.update_anything_memo(new_memo)
-    st.session_state['my_memo_content'] = new_memo
-    st.success("保存しました！")
+if st.button(btn_label, type=btn_type):
+    if is_unsaved:
+        new_text = st.session_state["memo_area"]
+        u.update_anything_memo(new_text)
+        st.session_state['my_memo_content'] = new_text
+        st.success("保存しました！")
+        time.sleep(0.5)
+        st.rerun()
+    else:
+        st.info("変更点はありません。")
