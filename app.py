@@ -282,7 +282,10 @@ if not df.empty:
     base_df = base_df.sort_values('日付')
     base_df['現金推移'] = base_df['グラフ金額'].cumsum()
     base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
-    graph_df = base_df[base_df['日付'] >= pd.to_datetime('2026-01-01') & (base_df['日付'] <= today)]
+    graph_df = base_df[
+        (base_df['日付'] >= pd.to_datetime('2026-01-01')) &
+        ((base_df['日付'] <= today))
+    ]
     if not graph_df.empty:
         # グラフ用データの作成
         # A. 棒グラフ用（その期間内の収支合計）
