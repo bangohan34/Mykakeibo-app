@@ -17,7 +17,6 @@ df_crypto = u.load_crypto_data()
 today = pd.to_datetime("today").normalize()
 
 # --- 入力フォーム ---
-st.divider()
 balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
@@ -95,6 +94,8 @@ if submit_btn:
                 st.rerun()
             except Exception as e:
                 st.error(f'書き込みエラー: {e}')
+
+st.divider()
 
 # --- 資産表示 ---
 # 収支の計算
@@ -202,8 +203,7 @@ if not df_crypto.empty:
 else:
     st.info("仮想通貨の登録はまだありません。")
 
-# --- 資産グラフ ---
-st.divider()
+# --- 現金グラフ ---
 st.subheader("📊 現金推移")
 if not df.empty:
     base_df = df.copy()
@@ -254,6 +254,8 @@ if not df.empty:
         st.info("2026年以降のデータはまだありません。")
 else:
     st.info("データがありません。")
+
+st.divider()
 
 # --- 履歴表示 ---
 st.divider()
@@ -323,8 +325,9 @@ with st.expander("削除メニューを開く", expanded=False):
     else:
         st.info("データがありません。")
 
-# --- なんでもメモ ---
 st.divider()
+
+# --- なんでもメモ ---
 st.subheader("なんでもメモ")
 # キャッシュに残っていないときだけ読み込む
 if 'my_memo_content' not in st.session_state:
