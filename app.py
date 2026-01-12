@@ -336,7 +336,7 @@ if "memo_area" not in st.session_state:
     st.session_state["memo_area"] = st.session_state['my_memo_content']
 saved_text = st.session_state['my_memo_content']
 line_count = saved_text.count('\n') + 1
-dynamic_height = max(150, line_count * 20 + 30)
+dynamic_height = max(150, line_count * 25)
 # 入力欄
 current_text = st.text_area(
     "メモ",
