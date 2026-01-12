@@ -329,20 +329,22 @@ st.divider()
 
 # --- なんでもメモ ---
 st.subheader("なんでもメモ")
-# キャッシュに残っていないときだけ読み込む
+# データの準備
 if 'my_memo_content' not in st.session_state:
     st.session_state['my_memo_content'] = u.get_anything_memo()
 if "memo_area" not in st.session_state:
     st.session_state["memo_area"] = st.session_state['my_memo_content']
+saved_text = st.session_state['my_memo_content']
+line_count = saved_text.count('\n') + 1
+dynamic_height = max(150, line_count * 30 + 50)
 # 入力欄
 current_text = st.text_area(
     "メモ",
     key="memo_area",
-    height=150,
+    height=dynamic_height,
     label_visibility="collapsed"
 )
 # 入力内容と保存済み内容が同じかどうか
-saved_text = st.session_state['my_memo_content']
 is_unsaved = (current_text != saved_text)
 if is_unsaved:
     st.markdown(":warning: **<span style='color:#ff4b4b'>変更されています。保存ボタンを押してください。</span>**", unsafe_allow_html=True)
