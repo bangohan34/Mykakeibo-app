@@ -16,6 +16,86 @@ df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 today = pd.to_datetime("today").normalize()
 
+# --- 入力フォーム ---
+st.divider()
+balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
+with st.form(key='entry_form', clear_on_submit=True):
+    date = st.date_input('日付', datetime.date.today())
+    category, amount, memo = None, 0, ""
+    crypto_name, crypto_amount = "", 0.0000
+    # 資産移動
+    if balance_type == "資産移動":
+        st.caption("資産を移動します")
+        col1, col2 = st.columns(2)
+        with col1:
+            crypto_name = st.text_input("銘柄名")
+        with col2:
+            crypto_amount = st.number_input("増える量", min_value=0.0, step=0.0001, format="%.8f")
+        # 支払う日本円
+        amount = st.number_input('支払った日本円', min_value=0, step=1, help="家計簿には「支出」として記録されます")
+        memo = st.text_input('メモ', value=f"{crypto_name}購入")
+        # 家計簿用のカテゴリーは自動で「投資」などにする
+        category = "投資"
+    # 支出、収入
+    else:
+        if balance_type == "支出":
+            category = st.radio('カテゴリー', c.EXPENSE_CATEGORIES)
+        else:
+            category = st.radio('カテゴリー', c.INCOME_CATEGORIES)
+        amount = st.number_input('金額', min_value=0, step=1)
+        memo = st.text_input('メモ（任意）')
+    submit_btn = st.form_submit_button('登録する')
+if submit_btn:
+    # 資産移動
+    if balance_type == "資産移動":
+        if not crypto_name:
+            st.warning("銘柄名を入力してください")
+        elif crypto_amount == 0 and amount == 0:
+            st.warning("数量または金額を入力してください")
+        else:
+            try:
+                # 処理1：仮想通貨の保有量を増やす
+                df_curr = u.load_crypto_data()
+                # 既存の保有量を取得（なければ0）
+                if crypto_name in df_curr['銘柄'].values:
+                    current_val = df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'].values[0]
+                    new_val = current_val + crypto_amount
+                    df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'] = new_val
+                else:
+                    new_row = pd.DataFrame({'銘柄': [crypto_name], '保有量': [crypto_amount]})
+                    df_curr = pd.concat([df_curr, new_row], ignore_index=True)
+                u.save_crypto_data(df_curr)
+                # 処理2：家計簿に「支出」として記録する（金額が1円以上の場合）
+                if amount > 0:
+                    # 区分はわかりやすく「支出」にするか、あえて「資産移動」と記録するか選べます
+                    # ここでは資産集計の計算を合わせるため「支出」として記録します
+                    u.add_entry(str(date), "支出", category, amount, memo)
+                    msg = f"💰 {amount:,}円で {crypto_name} を {crypto_amount} 購入しました。"
+                else:
+                    msg = f"💎 {crypto_name} が {crypto_amount} 増えました。"
+                st.success(msg)
+                st.balloons()
+                time.sleep(2)
+                st.rerun()
+            except Exception as e:
+                st.error(f"資産移動エラー: {e}")
+    # 支出、収入
+    else:
+        if amount == 0:
+            st.warning('金額が0円です。入力してください。')
+        else:
+            try:
+                u.add_entry(date, balance_type, category, amount, memo)
+                if balance_type =="収入":
+                    st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
+                else:
+                    st.info(f'{category} : {amount}円を登録しました。')
+                st.balloons()
+                time.sleep(2)
+                st.rerun()
+            except Exception as e:
+                st.error(f'書き込みエラー: {e}')
+
 # --- 資産表示 ---
 # 収支の計算
 if not df.empty:
@@ -122,85 +202,58 @@ if not df_crypto.empty:
 else:
     st.info("仮想通貨の登録はまだありません。")
 
-# --- 入力フォーム ---
+# --- 資産グラフ ---
 st.divider()
-balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
-with st.form(key='entry_form', clear_on_submit=True):
-    date = st.date_input('日付', datetime.date.today())
-    category, amount, memo = None, 0, ""
-    crypto_name, crypto_amount = "", 0.0000
-    # 資産移動
-    if balance_type == "資産移動":
-        st.caption("資産を移動します")
-        col1, col2 = st.columns(2)
-        with col1:
-            crypto_name = st.text_input("銘柄名")
-        with col2:
-            crypto_amount = st.number_input("増える量", min_value=0.0, step=0.0001, format="%.8f")
-        # 支払う日本円
-        amount = st.number_input('支払った日本円', min_value=0, step=1, help="家計簿には「支出」として記録されます")
-        memo = st.text_input('メモ', value=f"{crypto_name}購入")
-        # 家計簿用のカテゴリーは自動で「投資」などにする
-        category = "投資"
-    # 支出、収入
+st.subheader("📊 現金推移")
+if not df.empty:
+    base_df = df.copy()
+    base_df['グラフ金額'] = base_df.apply(
+        lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
+        axis=1
+    )
+    base_df = base_df.sort_values('日付')
+    base_df['現金推移'] = base_df['グラフ金額'].cumsum()
+    base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
+    graph_df = base_df[
+        (base_df['日付'] >= pd.to_datetime('2026-01-01')) &
+        ((base_df['日付'] <= '2026-7-30'))
+    ]
+    if not graph_df.empty:
+        # グラフ用データの作成
+        # A. 棒グラフ用（その期間内の収支合計）
+        bar_data = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
+        # B. 折れ線グラフ用（その月の最終残高）
+        line_data = graph_df.groupby('年月')['現金推移'].last().reset_index()
+        # グラフ描画
+        common_x = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
+        # 棒グラフ
+        bars = alt.Chart(bar_data).mark_bar().encode(
+            x=common_x,
+            y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 保有現金 (円)', grid=True)),
+            color=alt.Color(
+                '区分', 
+                scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), 
+                legend=None
+            ),
+            tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
+        )
+        # 折れ線グラフ
+        line = alt.Chart(line_data).mark_line(color="#498dd1", point=True).encode(
+            x=common_x,
+            y='現金推移',
+            tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
+        )
+        # 重ね合わせ
+        combo_chart = alt.layer(bars, line).resolve_scale(
+            y='shared'
+        ).properties(
+            height=300
+        )
+        st.altair_chart(combo_chart, use_container_width=True)
     else:
-        if balance_type == "支出":
-            category = st.radio('カテゴリー', c.EXPENSE_CATEGORIES)
-        else:
-            category = st.radio('カテゴリー', c.INCOME_CATEGORIES)
-        amount = st.number_input('金額', min_value=0, step=1)
-        memo = st.text_input('メモ（任意）')
-    submit_btn = st.form_submit_button('登録する')
-if submit_btn:
-    # 資産移動
-    if balance_type == "資産移動":
-        if not crypto_name:
-            st.warning("銘柄名を入力してください")
-        elif crypto_amount == 0 and amount == 0:
-            st.warning("数量または金額を入力してください")
-        else:
-            try:
-                # 処理1：仮想通貨の保有量を増やす
-                df_curr = u.load_crypto_data()
-                # 既存の保有量を取得（なければ0）
-                if crypto_name in df_curr['銘柄'].values:
-                    current_val = df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'].values[0]
-                    new_val = current_val + crypto_amount
-                    df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'] = new_val
-                else:
-                    new_row = pd.DataFrame({'銘柄': [crypto_name], '保有量': [crypto_amount]})
-                    df_curr = pd.concat([df_curr, new_row], ignore_index=True)
-                u.save_crypto_data(df_curr)
-                # 処理2：家計簿に「支出」として記録する（金額が1円以上の場合）
-                if amount > 0:
-                    # 区分はわかりやすく「支出」にするか、あえて「資産移動」と記録するか選べます
-                    # ここでは資産集計の計算を合わせるため「支出」として記録します
-                    u.add_entry(str(date), "支出", category, amount, memo)
-                    msg = f"💰 {amount:,}円で {crypto_name} を {crypto_amount} 購入しました。"
-                else:
-                    msg = f"💎 {crypto_name} が {crypto_amount} 増えました。"
-                st.success(msg)
-                st.balloons()
-                time.sleep(2)
-                st.rerun()
-            except Exception as e:
-                st.error(f"資産移動エラー: {e}")
-    # 支出、収入
-    else:
-        if amount == 0:
-            st.warning('金額が0円です。入力してください。')
-        else:
-            try:
-                u.add_entry(date, balance_type, category, amount, memo)
-                if balance_type =="収入":
-                    st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
-                else:
-                    st.info(f'{category} : {amount}円を登録しました。')
-                st.balloons()
-                time.sleep(2)
-                st.rerun()
-            except Exception as e:
-                st.error(f'書き込みエラー: {e}')
+        st.info("2026年以降のデータはまだありません。")
+else:
+    st.info("データがありません。")
 
 # --- 履歴表示 ---
 st.divider()
@@ -270,60 +323,7 @@ with st.expander("削除メニューを開く", expanded=False):
     else:
         st.info("データがありません。")
 
-# --- 資産グラフ ---
-st.divider()
-st.subheader("📊 現金推移")
-if not df.empty:
-    base_df = df.copy()
-    base_df['グラフ金額'] = base_df.apply(
-        lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
-        axis=1
-    )
-    base_df = base_df.sort_values('日付')
-    base_df['現金推移'] = base_df['グラフ金額'].cumsum()
-    base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
-    graph_df = base_df[
-        (base_df['日付'] >= pd.to_datetime('2026-01-01')) &
-        ((base_df['日付'] <= '2026-7-30'))
-    ]
-    if not graph_df.empty:
-        # グラフ用データの作成
-        # A. 棒グラフ用（その期間内の収支合計）
-        bar_data = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
-        # B. 折れ線グラフ用（その月の最終残高）
-        line_data = graph_df.groupby('年月')['現金推移'].last().reset_index()
-        # グラフ描画
-        common_x = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
-        # 棒グラフ
-        bars = alt.Chart(bar_data).mark_bar().encode(
-            x=common_x,
-            y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 保有現金 (円)', grid=True)),
-            color=alt.Color(
-                '区分', 
-                scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), 
-                legend=None
-            ),
-            tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
-        )
-        # 折れ線グラフ
-        line = alt.Chart(line_data).mark_line(color="#498dd1", point=True).encode(
-            x=common_x,
-            y='現金推移',
-            tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
-        )
-        # 重ね合わせ
-        combo_chart = alt.layer(bars, line).resolve_scale(
-            y='shared'
-        ).properties(
-            height=300
-        )
-        st.altair_chart(combo_chart, use_container_width=True)
-    else:
-        st.info("2026年以降のデータはまだありません。")
-else:
-    st.info("データがありません。")
-
-# --- いろいろメモ ---
+# --- なんでもメモ ---
 st.divider()
 st.subheader("なんでもメモ")
 # キャッシュに残っていないときだけ読み込む
