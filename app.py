@@ -282,7 +282,7 @@ if not df.empty:
     base_df = base_df.sort_values('日付')
     base_df['現金推移'] = base_df['グラフ金額'].cumsum()
     base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
-    graph_df = base_df[base_df['日付'] >= pd.to_datetime('2026-01-01')]
+    graph_df = base_df[base_df['日付'] >= pd.to_datetime('2026-01-01') & (base_df['日付'] <= today)]
     if not graph_df.empty:
         # グラフ用データの作成
         # A. 棒グラフ用（その期間内の収支合計）
@@ -294,23 +294,23 @@ if not df.empty:
         # 棒グラフ
         bars = alt.Chart(bar_data).mark_bar().encode(
             x=common_x,
-            y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 (円)', grid=True)),
+            y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 保有現金 (円)', grid=True)),
             color=alt.Color(
                 '区分', 
-                scale=alt.Scale(domain=['収入', '支出'], range=['#03a9f4', '#ff5252']), 
+                scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), 
                 legend=None
             ),
             tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
         )
         # 折れ線グラフ
-        line = alt.Chart(line_data).mark_line(color='#2c3e50', point=True).encode(
+        line = alt.Chart(line_data).mark_line(color="#498dd1", point=True).encode(
             x=common_x,
-            y=alt.Y('現金推移', axis=alt.Axis(title='資産残高 (円)', grid=False)),
+            y='現金推移',
             tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
         )
         # 重ね合わせ
         combo_chart = alt.layer(bars, line).resolve_scale(
-            y='independent'
+            y='shared'
         ).properties(
             height=300
         )
