@@ -329,8 +329,16 @@ st.subheader("なんでもメモ")
 # キャッシュに残っていないときだけ読み込む
 if 'my_memo_content' not in st.session_state:
     st.session_state['my_memo_content'] = u.get_anything_memo()
+if "memo_area" not in st.session_state:
+    st.session_state["memo_area"] = st.session_state['my_memo_content']
+# 入力欄
+current_text = st.text_area(
+    "メモ",
+    key="memo_area",
+    height=150,
+    label_visibility="collapsed"
+)
 # 入力内容と保存済み内容が同じかどうか
-current_text = st.session_state["memo_area"]
 saved_text = st.session_state['my_memo_content']
 is_unsaved = (current_text != saved_text)
 if is_unsaved:
@@ -340,13 +348,6 @@ if is_unsaved:
 else:
     btn_type = "secondary"
     btn_label = "保存済み"
-# 入力欄
-st.text_area(
-    "メモ",
-    key="memo_area",
-    height=150,
-    label_visibility="collapsed"
-)
 # 保存ボタンが押されたときだけ書き込む
 if st.button(btn_label, type=btn_type):
     if is_unsaved:
