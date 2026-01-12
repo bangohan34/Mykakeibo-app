@@ -16,8 +16,10 @@ df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
 
 # --- 資産表示 ---
+today = pd.to_datetime("today").normalize()
 # 収支の計算
 if not df.empty:
+    df_current = df[df['日付'] <= today]
     total_income = df[df['区分'] == '収入']['金額'].sum()
     total_expense = df[df['区分'] == '支出']['金額'].sum()
     yen_assets = total_income - total_expense
@@ -271,7 +273,6 @@ with st.expander("削除メニューを開く", expanded=False):
 # --- 資産グラフ ---
 st.divider()
 st.subheader("📊 現金推移")
-
 if not df.empty:
     base_df = df.copy()
     base_df['グラフ金額'] = base_df.apply(
