@@ -258,7 +258,6 @@ else:
 st.divider()
 
 # --- 履歴表示 ---
-st.divider()
 st.subheader("入力履歴")
 if not df.empty:
     df_display = df.copy()
