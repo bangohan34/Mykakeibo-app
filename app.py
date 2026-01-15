@@ -224,7 +224,7 @@ if not df.empty:
     ]
     if not graph_df.empty:
         # タブを作成
-        tab_month, tab_week = st.tabs(["📅 月ごと", "📆 週ごと"])
+        tab_month, tab_week = st.tabs(["月ごと", "週ごと"])
         # 月ごとのグラフ
         with tab_month:
             bar_data_m = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
