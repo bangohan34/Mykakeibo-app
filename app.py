@@ -224,7 +224,7 @@ if not df.empty:
     ]
     if not graph_df.empty:
         # タブを作成
-        tab_month, tab_week = st.tabs(["月ごと", "週ごと"])
+        tab_month, tab_week, tab_day = st.tabs(["月ごと", "週ごと", "日ごと"])
         # 月ごとのグラフ
         with tab_month:
             bar_data_m = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
@@ -271,6 +271,29 @@ if not df.empty:
             )
             combo_w = alt.layer(bars_w, line_w).resolve_scale(y='shared').properties(height=300)
             st.altair_chart(combo_w, use_container_width=True)
+        # 日ごと
+        with tab_day:
+            # 30日前まで
+            start_date_30 = today - pd.Timedelta(days=30)
+            # base_df（全データ）から、直近30日分だけを抽出
+            df_30 = base_df[(base_df['日付'] >= start_date_30) & (base_df['日付'] <= today)]
+            if not df_30.empty:
+                bar_data_d = df_30.groupby(['日付', '区分'])['グラフ金額'].sum().reset_index()
+                line_data_d = df_30.groupby('日付')['現金推移'].last().reset_index()
+                common_x_d = alt.X('日付', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45))
+                bars_d = alt.Chart(bar_data_d).mark_bar().encode(
+                    x=common_x_d,
+                    y=alt.Y('グラフ金額', axis=alt.Axis(title='金額 (円)', grid=True)),
+                    color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
+                    tooltip=[alt.Tooltip('日付', format='%Y/%m/%d'), '区分', alt.Tooltip('グラフ金額', format=',')]
+                )
+                line_d = alt.Chart(line_data_d).mark_line(color="#498dd1", point=True).encode(
+                    x=common_x_d, y='現金推移',
+                    tooltip=[alt.Tooltip('日付', format='%m/%d'), alt.Tooltip('現金推移', format=',')]
+                )
+                st.altair_chart(alt.layer(bars_d, line_d).resolve_scale(y='shared').properties(height=300), use_container_width=True)
+            else:
+                st.info("直近30日のデータはありません。")
     else:
         st.info("指定期間のデータはありません。")
 else:
