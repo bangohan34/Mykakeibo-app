@@ -14,7 +14,8 @@ st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 # --- データの準備 ---
 df = u.load_kakeibo_data()
 df_crypto = u.load_crypto_data()
-today = pd.to_datetime("today").normalize()
+tody = '2028-12-20'
+# today = pd.to_datetime("today").normalize()
 
 # --- 入力フォーム ---
 balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
