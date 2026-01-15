@@ -205,8 +205,9 @@ else:
 
 # --- 現金グラフ ---
 st.subheader("📊 現金推移")
+
 if not df.empty:
-    # 共通データの作成（全期間で計算）
+    # 1. 共通データの作成
     base_df = df.copy()
     base_df['グラフ金額'] = base_df.apply(
         lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
@@ -215,17 +216,17 @@ if not df.empty:
     base_df = base_df.sort_values('日付')
     base_df['現金推移'] = base_df['グラフ金額'].cumsum()
     base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
+    base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
     # 表示期間の絞り込み
     graph_df = base_df[
         (base_df['日付'] >= pd.to_datetime('2026-01-01')) &
-        (base_df['日付'] <= pd.to_datetime('2026-04-30')) 
+        (base_df['日付'] <= pd.to_datetime('2026-07-30')) 
     ]
     if not graph_df.empty:
         # タブを作成
-        tab_month, tab_day = st.tabs(["月ごと", "日ごと"])
+        tab_month, tab_week = st.tabs(["📅 月ごと", "📆 週ごと"])
         # 月ごとのグラフ
         with tab_month:
-            # 月次集計
             bar_data_m = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
             line_data_m = graph_df.groupby('年月')['現金推移'].last().reset_index()
             common_x_m = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
@@ -242,34 +243,34 @@ if not df.empty:
             )
             combo_m = alt.layer(bars_m, line_m).resolve_scale(y='shared').properties(height=300)
             st.altair_chart(combo_m, use_container_width=True)
-        # 日ごとのグラフ
-        with tab_day:
-            # 日次集計
-            bar_data_d = graph_df.groupby(['日付', '区分'])['グラフ金額'].sum().reset_index()
-            # その日の「最終的な残高」を取得
-            line_data_d = graph_df.groupby('日付')['現金推移'].last().reset_index()
-            # 日付のフォーマット（例: 1/15）
-            common_x_d = alt.X('日付', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45))
-            bars_d = alt.Chart(bar_data_d).mark_bar().encode(
-                x=common_x_d,
-                y=alt.Y('グラフ金額', axis=alt.Axis(title='日次収支 & 保有現金 (円)', grid=True)),
+        # 週ごとのグラフ
+        with tab_week:
+            # 週次集計
+            bar_data_w = graph_df.groupby(['週', '区分'])['グラフ金額'].sum().reset_index()
+            # その週の最後の時点での残高
+            line_data_w = graph_df.groupby('週')['現金推移'].last().reset_index()
+            # X軸の設定（週の初めの日付を表示）
+            common_x_w = alt.X('週', axis=alt.Axis(format='%m/%d', title='週 (月曜始まり)', labelAngle=-45))
+            bars_w = alt.Chart(bar_data_w).mark_bar().encode(
+                x=common_x_w,
+                y=alt.Y('グラフ金額', axis=alt.Axis(title='週間収支 & 保有現金 (円)', grid=True)),
                 color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
                 tooltip=[
-                    alt.Tooltip('日付', format='%Y/%m/%d', title='日付'),
+                    alt.Tooltip('週', format='%Y/%m/%d', title='週の初め'),
                     '区分', 
                     alt.Tooltip('グラフ金額', format=',', title='金額')
                 ]
             )
-            line_d = alt.Chart(line_data_d).mark_line(color="#498dd1", point=True).encode(
-                x=common_x_d,
+            line_w = alt.Chart(line_data_w).mark_line(color="#498dd1", point=True).encode(
+                x=common_x_w,
                 y='現金推移',
                 tooltip=[
-                    alt.Tooltip('日付', format='%Y/%m/%d', title='日付'),
+                    alt.Tooltip('週', format='%Y/%m/%d', title='週の初め'),
                     alt.Tooltip('現金推移', format=',', title='残高')
                 ]
             )
-            combo_d = alt.layer(bars_d, line_d).resolve_scale(y='shared').properties(height=300)
-            st.altair_chart(combo_d, use_container_width=True)
+            combo_w = alt.layer(bars_w, line_w).resolve_scale(y='shared').properties(height=300)
+            st.altair_chart(combo_w, use_container_width=True)
     else:
         st.info("指定期間のデータはありません。")
 else:
