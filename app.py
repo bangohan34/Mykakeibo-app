@@ -204,8 +204,11 @@ else:
     st.info("暗号資産の登録はまだありません。")
 
 # --- 現金グラフ ---
+# --- 現金グラフ ---
 st.subheader("📊 現金推移")
+
 if not df.empty:
+    # 1. 共通データの作成（全期間で計算）
     base_df = df.copy()
     base_df['グラフ金額'] = base_df.apply(
         lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], 
@@ -214,44 +217,79 @@ if not df.empty:
     base_df = base_df.sort_values('日付')
     base_df['現金推移'] = base_df['グラフ金額'].cumsum()
     base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
+    
+    # 2. 表示期間の絞り込み
+    # (先ほど指定されていた期間でフィルタリングします)
+    # ※もし「今日まで」に戻すなら '2026-7-30' の部分を pd.to_datetime("today") に変えてください
     graph_df = base_df[
         (base_df['日付'] >= pd.to_datetime('2026-01-01')) &
-        ((base_df['日付'] <= '2026-7-30'))
+        (base_df['日付'] <= pd.to_datetime('2026-07-30')) 
     ]
+
     if not graph_df.empty:
-        # グラフ用データの作成
-        # A. 棒グラフ用（その期間内の収支合計）
-        bar_data = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
-        # B. 折れ線グラフ用（その月の最終残高）
-        line_data = graph_df.groupby('年月')['現金推移'].last().reset_index()
-        # グラフ描画
-        common_x = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
-        # 棒グラフ
-        bars = alt.Chart(bar_data).mark_bar().encode(
-            x=common_x,
-            y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 保有現金 (円)', grid=True)),
-            color=alt.Color(
-                '区分', 
-                scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), 
-                legend=None
-            ),
-            tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
-        )
-        # 折れ線グラフ
-        line = alt.Chart(line_data).mark_line(color="#498dd1", point=True).encode(
-            x=common_x,
-            y='現金推移',
-            tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
-        )
-        # 重ね合わせ
-        combo_chart = alt.layer(bars, line).resolve_scale(
-            y='shared'
-        ).properties(
-            height=300
-        )
-        st.altair_chart(combo_chart, use_container_width=True)
+        # ★タブを作成
+        tab_month, tab_day = st.tabs(["📅 月ごと", "📆 日ごと"])
+
+        # --- A. 月ごとのグラフ (既存のコード) ---
+        with tab_month:
+            # 月次集計
+            bar_data_m = graph_df.groupby(['年月', '区分'])['グラフ金額'].sum().reset_index()
+            line_data_m = graph_df.groupby('年月')['現金推移'].last().reset_index()
+            
+            common_x_m = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
+
+            bars_m = alt.Chart(bar_data_m).mark_bar().encode(
+                x=common_x_m,
+                y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 保有現金 (円)', grid=True)),
+                color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
+                tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
+            )
+
+            line_m = alt.Chart(line_data_m).mark_line(color="#498dd1", point=True).encode(
+                x=common_x_m,
+                y='現金推移',
+                tooltip=[alt.Tooltip('年月', title='年月'), alt.Tooltip('現金推移', format=',', title='残高')]
+            )
+
+            combo_m = alt.layer(bars_m, line_m).resolve_scale(y='shared').properties(height=300)
+            st.altair_chart(combo_m, use_container_width=True)
+
+        # --- B. 日ごとのグラフ (新規追加) ---
+        with tab_day:
+            # 日次集計
+            # 1日に複数の出費がある場合を想定して合計する
+            bar_data_d = graph_df.groupby(['日付', '区分'])['グラフ金額'].sum().reset_index()
+            # その日の「最終的な残高」を取得
+            line_data_d = graph_df.groupby('日付')['現金推移'].last().reset_index()
+
+            # 日付のフォーマット（例: 1/15）
+            common_x_d = alt.X('日付', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45))
+
+            bars_d = alt.Chart(bar_data_d).mark_bar().encode(
+                x=common_x_d,
+                y=alt.Y('グラフ金額', axis=alt.Axis(title='日次収支 & 保有現金 (円)', grid=True)),
+                color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
+                tooltip=[
+                    alt.Tooltip('日付', format='%Y/%m/%d', title='日付'),
+                    '区分', 
+                    alt.Tooltip('グラフ金額', format=',', title='金額')
+                ]
+            )
+
+            line_d = alt.Chart(line_data_d).mark_line(color="#498dd1", point=True).encode(
+                x=common_x_d,
+                y='現金推移',
+                tooltip=[
+                    alt.Tooltip('日付', format='%Y/%m/%d', title='日付'),
+                    alt.Tooltip('現金推移', format=',', title='残高')
+                ]
+            )
+
+            combo_d = alt.layer(bars_d, line_d).resolve_scale(y='shared').properties(height=300)
+            st.altair_chart(combo_d, use_container_width=True)
+
     else:
-        st.info("2026年以降のデータはまだありません。")
+        st.info("指定期間のデータはありません。")
 else:
     st.info("データがありません。")
 
