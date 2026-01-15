@@ -53,9 +53,9 @@ if submit_btn:
             st.warning("数量または金額を入力してください")
         else:
             try:
-                # 処理1：仮想通貨の保有量を増やす
+                # 暗号資産の保有量を増やす
                 df_curr = u.load_crypto_data()
-                # 既存の保有量を取得（なければ0）
+                # 既存の保有量を取得
                 if crypto_name in df_curr['銘柄'].values:
                     current_val = df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'].values[0]
                     new_val = current_val + crypto_amount
@@ -64,7 +64,7 @@ if submit_btn:
                     new_row = pd.DataFrame({'銘柄': [crypto_name], '保有量': [crypto_amount]})
                     df_curr = pd.concat([df_curr, new_row], ignore_index=True)
                 u.save_crypto_data(df_curr)
-                # 処理2：家計簿に「支出」として記録する（金額が1円以上の場合）
+                # 家計簿に「支出」として記録する（金額が1円以上の場合）
                 if amount > 0:
                     # 区分はわかりやすく「支出」にするか、あえて「資産移動」と記録するか選べます
                     # ここでは資産集計の計算を合わせるため「支出」として記録します
@@ -106,7 +106,7 @@ if not df.empty:
     yen_assets = total_income - total_expense
 else:
     yen_assets = 0
-# 仮想通貨の価値計算
+# 暗号資産の価値計算
 crypto_total_val = 0 
 if not df_crypto.empty:
     # 現在価格を取得
@@ -132,7 +132,7 @@ st.markdown(f"""
         </div>
     </div>
     <div style="flex: 1; padding: 10px; text-align: center;">
-        <div style="font-size: 14px; color: gray;">仮想通貨</div>
+        <div style="font-size: 14px; color: gray;">暗号資産</div>
         <div style="font-size: 30px; font-weight: bold; color: #ff8c00;">
             {f"{int(crypto_total_val):,} 円"}
         </div>
@@ -157,7 +157,7 @@ if total_all_assets > 0:
     yen_ratio = (yen_assets / total_all_assets) * 100
     bars_html = f'<div style="width: {yen_ratio}%; background-color:{COLOR_YEN};" title="日本円: {yen_ratio:.1f}%"></div>'
     legend_html = f'<span style="color:{COLOR_YEN}">■</span> 日本円 '
-    # 2. 仮想通貨のバー作成（ループ）
+    # 暗号資産のバー作成
     if not df_crypto.empty:
         default_color_index = 0
         for i, row in df_crypto.iterrows():
@@ -184,10 +184,10 @@ if total_all_assets > 0:
     """
     st.markdown(final_html, unsafe_allow_html=True)
 
-# --- 仮想通貨の内訳リスト ---
+# --- 暗号資産の内訳リスト ---
 st.write("")
 if not df_crypto.empty:
-    with st.expander("仮想通貨の内訳を見る", expanded=False):
+    with st.expander("暗号資産の内訳を見る", expanded=False):
         display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
         display_df = display_df.rename(columns={'評価額(円)': '評価額'})
         display_df['保有量'] = display_df['保有量'].astype(float)
@@ -201,7 +201,7 @@ if not df_crypto.empty:
             use_container_width=True
         )
 else:
-    st.info("仮想通貨の登録はまだありません。")
+    st.info("暗号資産の登録はまだありません。")
 
 # --- 現金グラフ ---
 st.subheader("📊 現金推移")
