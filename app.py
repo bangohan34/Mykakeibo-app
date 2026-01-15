@@ -280,10 +280,10 @@ if not df.empty:
             # 30日前まで
             start_date_30 = today - pd.Timedelta(days=30)
             # base_df（全データ）から、直近30日分だけを抽出
-            df_30 = base_df[(base_df['日付'] >= start_date_30) & (base_df['日付'] <= today)]
-            if not df_30.empty:
-                bar_data_d = df_30.groupby(['日付', '区分'])['グラフ金額'].sum().reset_index()
-                line_data_d = df_30.groupby('日付')['現金推移'].last().reset_index()
+            df_30d = base_df[(base_df['日付'] >= start_date_30) & (base_df['日付'] <= today)]
+            if not df_30d.empty:
+                bar_data_d = df_30d.groupby(['日付', '区分'])['グラフ金額'].sum().reset_index()
+                line_data_d = df_30d.groupby('日付')['現金推移'].last().reset_index()
                 common_x_d = alt.X('日付', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45))
                 bars_d = alt.Chart(bar_data_d).mark_bar().encode(
                     x=common_x_d,
