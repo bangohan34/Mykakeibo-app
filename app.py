@@ -346,7 +346,7 @@ current_text = st.text_area(
 # 入力内容と保存済み内容が同じかどうか
 is_unsaved = (current_text != saved_text)
 if is_unsaved:
-    st.markdown(":warning: **<span style='color:#ff4b4b'>変更されています。保存ボタンを押してください。</span>**", unsafe_allow_html=True)
+    st.markdown(":warning: **<span style='color:#ff4b4b'>変更が保存されていません。</span>**", unsafe_allow_html=True)
     btn_type = "primary"
     btn_label = "変更を保存する"
 else:
