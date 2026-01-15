@@ -230,7 +230,7 @@ if not df.empty:
             common_x_m = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
             bars_m = alt.Chart(bar_data_m).mark_bar().encode(
                 x=common_x_m,
-                y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 残高 (円)', grid=True)),
+                y=alt.Y('グラフ金額', axis=alt.Axis(title='収支 & 残高 (円)', grid=True)),
                 color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
                 tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
             )
@@ -255,7 +255,7 @@ if not df.empty:
                 common_x_w = alt.X('週', axis=alt.Axis(title=None, labelAngle=-45))
                 bars_w = alt.Chart(bar_data_w).mark_bar().encode(
                     x=common_x_w,
-                    y=alt.Y('グラフ金額', axis=alt.Axis(title='週間収支 & 残高 (円)', grid=True)),
+                    y=alt.Y('グラフ金額', axis=alt.Axis(title='収支 & 残高 (円)', grid=True)),
                     color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
                     tooltip=[
                         alt.Tooltip('週', format='%Y/%m/%d', title='週の初め'),
