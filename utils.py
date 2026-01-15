@@ -94,7 +94,7 @@ def delete_callback():
         except Exception as e:
             st.session_state["delete_msg"] = f"削除エラー: {e}"
 
-# --- 仮想通貨データの操作 ---
+# --- 暗号資産データの操作 ---
 def load_crypto_data():
     raw_data = worksheet.get('I:J')
     if len(raw_data) < 2:

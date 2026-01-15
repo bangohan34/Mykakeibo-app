@@ -4,7 +4,7 @@
 EXPENSE_CATEGORIES = ['食費', '交通費', '日用品', '趣味', '交際費', 'その他']
 INCOME_CATEGORIES = ['給与','賞与','臨時収入','その他']
 
-# 仮想通貨のIDマップ
+# 暗号資産のIDマップ
 CRYPTO_ID_MAP = {
     'BTC': 'bitcoin',
     'ETH': 'ethereum',
