@@ -230,7 +230,7 @@ if not df.empty:
             common_x_m = alt.X('年月', axis=alt.Axis(title=None, labelAngle=0))
             bars_m = alt.Chart(bar_data_m).mark_bar().encode(
                 x=common_x_m,
-                y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 保有現金 (円)', grid=True)),
+                y=alt.Y('グラフ金額', axis=alt.Axis(title='月間収支 & 残高 (円)', grid=True)),
                 color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
                 tooltip=['年月', '区分', alt.Tooltip('グラフ金額', format=',', title='金額')]
             )
@@ -248,10 +248,10 @@ if not df.empty:
             # その週の最後の時点での残高
             line_data_w = graph_df.groupby('週')['現金推移'].last().reset_index()
             # X軸の設定（週の初めの日付を表示）
-            common_x_w = alt.X('週', axis=alt.Axis(format='%m/%d', title='週 (月曜始まり)', labelAngle=-45))
+            common_x_w = alt.X('週', axis=alt.Axis(title=None, labelAngle=-45))
             bars_w = alt.Chart(bar_data_w).mark_bar().encode(
                 x=common_x_w,
-                y=alt.Y('グラフ金額', axis=alt.Axis(title='週間収支 & 保有現金 (円)', grid=True)),
+                y=alt.Y('グラフ金額', axis=alt.Axis(title='週間収支 & 残高 (円)', grid=True)),
                 color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
                 tooltip=[
                     alt.Tooltip('週', format='%Y/%m/%d', title='週の初め'),
@@ -281,7 +281,7 @@ if not df.empty:
                 common_x_d = alt.X('日付', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45))
                 bars_d = alt.Chart(bar_data_d).mark_bar().encode(
                     x=common_x_d,
-                    y=alt.Y('グラフ金額', axis=alt.Axis(title='金額 (円)', grid=True)),
+                    y=alt.Y('グラフ金額', axis=alt.Axis(title='収支 & 残高 (円)', grid=True)),
                     color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
                     tooltip=[alt.Tooltip('日付', format='%Y/%m/%d'), '区分', alt.Tooltip('グラフ金額', format=',')]
                 )
