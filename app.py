@@ -248,11 +248,11 @@ if not df.empty:
             df_30w = base_df[(base_df['日付'] >= start_date_30w) & (base_df['日付'] <= today)]
             if not df_30w.empty:
                 # 週次集計
-                bar_data_w = graph_df.groupby(['週', '区分'])['グラフ金額'].sum().reset_index()
+                bar_data_w = df_30w.groupby(['週', '区分'])['グラフ金額'].sum().reset_index()
                 # その週の最後の時点での残高
-                line_data_w = graph_df.groupby('週')['現金推移'].last().reset_index()
+                line_data_w = df_30w.groupby('週')['現金推移'].last().reset_index()
                 # X軸の設定（週の初めの日付を表示）
-                common_x_w = alt.X('週', axis=alt.Axis(title=None, labelAngle=-45))
+                common_x_w = alt.X('週', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45))
                 bars_w = alt.Chart(bar_data_w).mark_bar().encode(
                     x=common_x_w,
                     y=alt.Y('グラフ金額', axis=alt.Axis(title='収支 & 残高 (円)', grid=True)),
