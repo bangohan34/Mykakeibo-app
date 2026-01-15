@@ -204,8 +204,6 @@ else:
     st.info("暗号資産の登録はまだありません。")
 
 # --- 現金グラフ ---
-st.subheader("📊 現金推移")
-
 if not df.empty:
     # 1. 共通データの作成
     base_df = df.copy()
