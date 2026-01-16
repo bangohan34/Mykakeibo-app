@@ -313,68 +313,40 @@ if not df.empty:
     df_display.index = df_display.index + 1
     df_display = df_display.rename(columns={'カテゴリー': '項目'})
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
+    df_display['No'] = df_display['No'].astype(str)
     df_display = df_display.iloc[::-1]
     df_display['金額'] = df_display['金額'].apply(lambda x: f"{x:,}")
     def color_span(row):
         color = "#cf4242" if row['区分'] == "支出" else "#35c787"
         return f'<span style="color: {color}; font-weight: bold;">{row["区分"]}</span>'
-    
     df_display['区分'] = df_display.apply(color_span, axis=1)
-
-    # 3. HTMLテーブルに変換
-    # escape=False にすることで、さっき埋め込んだ <span> タグが有効になります
-    table_html = df_display.to_html(classes='kakeibo-table', escape=False, index=False)
-
-    # 4. デザイン（CSS）と表示
-    # 以前のコードのような自動生成CSSが出ないよう、手動で完璧なCSSを定義します
+    table_html = df_display.to_html(escape=False, index=False, border=1)
     st.markdown(
         f"""
         <style>
-            /* スクロール枠のデザイン */
-            .table-container {{
-                height: 300px;
-                overflow-y: auto;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-            }}
-            
-            /* テーブル全体 */
-            .kakeibo-table {{
-                width: 100%;
-                border-collapse: collapse;
-                font-family: sans-serif;
-            }}
-            
-            /* ヘッダー（見出し） */
-            .kakeibo-table th {{
-                background-color: #f0f2f6;
-                color: #333;
-                position: sticky; /* スクロールしてもヘッダーを固定 */
-                top: 0;
-                padding: 10px;
-                text-align: center !important; /* ★強制中央揃え */
-                border-bottom: 2px solid #ddd;
-                font-size: 14px;
-                white-space: nowrap; /* 勝手に改行させない */
-            }}
-            
-            /* データセル（中身） */
-            .kakeibo-table td {{
-                padding: 8px;
-                text-align: center !important; /* ★強制中央揃え */
-                border-bottom: 1px solid #eee;
-                font-size: 14px;
-            }}
-
-            /* ダークモード対応 */
-            @media (prefers-color-scheme: dark) {{
-                .kakeibo-table th {{ background-color: #262730; color: white; border-bottom: 2px solid #444; }}
-                .kakeibo-table td {{ border-bottom: 1px solid #444; color: white; }}
-                .table-container {{ border: 1px solid #444; }}
-            }}
+        /* このdivの中にあるテーブルだけにスタイルを適用 */
+        .custom-table-box table {{
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }}
+        .custom-table-box th, .custom-table-box td {{
+            text-align: center !important;  /* 強制中央揃え */
+            border: 1px solid #666 !important; /* 枠線を強制表示 */
+            padding: 8px !important;
+            font-size: 14px !important;
+        }}
+        .custom-table-box th {{
+            background-color: #f0f2f6;
+            color: black;
+        }}
+        /* ダークモード時の文字色調整 */
+        @media (prefers-color-scheme: dark) {{
+            .custom-table-box th {{ background-color: #333; color: white; }}
+            .custom-table-box td {{ color: white; }}
+        }}
         </style>
 
-        <div class="table-container">
+        <div class="custom-table-box" style="height: 300px; overflow-y: auto;">
             {table_html}
         </div>
         """,
