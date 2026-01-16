@@ -311,13 +311,15 @@ st.subheader("入力履歴")
 if not df.empty:
     df_display = df[['No', '日付', '区分', '金額', 'カテゴリー', 'メモ']].copy()
     df_display.index = df_display.index + 1
+    df_display = df_display.rename(columns={'カテゴリー': '項目'})
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
     df_display = df_display.iloc[::-1]
+    df_display['No'] = df_display['No'].astype(str)
     st.dataframe(
         df_display.style
         .format({"金額": "{:,} 円"})
         .map(u.color_coding, subset=['区分'])
-        .set_properties(subset=['No', '区分', 'カテゴリー'], **{
+        .set_properties(subset=['No', '区分', '項目'], **{
             'text-align': 'center'
         })
         .set_properties(subset=['メモ'], **{
