@@ -366,15 +366,7 @@ if not df.empty:
         .format({"金額": "{:,} 円"}),
         use_container_width=True,
         height=240,
-        hide_index=True,
-        column_config={
-            "No": st.column_config.TextColumn(width="small"),
-            "日付": st.column_config.TextColumn(width="small"),
-            "区分": st.column_config.TextColumn(width="small"),
-            "金額": st.column_config.TextColumn(width="small"),
-            "項目": st.column_config.TextColumn(width="small"),
-            "メモ": st.column_config.TextColumn(width="medium"),
-        }
+        hide_index=True
     )
 else:
     st.info("まだデータがありません")
