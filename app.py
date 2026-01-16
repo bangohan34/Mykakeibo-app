@@ -84,7 +84,7 @@ with st.form(key='entry_form', clear_on_submit=True):
     submit_btn = st.form_submit_button('登録する')
 if submit_btn:
     final_memo = memo
-    if category == "食費" and sub_category:
+    if sub_category:
         if final_memo:
             final_memo = f"{sub_category} {final_memo}"
         else:
