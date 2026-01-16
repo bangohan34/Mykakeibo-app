@@ -365,10 +365,7 @@ if not df.empty:
         .format({"金額": "{:,} 円"}),
         use_container_width=True,
         height=240,
-        hide_index=True,
-        column_config={
-            "メモ": None,
-        }
+        hide_index=True
     )
 else:
     st.info("まだデータがありません")
