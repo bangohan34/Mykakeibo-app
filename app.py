@@ -360,7 +360,7 @@ if not df.empty:
     df_display = df_display.rename(columns={'カテゴリー': '項目'})
     df_display.index = df_display.index + 1
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
-    df_display['メモ'] = df_display['メモ'].astype(str).apply(lambda x: (x[:4] + '..') if len(x) > 10 else x)
+    df_display['メモ'] = df_display['メモ'].astype(str).apply(lambda x: (x[:4] + '..') if len(x) > 3 else x)
     st.dataframe(
         df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
         .format({"金額": "{:,} 円"}),
