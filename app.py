@@ -81,7 +81,8 @@ with st.form(key='entry_form', clear_on_submit=True):
         category = "投資"
     # 支出、収入
     else:
-        amount = st.number_input('金額', min_value=0, step=1)
+        val = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0")
+        amount = val if val is not None else 0
         memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
 if submit_btn:
