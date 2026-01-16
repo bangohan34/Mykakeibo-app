@@ -409,7 +409,7 @@ with st.expander("削除メニューを開く", expanded=False):
                 if not target_row.empty:
                     st.warning("⚠️ 以下のデータを本当に削除しますか？")
                     # 削除対象をプレビュー表示
-                    preview_df = df[['No','日付','区分','金額','カテゴリー','メモ']].copy()
+                    preview_df = target_row[['No','日付','区分','金額','カテゴリー','メモ']].copy()
                     preview_df = preview_df.rename(columns={'カテゴリー': '項目'})
                     preview_df['日付'] = preview_df['日付'].dt.strftime('%y/%m/%d')
                     st.dataframe(
