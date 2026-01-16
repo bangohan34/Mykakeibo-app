@@ -36,6 +36,30 @@ if balance_type =="支出":
             horizontal=True,
             label_visibility="collapsed"
         )
+    if category == "交通費":
+        st.caption("交通費の詳細を選んでください")
+        sub_category = st.radio(
+            "交通費詳細",
+            ["電車","バス","車","原付","その他"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+    if category == "趣味":
+        st.caption("趣味の詳細を選んでください")
+        sub_category = st.radio(
+            "趣味詳細",
+            ["ゲーム", "その他"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+    if category == "交際費":
+        st.caption("交際費の詳細を選んでください")
+        sub_category = st.radio(
+            "交際費詳細",
+            ["デート", "友達", "飲み会", "その他"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
 elif balance_type =="収入":
     category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
