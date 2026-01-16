@@ -312,16 +312,20 @@ if not df.empty:
     df_display = df[['No', '日付', '区分', '金額', 'カテゴリー', 'メモ']].copy()
     df_display.index = df_display.index + 1
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
-    styled_df = df_display.style.set_properties(subset=['No', '区分', 'カテゴリー'], **{
-        'text-align': 'center'                    # ★Noの列を中央揃えにする
-    }).set_properties(subset=['メモ'], **{
-        'text-align': 'left'                      # 文字列は左寄せ（念のため）
-    }).set_properties(subset=['金額'], **{
-        'text-align': 'right'                     # 金額は右寄せ
-    })
+    df_display = df_display.iloc[::-1]
     st.dataframe(
-        styled_df.iloc[::-1].style.map(u.color_coding, subset=['区分'])
-        .format({"金額": "{:,} 円"}),
+        df_display.style
+        .format({"金額": "{:,} 円"})
+        .map(u.color_coding, subset=['区分'])
+        .set_properties(subset=['No', '区分', 'カテゴリー'], **{
+            'text-align': 'center'
+        })
+        .set_properties(subset=['メモ'], **{
+            'text-align': 'left'
+        })
+        .set_properties(subset=['金額'], **{
+            'text-align': 'right'
+        }),
         use_container_width=True,
         height=240,
         hide_index=True
