@@ -360,12 +360,21 @@ if not df.empty:
     df_display = df_display.rename(columns={'カテゴリー': '項目'})
     df_display.index = df_display.index + 1
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
+    df_display['メモ'] = df_display['メモ'].astype(str).apply(lambda x: (x[:10] + '..') if len(x) > 10 else x)
     st.dataframe(
         df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
         .format({"金額": "{:,} 円"}),
         use_container_width=True,
         height=240,
-        hide_index=True
+        hide_index=True,
+        column_config={
+            "No": st.column_config.TextColumn(width="small"),
+            "日付": st.column_config.TextColumn(width="small"),
+            "区分": st.column_config.TextColumn(width="small"),
+            "金額": st.column_config.TextColumn(width="small"),
+            "項目": st.column_config.TextColumn(width="small"),
+            "メモ": st.column_config.TextColumn(width="medium"),
+        }
     )
 else:
     st.info("まだデータがありません")
