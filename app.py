@@ -27,6 +27,7 @@ balance_type = st.radio(
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
     category, amount, memo = None, 0, ""
+    sub_category = ""
     crypto_name, crypto_amount = "", 0.0000
     # 資産移動
     if balance_type == "資産移動":
@@ -45,12 +46,26 @@ with st.form(key='entry_form', clear_on_submit=True):
     else:
         if balance_type == "支出":
             category = st.radio('カテゴリー', c.EXPENSE_CATEGORIES)
+            if category == "食費":
+                st.caption("食費の詳細")
+                sub_category = st.radio(
+                    "食費詳細",
+                    ["朝食","昼食","夕食","間食","その他"],
+                    horizontal=True,
+                    label_visibility="collapsed"
+                )
         else:
             category = st.radio('カテゴリー', c.INCOME_CATEGORIES)
         amount = st.number_input('金額', min_value=0, step=1)
         memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
 if submit_btn:
+    final_memo = memo
+    if category == "食費" and sub_category:
+        if final_memo:
+            final_memo = f"{sub_category} {final_memo}"
+        else:
+            final_memo = sub_category
     # 資産移動
     if balance_type == "資産移動":
         if not crypto_name:
@@ -90,11 +105,11 @@ if submit_btn:
             st.warning('金額が0円です。入力してください。')
         else:
             try:
-                u.add_entry(date, balance_type, category, amount, memo)
+                u.add_entry(date, balance_type, category, amount, final_memo)
                 if balance_type =="収入":
                     st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
                 else:
-                    st.info(f'{category} : {amount}円を登録しました。')
+                    st.info(f'{category} ({sub_category if sub_category else ""}) : {amount}円を登録しました。')
                 st.balloons()
                 time.sleep(2)
                 st.rerun()
