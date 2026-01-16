@@ -63,6 +63,8 @@ def load_kakeibo_data():
     # 「日付」が入っていない空っぽの行を削除
     df = df[df['日付'].astype(str).str.strip() != ""]
     df['金額'] = pd.to_numeric(df['金額'].astype(str).str.replace(',', ''), errors='coerce').fillna(0).astype(int)
+    # 日付の書き方を統一
+    df['日付'] = df['日付'].astype(str).str.strip().str.replace('-','/')
     df['日付'] = pd.to_datetime(df['日付'], errors='coerce')
     return df
 
