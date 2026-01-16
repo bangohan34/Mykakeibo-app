@@ -314,23 +314,39 @@ if not df.empty:
     df_display = df_display.rename(columns={'カテゴリー': '項目'})
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
     df_display = df_display.iloc[::-1]
-    df_display['No'] = df_display['No'].astype(str)
-    st.dataframe(
-        df_display.style
-        .format({"金額": "{:,} 円"})
-        .map(u.color_coding, subset=['区分'])
-        .set_properties(subset=['No', '区分', '項目'], **{
-            'text-align': 'center'
-        })
-        .set_properties(subset=['メモ'], **{
-            'text-align': 'left'
-        })
-        .set_properties(subset=['金額'], **{
-            'text-align': 'right'
-        }),
-        use_container_width=True,
-        height=240,
-        hide_index=True
+    styled = df_display.style.format({
+        "金額": "{:,}"
+    }).map(u.color_coding, subset=['区分'])
+    html = styled.set_table_styles([
+        {'selector': 'th', 'props': [('text-align', 'center !important')]},
+        {'selector': 'td', 'props': [('text-align', 'center !important')]}
+    ]).set_properties(**{
+        'text-align': 'center !important' # 念押しで全セル中央揃え
+    }).to_html(escape=False) # escape=Falseで色分けHTMLを有効化
+    st.markdown(
+        f"""
+        <style>
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+        th {{
+            background-color: #f0f2f6;
+            color: #31333F;
+            padding: 8px;
+            font-size: 14px;
+        }}
+        td {{
+            padding: 8px;
+            border-bottom: 1px solid #e6e9ef;
+            font-size: 14px;
+        }}
+        </style>
+        <div style="height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+            {html}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 else:
     st.info("まだデータがありません。")
