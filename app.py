@@ -27,9 +27,10 @@ balance_type = st.radio(
 category, amount, memo, sub_category = None, 0, "", ""
 crypto_name, crypto_amount = "", 0.0000
 if balance_type =="支出":
-    category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True)
+    st.caption("支出の詳細を選んでください。")
+    category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
     if category == "食費":
-        st.caption("食費の詳細を選んでください")
+        st.caption("食費の詳細を選んでください。")
         sub_category = st.radio(
             "食費詳細",
             ["朝食","昼食","夕食","間食","スーパー","その他"],
@@ -37,7 +38,7 @@ if balance_type =="支出":
             label_visibility="collapsed"
         )
     if category == "交通費":
-        st.caption("交通費の詳細を選んでください")
+        st.caption("交通費の詳細を選んでください。")
         sub_category = st.radio(
             "交通費詳細",
             ["電車","バス","車","原付","その他"],
@@ -45,7 +46,7 @@ if balance_type =="支出":
             label_visibility="collapsed"
         )
     if category == "趣味":
-        st.caption("趣味の詳細を選んでください")
+        st.caption("趣味の詳細を選んでください。")
         sub_category = st.radio(
             "趣味詳細",
             ["ゲーム", "その他"],
@@ -53,7 +54,7 @@ if balance_type =="支出":
             label_visibility="collapsed"
         )
     if category == "交際費":
-        st.caption("交際費の詳細を選んでください")
+        st.caption("交際費の詳細を選んでください。")
         sub_category = st.radio(
             "交際費詳細",
             ["デート", "友達", "飲み会", "その他"],
@@ -61,7 +62,8 @@ if balance_type =="支出":
             label_visibility="collapsed"
         )
 elif balance_type =="収入":
-    category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True)
+    st.caption("収入の詳細を選んでください。")
+    category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
     # 資産移動
