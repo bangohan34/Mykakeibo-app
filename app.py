@@ -17,7 +17,13 @@ df_crypto = u.load_crypto_data()
 today = pd.to_datetime("today").normalize()
 
 # --- 入力フォーム ---
-balance_type = st.radio("区分",["支出","収入","資産移動"], horizontal=True)
+st.subheader("収支入力")
+balance_type = st.radio(
+    "区分",
+    ["支出","収入","資産移動"],
+    horizontal=True,
+    label_visibility="collapsed"
+    )
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
     category, amount, memo = None, 0, ""
