@@ -309,48 +309,15 @@ st.divider()
 # --- 履歴表示 ---
 st.subheader("入力履歴")
 if not df.empty:
-    df_display = df[['No', '日付', '区分', '金額', 'カテゴリー', 'メモ']].copy()
+    df_display = df[['No','日付','区分','金額','カテゴリー','メモ']].copy()
     df_display.index = df_display.index + 1
-    df_display = df_display.rename(columns={'カテゴリー': '項目'})
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
-    df_display['No'] = df_display['No'].astype(str)
-    df_display = df_display.iloc[::-1]
-    df_display['金額'] = df_display['金額'].apply(lambda x: f"{x:,}")
-    def color_span(row):
-        color = "#cf4242" if row['区分'] == "支出" else "#35c787"
-        return f'<span style="color: {color}; font-weight: bold;">{row["区分"]}</span>'
-    df_display['区分'] = df_display.apply(color_span, axis=1)
-    table_html = df_display.to_html(escape=False, index=False, border=1)
-    st.markdown(
-        f"""
-        <style>
-        /* このdivの中にあるテーブルだけにスタイルを適用 */
-        .custom-table-box table {{
-            width: 100% !important;
-            border-collapse: collapse !important;
-        }}
-        .custom-table-box th, .custom-table-box td {{
-            text-align: center !important;  /* 強制中央揃え */
-            border: 1px solid #666 !important; /* 枠線を強制表示 */
-            padding: 8px !important;
-            font-size: 14px !important;
-        }}
-        .custom-table-box th {{
-            background-color: #f0f2f6;
-            color: black;
-        }}
-        /* ダークモード時の文字色調整 */
-        @media (prefers-color-scheme: dark) {{
-            .custom-table-box th {{ background-color: #333; color: white; }}
-            .custom-table-box td {{ color: white; }}
-        }}
-        </style>
-
-        <div class="custom-table-box" style="height: 300px; overflow-y: auto;">
-            {table_html}
-        </div>
-        """,
-        unsafe_allow_html=True
+    st.dataframe(
+        df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
+        .format({"金額": "{:,} 円"}),
+        use_container_width=True,
+        height=240,
+        hide_index=True
     )
 else:
     st.info("まだデータがありません。")
