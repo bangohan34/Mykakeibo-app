@@ -314,36 +314,44 @@ if not df.empty:
     df_display = df_display.rename(columns={'カテゴリー': '項目'})
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
     df_display = df_display.iloc[::-1]
-    styled = df_display.style.format({
+    styled_html = df_display.style.format({
         "金額": "{:,}"
-    }).map(u.color_coding, subset=['区分'])
-    html = styled.set_table_styles([
-        {'selector': 'th', 'props': [('text-align', 'center !important')]},
-        {'selector': 'td', 'props': [('text-align', 'center !important')]}
-    ]).set_properties(**{
-        'text-align': 'center !important' # 念押しで全セル中央揃え
-    }).to_html(escape=False) # escape=Falseで色分けHTMLを有効化
-    st.markdown(
-        f"""
-        <style>
-        table {{
+    }).map(u.color_coding, subset=['区分']).to_html(escape=False)
+    custom_css = """
+    <style>
+        .kakeibo-table table {
             width: 100%;
             border-collapse: collapse;
-        }}
-        th {{
+            font-size: 14px;
+        }
+        .kakeibo-table th {
             background-color: #f0f2f6;
-            color: #31333F;
+            color: #333;
+            text-align: center !important;
             padding: 8px;
-            font-size: 14px;
-        }}
-        td {{
+            font-weight: bold;
+            border: 1px solid #ddd;
+        }
+        .kakeibo-table td {
+            text-align: center !important;
             padding: 8px;
-            border-bottom: 1px solid #e6e9ef;
-            font-size: 14px;
-        }}
-        </style>
-        <div style="height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
-            {html}
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        .kakeibo-table td:nth-child(5) { text-align: right !important; }
+        
+        /* ダークモード対応 */
+        @media (prefers-color-scheme: dark) {
+            .kakeibo-table th { background-color: #262730; color: white; border-color: #444; }
+            .kakeibo-table td { border-color: #444; color: white; }
+        }
+    </style>
+    """
+    st.markdown(
+        f"""
+        {custom_css}
+        <div class="kakeibo-table" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+            {styled_html}
         </div>
         """,
         unsafe_allow_html=True
