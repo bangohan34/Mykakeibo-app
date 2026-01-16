@@ -309,9 +309,18 @@ st.divider()
 # --- 履歴表示 ---
 st.subheader("入力履歴")
 if not df.empty:
-    df_display = df.copy()
+    df_display = df[['No','日付','区分','金額','カテゴリー','メモ']].copy()
     df_display.index = df_display.index + 1
-    df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
+    styled_df = df_display.style.format({
+        "日付": lambda t: t.strftime('%y/%m/%d'),
+        "金額": "{:,}"
+    }).set_properties(subset=['No', '区分', 'カテゴリー'], **{
+        'text-align': 'center'
+    }).set_properties(subset=['メモ'], **{
+        'text-align': 'left'
+    }).set_properties(subset=['金額'], **{
+        'text-align': 'right'
+    })
     st.dataframe(
         df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
         .format({"金額": "{:,} 円"}),
