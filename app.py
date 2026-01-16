@@ -45,7 +45,7 @@ with st.form(key='entry_form', clear_on_submit=True):
     # 支出、収入
     else:
         if balance_type == "支出":
-            category = st.radio('カテゴリー', c.EXPENSE_CATEGORIES)
+            category = st.radio('項目', c.EXPENSE_CATEGORIES)
             if category == "食費":
                 st.caption("食費の詳細")
                 sub_category = st.radio(
@@ -55,7 +55,7 @@ with st.form(key='entry_form', clear_on_submit=True):
                     label_visibility="collapsed"
                 )
         else:
-            category = st.radio('カテゴリー', c.INCOME_CATEGORIES)
+            category = st.radio('項目', c.INCOME_CATEGORIES)
         amount = st.number_input('金額', min_value=0, step=1)
         memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
