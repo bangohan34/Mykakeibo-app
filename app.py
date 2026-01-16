@@ -409,8 +409,13 @@ with st.expander("削除メニューを開く", expanded=False):
                 if not target_row.empty:
                     st.warning("⚠️ 以下のデータを本当に削除しますか？")
                     # 削除対象をプレビュー表示
+                    preview_df = df[['No','日付','区分','金額','カテゴリー','メモ']].copy()
+                    preview_df = preview_df.rename(columns={'カテゴリー': '項目'})
+                    preview_df['日付'] = preview_df['日付'].dt.strftime('%y/%m/%d')
                     st.dataframe(
-                        target_row.style.format({"金額": "{:,} 円"}), 
+                        preview_df.style.map(u.color_coding, subset=['区分'])
+                        .format({"金額": "{:,} 円"}),
+                        use_container_width=True,
                         hide_index=True
                     )
                     st.button("はい、削除します", on_click=u.delete_callback)
