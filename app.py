@@ -24,11 +24,22 @@ balance_type = st.radio(
     horizontal=True,
     label_visibility="collapsed"
     )
+category, amount, memo, sub_category = None, 0, "", ""
+crypto_name, crypto_amount = "", 0.0000
+if balance_type =="支出":
+    category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True)
+    if category == "食費":
+        st.caption("食費の詳細を選んでください")
+        sub_category = st.radio(
+            "食費詳細",
+            ["朝食","昼食","夕食","間食","スーパー","その他"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+elif balance_type =="収入":
+    category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True)
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
-    category, amount, memo = None, 0, ""
-    sub_category = ""
-    crypto_name, crypto_amount = "", 0.0000
     # 資産移動
     if balance_type == "資産移動":
         st.caption("資産を移動します")
@@ -44,18 +55,6 @@ with st.form(key='entry_form', clear_on_submit=True):
         category = "投資"
     # 支出、収入
     else:
-        if balance_type == "支出":
-            category = st.radio('項目', c.EXPENSE_CATEGORIES)
-            if category == "食費":
-                st.caption("食費の詳細")
-                sub_category = st.radio(
-                    "食費詳細",
-                    ["朝食","昼食","夕食","間食","その他"],
-                    horizontal=True,
-                    label_visibility="collapsed"
-                )
-        else:
-            category = st.radio('項目', c.INCOME_CATEGORIES)
         amount = st.number_input('金額', min_value=0, step=1)
         memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
