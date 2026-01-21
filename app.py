@@ -393,7 +393,7 @@ if not df.empty:
                     y=alt.Y('現金推移', axis=alt.Axis(title='現金残高（円）', grid=False)),
                     tooltip=[alt.Tooltip('日付', format='%m/%d'), alt.Tooltip('現金推移', format=',')]
                 )
-                st.altair_chart(alt.layer(bars_d, line_d).resolve_scale(y='shared').properties(height=300), use_container_width=True)
+                st.altair_chart(alt.layer(bars_d, line_d).resolve_scale(y='independent').properties(height=300), use_container_width=True)
             else:
                 st.info("直近30日のデータはありません。")
     else:
