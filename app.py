@@ -11,21 +11,18 @@ import utils as u
 st.set_page_config(page_title="家計簿", page_icon="💰")
 st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 
-# --- ログイン状態の管理 ---
+# --- 自動ログイン ---
 if "is_logged_in" not in st.session_state:
     st.session_state["is_logged_in"] = False
 if "target_sheet" not in st.session_state:
     st.session_state["target_sheet"] = ""
 if "current_user_name" not in st.session_state:
     st.session_state["current_user_name"] = ""
-
 # URLパラメータを取得
 query_params = st.query_params
 url_user_id = query_params.get("u",None)
-
 # ユーザー情報の取得
 users_cfg = st.secrets["users"]
-
 # 自動ログイン
 if not st.session_state["is_logged_in"] and url_user_id in users_cfg:
     user_data = users_cfg[url_user_id]
