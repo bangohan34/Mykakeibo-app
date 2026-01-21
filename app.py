@@ -238,67 +238,69 @@ if(url_user_id =="u2"):
     """, unsafe_allow_html=True)
 
 # --- 資産割合バー ---
-if total_all_assets > 0:
-    # 色の指定
-    COLOR_YEN = '#DB4437'
-    SYMBOL_COLORS = {
-        'BTC':'#F4B400',
-        'ETH':'#9079ad',
-        'XRP':'#afafb0',
-        'IOST':'#00c8c8',
-        'PI':'#9600ff'
-    }
-    # 指定がない銘柄用の予備カラー（順番に使われます）
-    DEFAULT_COLORS = ['#0F9D58', '#4285F4', '#F4B400', '#AB47BC', '#00ACC1']
-    # ベースのHTML
-    yen_ratio = (yen_assets / total_all_assets) * 100
-    bars_html = f'<div style="width: {yen_ratio}%; background-color:{COLOR_YEN};" title="日本円: {yen_ratio:.1f}%"></div>'
-    legend_html = f'<span style="color:{COLOR_YEN}">■</span> 日本円 '
-    # 暗号資産のバー作成
-    if not df_crypto.empty:
-        default_color_index = 0
-        for i, row in df_crypto.iterrows():
-            if '評価額(円)' in row and row['評価額(円)'] > 0:
-                ratio = (row['評価額(円)'] / total_all_assets) * 100
-                name = row['銘柄']
-                # 色を決定するロジック
-                # 辞書に設定があればその色、なければ予備リストから順番に使う
-                if name.upper() in SYMBOL_COLORS:
-                    color = SYMBOL_COLORS[name.upper()]
-                else:
-                    color = DEFAULT_COLORS[default_color_index % len(DEFAULT_COLORS)]
-                    default_color_index += 1
-                bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{name}: {ratio:.1f}%"></div>'
-                legend_html += f' <span style="color:{color}; margin-left:10px;">■</span> {name}'
-    # 全体枠と合体
-    final_html = f"""
-    <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden;">
-        {bars_html}
-    </div>
-    <div style="font-size: 12px; margin-top: 5px; color: #333;">
-        {legend_html}
-    </div>
-    """
-    st.markdown(final_html, unsafe_allow_html=True)
+if(url_user_id =="u1"):
+    if total_all_assets > 0:
+        # 色の指定
+        COLOR_YEN = '#DB4437'
+        SYMBOL_COLORS = {
+            'BTC':'#F4B400',
+            'ETH':'#9079ad',
+            'XRP':'#afafb0',
+            'IOST':'#00c8c8',
+            'PI':'#9600ff'
+        }
+        # 指定がない銘柄用の予備カラー（順番に使われます）
+        DEFAULT_COLORS = ['#0F9D58', '#4285F4', '#F4B400', '#AB47BC', '#00ACC1']
+        # ベースのHTML
+        yen_ratio = (yen_assets / total_all_assets) * 100
+        bars_html = f'<div style="width: {yen_ratio}%; background-color:{COLOR_YEN};" title="日本円: {yen_ratio:.1f}%"></div>'
+        legend_html = f'<span style="color:{COLOR_YEN}">■</span> 日本円 '
+        # 暗号資産のバー作成
+        if not df_crypto.empty:
+            default_color_index = 0
+            for i, row in df_crypto.iterrows():
+                if '評価額(円)' in row and row['評価額(円)'] > 0:
+                    ratio = (row['評価額(円)'] / total_all_assets) * 100
+                    name = row['銘柄']
+                    # 色を決定するロジック
+                    # 辞書に設定があればその色、なければ予備リストから順番に使う
+                    if name.upper() in SYMBOL_COLORS:
+                        color = SYMBOL_COLORS[name.upper()]
+                    else:
+                        color = DEFAULT_COLORS[default_color_index % len(DEFAULT_COLORS)]
+                        default_color_index += 1
+                    bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{name}: {ratio:.1f}%"></div>'
+                    legend_html += f' <span style="color:{color}; margin-left:10px;">■</span> {name}'
+        # 全体枠と合体
+        final_html = f"""
+        <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden;">
+            {bars_html}
+        </div>
+        <div style="font-size: 12px; margin-top: 5px; color: #333;">
+            {legend_html}
+        </div>
+        """
+        st.markdown(final_html, unsafe_allow_html=True)
 
 # --- 暗号資産の内訳リスト ---
-st.write("")
-if not df_crypto.empty:
-    with st.expander("暗号資産の内訳を見る", expanded=False):
-        display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
-        display_df = display_df.rename(columns={'評価額(円)': '評価額'})
-        display_df['保有量'] = display_df['保有量'].astype(float)
-        display_df['評価額'] = display_df['評価額'].astype(int)
-        st.dataframe(
-            display_df.style.format({
-                "保有量": "{:.8f}",
-                "評価額": "{:,} 円" 
-            }),
-            hide_index=True,
-            use_container_width=True
-        )
-else:
-    st.info("暗号資産の登録はまだありません。")
+if(url_user_id =="u1"):
+    st.write("")
+    if not df_crypto.empty:
+        with st.expander("暗号資産の内訳を見る", expanded=False):
+            display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
+            display_df = display_df.rename(columns={'評価額(円)': '評価額'})
+            display_df['保有量'] = display_df['保有量'].astype(float)
+            display_df['評価額'] = display_df['評価額'].astype(int)
+            st.dataframe(
+                display_df.style.format({
+                    "保有量": "{:.8f}",
+                    "評価額": "{:,} 円" 
+                }),
+                hide_index=True,
+                use_container_width=True
+            )
+    else:
+        st.info("暗号資産の登録はまだありません。")
 
 # --- 現金グラフ ---
 if not df.empty:
