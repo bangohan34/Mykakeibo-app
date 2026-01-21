@@ -51,7 +51,7 @@ hide_streamlit_style = """
             .stTextInput div[data-baseweb="input"],
             .stNumberInput div[data-baseweb="input"],
             .stSelectbox div[data-baseweb="select"] > div {
-                background-color: #ddd1bc !important;
+                background-color: #333 !important;
                 border-color: #333 !important;
             }
             /* 表 */
