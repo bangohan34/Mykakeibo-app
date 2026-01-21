@@ -12,7 +12,7 @@ scopes = [
     'https://www.googleapis.com/auth/drive'
 ]
 # キャッシュを使って認証を高速化
-def get_worksheet():
+def get_worksheet(sheet_name):
     try:
         # A. Streamlit Cloud (本番)
         if "gcp_service_account" in st.secrets:
@@ -31,14 +31,11 @@ def get_worksheet():
             credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
         # ログインして、スプレッドシートを開く
         gc = gspread.authorize(credentials)
-        sh = gc.open(c.SPREADSHEET_NAME)
+        sh = gc.open(sheet_name)
         return sh.sheet1
     except Exception as e:
-        st.error(f"接続エラー: {e}")
+        st.error(f"接続エラー: スプレッドシート '{sheet_name}' が見つかりません。共有設定を確認してください。エラー詳細: {e}")
         st.stop()
-
-# --- worksheetを使えるように ---
-worksheet = get_worksheet()
 
 # --- 資産の表示＆非表示 ---
 def format_money(amount, is_visible):
@@ -48,7 +45,7 @@ def format_money(amount, is_visible):
         return "******* 円"
 
 # --- 家計簿データの操作 ---
-def load_kakeibo_data():
+def load_kakeibo_data(worksheet):
     all_rows = worksheet.get_all_values()
     columns=['No','日付','区分','カテゴリー','金額','メモ']
     if len(all_rows) < 2:
@@ -68,14 +65,14 @@ def load_kakeibo_data():
     df['日付'] = pd.to_datetime(df['日付'], errors='coerce')
     return df
 
-def add_entry(date, balance_type,category, amount, memo):
+def add_entry(worksheet, date, balance_type,category, amount, memo):
     col_a_values = worksheet.col_values(1)
     next_row = len(col_a_values) + 1
     row_data = [[str(date), balance_type, category, amount, memo]]
     range_str = f"A{next_row}:E{next_row}"
     worksheet.update(range_name=range_str,values=row_data)
 
-def delete_entry(row_index):
+def delete_entry(worksheet, row_index):
     current_data = worksheet.get('A:E')
     target_list_index = int(row_index) - 1
     if 0 <= target_list_index < len(current_data):
@@ -97,7 +94,7 @@ def delete_callback():
             st.session_state["delete_msg"] = f"削除エラー: {e}"
 
 # --- 暗号資産データの操作 ---
-def load_crypto_data():
+def load_crypto_data(worksheet):
     raw_data = worksheet.get('I:J')
     if len(raw_data) < 2:
         return pd.DataFrame(columns=['銘柄','保有量'])
@@ -105,7 +102,7 @@ def load_crypto_data():
     df_crypto['保有量'] = pd.to_numeric(df_crypto['保有量'], errors='coerce').fillna(0.0)
     return df_crypto
 
-def save_crypto_data(df_crypto):
+def save_crypto_data(worksheet, df_crypto):
     data_to_save = [df_crypto.columns.tolist()] + df_crypto.values.tolist()
     worksheet.batch_clear(['I:J'])
     worksheet.update('I1', data_to_save)
@@ -192,7 +189,7 @@ def color_coding(val):
     return ''
 
 # --- なんでもメモの操作 ---
-def get_anything_memo():
+def get_anything_memo(worksheet):
     try:
         current_memo = worksheet.acell('G2').value
         if current_memo is None:
@@ -201,5 +198,5 @@ def get_anything_memo():
         current_memo = ""
     return current_memo
 
-def update_anything_memo(text):
+def update_anything_memo(worksheet, text):
     worksheet.update_acell('G2', text)

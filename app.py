@@ -11,9 +11,56 @@ import utils as u
 st.set_page_config(page_title="家計簿", page_icon="💰")
 st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 
+# --- ログイン状態の管理 ---
+if "is_logged_in" not in st.session_state:
+    st.session_state["is_logged_in"] = False
+if "target_sheet" not in st.session_state:
+    st.session_state["target_sheet"] = ""
+if "current_user_name" not in st.session_state:
+    st.session_state["current_user_name"] = ""
+
+# URLパラメータを取得
+query_params = st.query_params
+url_user_id = query_params.get("u",None)
+
+# ユーザー情報の取得
+users_cfg = st.secrets["users"]
+
+# 自動ログイン
+if not st.session_state["is_logged_in"] and url_user_id in users_cfg:
+    user_data = users_cfg[url_user_id]
+    st.session_state["is_logged_in"] = True
+    st.session_state["target_sheet"] = user_data["sheet"]
+    st.session_state["current_user_name"] = user_data["name"]
+    # 成功メッセージ（一瞬だけ表示）
+    st.toast(f"おかえりなさい、{user_data['name']}さん！")
+
+# --- ログイン画面 ---
+if not st.session_state["is_logged_in"]:
+    st.header("🔒 ログイン")
+    st.write("パスワードを入力するか、**専用URL**からアクセスしてください。")
+    # 選択肢の作成 (表示名 -> ID の逆引き辞書を作る)
+    name_to_id = {v["name"]: k for k, v in users_cfg.items()}
+    selected_name = st.selectbox("ユーザーを選択", list(name_to_id.keys()))
+    input_pass = st.text_input("パスワード", type="password")
+    if st.button("ログイン"):
+        selected_id = name_to_id[selected_name]
+        correct_data = users_cfg[selected_id]
+        if input_pass == correct_data["pass"]:
+            st.session_state["is_logged_in"] = True
+            st.session_state["target_sheet"] = correct_data["sheet"]
+            st.session_state["current_user_name"] = correct_data["name"]
+            st.success("ログイン成功！")
+            time.sleep(0.5)
+            st.rerun()
+        else:
+            st.error("パスワードが違います")
+    st.stop()
+
 # --- データの準備 ---
-df = u.load_kakeibo_data()
-df_crypto = u.load_crypto_data()
+worksheet = u.get_worksheet(st.session_state["target_sheet"])
+df = u.load_kakeibo_data(worksheet)
+df_crypto = u.load_crypto_data(worksheet)
 today = pd.to_datetime("today").normalize()
 
 # --- 入力フォーム ---
@@ -101,7 +148,7 @@ if submit_btn:
         else:
             try:
                 # 暗号資産の保有量を増やす
-                df_curr = u.load_crypto_data()
+                df_curr = u.load_crypto_data(worksheet)
                 # 既存の保有量を取得
                 if crypto_name in df_curr['銘柄'].values:
                     current_val = df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'].values[0]
@@ -110,12 +157,12 @@ if submit_btn:
                 else:
                     new_row = pd.DataFrame({'銘柄': [crypto_name], '保有量': [crypto_amount]})
                     df_curr = pd.concat([df_curr, new_row], ignore_index=True)
-                u.save_crypto_data(df_curr)
+                u.save_crypto_data(worksheet, df_curr)
                 # 家計簿に「支出」として記録する（金額が1円以上の場合）
                 if amount > 0:
                     # 区分はわかりやすく「支出」にするか、あえて「資産移動」と記録するか選べます
                     # ここでは資産集計の計算を合わせるため「支出」として記録します
-                    u.add_entry(str(date), "支出", category, amount, memo)
+                    u.add_entry(worksheet, date, "支出", category, amount, memo)
                     msg = f"💰 {amount:,}円で {crypto_name} を {crypto_amount} 購入しました。"
                 else:
                     msg = f"💎 {crypto_name} が {crypto_amount} 増えました"
@@ -131,7 +178,7 @@ if submit_btn:
             st.warning('金額が0円です。入力してください。')
         else:
             try:
-                u.add_entry(date, balance_type, category, amount, final_memo)
+                u.add_entry(worksheet, date, balance_type, category, amount, final_memo)
                 if balance_type =="収入":
                     st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
                 else:
@@ -432,7 +479,7 @@ st.divider()
 st.subheader("なんでもメモ")
 # データの準備
 if 'my_memo_content' not in st.session_state:
-    st.session_state['my_memo_content'] = u.get_anything_memo()
+    st.session_state['my_memo_content'] = u.get_anything_memo(worksheet)
 if "memo_area" not in st.session_state:
     st.session_state["memo_area"] = st.session_state['my_memo_content']
 saved_text = st.session_state['my_memo_content']
@@ -458,7 +505,7 @@ else:
 if st.button(btn_label, type=btn_type):
     if is_unsaved:
         new_text = st.session_state["memo_area"]
-        u.update_anything_memo(new_text)
+        u.update_anything_memo(worksheet, new_text)
         st.session_state['my_memo_content'] = new_text
         st.success("保存しました！")
         time.sleep(0.5)
