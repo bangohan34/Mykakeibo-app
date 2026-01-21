@@ -81,7 +81,7 @@ def delete_entry(worksheet, row_index):
     if 0 <= target_list_index < len(current_data):
         current_data.pop(target_list_index)
         worksheet.batch_clear(['A:E'])
-        worksheet.update('A1', current_data)
+        worksheet.update(range_name='A1', values=current_data)
 
 def delete_callback():
     target_no = st.session_state.get("delete_input_no")
@@ -112,7 +112,7 @@ def load_crypto_data(worksheet):
 def save_crypto_data(worksheet, df_crypto):
     data_to_save = [df_crypto.columns.tolist()] + df_crypto.values.tolist()
     worksheet.batch_clear(['I:J'])
-    worksheet.update('I1', data_to_save)
+    worksheet.update(range_name='I1', values=data_to_save)
 
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
