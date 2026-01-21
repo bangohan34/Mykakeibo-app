@@ -230,7 +230,7 @@ if(url_user_id =="u2"):
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
             <div style="font-size: 14px; color: gray;">現金・預金</div>
-            <div style="font-size: 60px; font-weight: bold; color: #0068c9;">
+            <div style="font-size: 48px; font-weight: bold; color: #0068c9;">
                 {f"{int(yen_assets):,} 円"}
             </div>
         </div>
