@@ -384,16 +384,15 @@ if not df.empty:
                 common_x_d = alt.X('日付', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45))
                 bars_d = alt.Chart(bar_data_d).mark_bar().encode(
                     x=common_x_d,
-                    y=alt.Y('グラフ金額', axis=alt.Axis(title='日次収支 (円)', grid=True)),
+                    y=alt.Y('グラフ金額', axis=alt.Axis(title='収支 & 残高 (円)', grid=True)),
                     color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#35c787", "#cf4242"]), legend=None),
                     tooltip=[alt.Tooltip('日付', format='%Y/%m/%d'), '区分', alt.Tooltip('グラフ金額', format=',')]
                 )
                 line_d = alt.Chart(line_data_d).mark_line(color="#498dd1", point=True).encode(
-                    x=common_x_d,
-                    y=alt.Y('現金推移', axis=alt.Axis(title='現金残高（円）', grid=False)),
+                    x=common_x_d, y='現金推移',
                     tooltip=[alt.Tooltip('日付', format='%m/%d'), alt.Tooltip('現金推移', format=',')]
                 )
-                st.altair_chart(alt.layer(bars_d, line_d).resolve_scale(y='independent').properties(height=300), use_container_width=True)
+                st.altair_chart(alt.layer(bars_d, line_d).resolve_scale(y='share').properties(height=300), use_container_width=True)
             else:
                 st.info("直近30日のデータはありません。")
     else:
