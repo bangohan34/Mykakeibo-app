@@ -47,5 +47,21 @@ hide_streamlit_style = """
             header {visibility: hidden;}
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
+            /* 入力欄 */
+            .stTextInput div[data-baseweb="input"],
+            .stNumberInput div[data-baseweb="input"],
+            .stSelectbox div[data-baseweb="select"] > div {
+                background-color: #e0d5c2 !important;
+                border-color: #dcb471 !important;
+            }
+            /* 表 */
+            div[data-testid="stDataFrame"] th {
+                background-color: #f0f2f6 !important;
+                color: #333 !important;
+            }
+            div[data-testid="stDataFrame"] td {
+                background-color: #ffffff !important;
+                color: #333 !important;
+            }
             </style>
             """
