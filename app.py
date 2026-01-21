@@ -32,7 +32,6 @@ if not st.session_state["is_logged_in"] and url_user_id in users_cfg:
     st.session_state["is_logged_in"] = True
     st.session_state["target_sheet"] = user_data["sheet"]
     st.session_state["current_user_name"] = user_data["name"]
-    st.toast(f"おかえりなさい、{user_data['name']}さん！")
 
 # --- ログイン画面 ---
 if not st.session_state["is_logged_in"]:
