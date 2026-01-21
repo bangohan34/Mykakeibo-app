@@ -74,20 +74,34 @@ crypto_name, crypto_amount = "", 0.0000
 # カテゴリ選択
 if balance_type =="支出":
     st.caption("支出の詳細を選んでください")
-    category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
-    # サブカテゴリ
-    sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
-    if sub_options:
-        st.caption(f"{category}の詳細を選んでください")
-        sub_category = st.radio(
-            f"{category}詳細",
-            sub_options,
-            horizontal=True,
-            label_visibility="collapsed"
-        )
+    if(url_user_id =="u1"):
+        category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
+        sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
+        if sub_options:
+            st.caption(f"{category}の詳細を選んでください")
+            sub_category = st.radio(
+                f"{category}詳細",
+                sub_options,
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+    elif(url_user_id =="u2"):
+        category = st.radio('項目', c.EXPENSE_CATEGORIES_saya, horizontal=True, label_visibility="collapsed")
+        sub_options = c.EXPENSE_SUB_CATEGORIES_saya.get(category)
+        if sub_options:
+            st.caption(f"{category}の詳細を選んでください")
+            sub_category = st.radio(
+                f"{category}詳細",
+                sub_options,
+                horizontal=True,
+                label_visibility="collapsed"
+            )
 elif balance_type =="収入":
     st.caption("収入の詳細を選んでください")
-    category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
+    if(url_user_id =="u1"):
+        category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
+    elif(url_user_id =="u2"):
+        category = st.radio('項目', c.EXPENSE_CATEGORIES_saya, horizontal=True, label_visibility="collapsed")
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
     # 資産移動
