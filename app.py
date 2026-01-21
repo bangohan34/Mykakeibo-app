@@ -208,22 +208,34 @@ if not df_crypto.empty:
 # 合計の計算
 total_all_assets = yen_assets + crypto_total_val
 # 表示
-st.markdown(f"""
-<div style="display: flex; gap: 10px; justify-content: space-between;">
-    <div style="flex: 1; padding: 10px; text-align: center;">
-        <div style="font-size: 14px; color: gray;">現金・預金</div>
-        <div style="font-size: 30px; font-weight: bold; color: #0068c9;">
-            {f"{int(yen_assets):,} 円"}
+if(url_user_id =="u1"):
+    st.markdown(f"""
+    <div style="display: flex; gap: 10px; justify-content: space-between;">
+        <div style="flex: 1; padding: 10px; text-align: center;">
+            <div style="font-size: 14px; color: gray;">現金・預金</div>
+            <div style="font-size: 30px; font-weight: bold; color: #0068c9;">
+                {f"{int(yen_assets):,} 円"}
+            </div>
+        </div>
+        <div style="flex: 1; padding: 10px; text-align: center;">
+            <div style="font-size: 14px; color: gray;">暗号資産</div>
+            <div style="font-size: 30px; font-weight: bold; color: #ff8c00;">
+                {f"{int(crypto_total_val):,} 円"}
+            </div>
         </div>
     </div>
-    <div style="flex: 1; padding: 10px; text-align: center;">
-        <div style="font-size: 14px; color: gray;">暗号資産</div>
-        <div style="font-size: 30px; font-weight: bold; color: #ff8c00;">
-            {f"{int(crypto_total_val):,} 円"}
+    """, unsafe_allow_html=True)
+if(url_user_id =="u2"):
+    st.markdown(f"""
+    <div style="display: flex; gap: 10px; justify-content: space-between;">
+        <div style="flex: 1; padding: 10px; text-align: center;">
+            <div style="font-size: 14px; color: gray;">現金・預金</div>
+            <div style="font-size: 30px; font-weight: bold; color: #0068c9;">
+                {f"{int(yen_assets):,} 円"}
+            </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # --- 資産割合バー ---
 if total_all_assets > 0:
