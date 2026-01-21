@@ -63,7 +63,7 @@ df_crypto = u.load_crypto_data(worksheet)
 # 日本時間
 t_delta = datetime.timedelta(hours=9)
 JST = datetime.timezone(t_delta, 'JST')
-today = datetime.datetime.now(JST).date()
+today = pd.to_datetime(datetime.datetime.now(JST).date())
 
 # --- 入力フォーム ---
 st.subheader("収支入力")
