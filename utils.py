@@ -85,7 +85,11 @@ def delete_callback():
     if target_no:
         try:
             real_row_index = int(target_no) + 1
-            delete_entry(real_row_index)
+            target_sheet_name = st.session_state.get("target_sheet")
+            if not target_sheet_name:
+                raise Exception("ログイン情報が見つかりません")
+            ws = get_worksheet(target_sheet_name)
+            delete_entry(ws, real_row_index)
             st.session_state["delete_input_no"] = None
             st.session_state["del_confirm_ckeck"] = False
             st.session_state["menu_reset_id"] += 1
