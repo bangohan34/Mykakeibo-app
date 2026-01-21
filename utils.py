@@ -32,9 +32,9 @@ def get_worksheet(sheet_name):
         # ログインして、スプレッドシートを開く
         gc = gspread.authorize(credentials)
         if len(sheet_name) > 30 and " " not in sheet_name:
-             sh = gc.open_by_key(sheet_name)
+            sh = gc.open_by_key(sheet_name)
         else:
-             sh = gc.open(sheet_name)
+            sh = gc.open(sheet_name)
         return sh.sheet1
     except Exception as e:
         st.error(f"接続エラー: スプレッドシート '{sheet_name}' が見つかりません。共有設定を確認してください。エラー詳細: {e}")

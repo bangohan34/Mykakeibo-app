@@ -32,7 +32,6 @@ if not st.session_state["is_logged_in"] and url_user_id in users_cfg:
     st.session_state["is_logged_in"] = True
     st.session_state["target_sheet"] = user_data["sheet"]
     st.session_state["current_user_name"] = user_data["name"]
-    # 成功メッセージ（一瞬だけ表示）
     st.toast(f"おかえりなさい、{user_data['name']}さん！")
 
 # --- ログイン画面 ---
@@ -61,7 +60,10 @@ if not st.session_state["is_logged_in"]:
 worksheet = u.get_worksheet(st.session_state["target_sheet"])
 df = u.load_kakeibo_data(worksheet)
 df_crypto = u.load_crypto_data(worksheet)
-today = pd.to_datetime("today").normalize()
+# 日本時間
+t_delta = datetime.timedelta(hours=9)
+JST = datetime.timezone(t_delta, 'JST')
+today = datetime.datetime.now(JST).date()
 
 # --- 入力フォーム ---
 st.subheader("収支入力")
