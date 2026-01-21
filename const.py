@@ -47,8 +47,5 @@ hide_streamlit_style = """
             header {visibility: hidden;}
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
-            .stApp{
-                background-color: #afeeee;
-            }
             </style>
             """
