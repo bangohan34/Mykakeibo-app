@@ -21,7 +21,6 @@ if "current_user_name" not in st.session_state:
 # URLパラメータを取得
 query_params = st.query_params
 url_user_id = query_params.get("u",None)
-url_user_id
 # ユーザー情報の取得
 users_cfg = st.secrets["users"]
 # 自動ログイン
