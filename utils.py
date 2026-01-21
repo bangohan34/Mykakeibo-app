@@ -190,9 +190,9 @@ def get_meme_price(token_address):
 # --- 履歴表示 ---
 def color_coding(val):
     if val == '収入':
-        return 'color: "#379c72"; font-weight: bold;'
+        return 'color: #379c72; font-weight: bold;'
     elif val == '支出':
-        return 'color: "#A03333FF"; font-weight: bold;'
+        return 'color: #A03333FF; font-weight: bold;'
     return ''
 
 # --- なんでもメモの操作 ---
