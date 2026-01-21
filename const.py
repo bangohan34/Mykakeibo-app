@@ -39,9 +39,6 @@ MEME_CONTRACTS = {
     '42069': 'FquUHKWfMUdSMxxSU9ZWrSc98hvTXeMnQn9nksSKpump'
 }
 
-# スプレッドシート名
-SPREADSHEET_NAME = 'MyKakeibo'
-
 # スタイルCSS
 hide_streamlit_style = """
             <style>
@@ -50,5 +47,8 @@ hide_streamlit_style = """
             header {visibility: hidden;}
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
+            .stApp{
+                background-color: #f8f9fa;
+            }
             </style>
             """
