@@ -53,6 +53,9 @@ hide_streamlit_style = """
                 background-color: #f2ead8 !important;
                 border: 1px solid #A1A3A6 !important;
             }
+            input, textarea {
+                background-color: transparent !important;
+            }
             /* なんでもメモ */
             /* 枠線の色 */
             .stTextArea div[data-baseweb="textarea"] {
