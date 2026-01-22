@@ -314,7 +314,7 @@ if not df.empty:
     base_df['グラフ金額'] = base_df.apply(lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], axis=1)
     base_df = base_df.sort_values('日付')
     base_df['現金推移'] = base_df['グラフ金額'].cumsum()
-    base_df['年月'] = base_df['日付'].dt.strftime('%Y-%m')
+    base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
     # 週の始まり（月曜）の日付を計算
     base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
     # 表示期間の絞り込み（2026年以降）
