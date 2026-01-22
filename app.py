@@ -2,7 +2,6 @@ import streamlit as st
 import datetime
 import pandas as pd
 import time
-import altair as alt
 
 import const as c
 import utils as u
