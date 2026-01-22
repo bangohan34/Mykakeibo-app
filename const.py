@@ -50,14 +50,14 @@ hide_streamlit_style = """
             /* 入力フォーム */
             .stTextInput div[data-baseweb="input"],
             .stNumberInput div[data-baseweb="input"] {
-                background-color: #F5E7C6 !important;
+                background-color: #f2ead8 !important;
                 border: 1px solid #A1A3A6 !important;
             }
             /* なんでもメモ */
             /* 枠線の色 */
             .stTextArea div[data-baseweb="textarea"] {
-                background-color: #F5E7C6 !important;
-                border: 1px solid #0068c9 !important;
+                background-color: #f2ead8 !important;
+                border: 1px solid #A1A3A6 !important;
             }
             /* 背景色 */
             .stTextArea textarea {
