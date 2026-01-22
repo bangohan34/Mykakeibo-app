@@ -5,6 +5,7 @@ import pandas as pd
 import json
 import requests
 import const as c
+import altair as alt
 
 # --- 認証と接続 ---
 scopes = [
@@ -67,14 +68,12 @@ def load_kakeibo_data(worksheet):
     df['日付'] = df['日付'].astype(str).str.strip().str.replace('-','/')
     df['日付'] = pd.to_datetime(df['日付'], errors='coerce')
     return df
-
 def add_entry(worksheet, date, balance_type,category, amount, memo):
     col_a_values = worksheet.col_values(1)
     next_row = len(col_a_values) + 1
     row_data = [[str(date), balance_type, category, amount, memo]]
     range_str = f"A{next_row}:E{next_row}"
     worksheet.update(range_name=range_str,values=row_data)
-
 def delete_entry(worksheet, row_index):
     current_data = worksheet.get('A:E')
     target_list_index = int(row_index) - 1
@@ -82,7 +81,6 @@ def delete_entry(worksheet, row_index):
         current_data.pop(target_list_index)
         worksheet.batch_clear(['A:E'])
         worksheet.update(range_name='A1', values=current_data)
-
 def delete_callback():
     target_no = st.session_state.get("delete_input_no")
     if target_no:
@@ -108,12 +106,10 @@ def load_crypto_data(worksheet):
     df_crypto = pd.DataFrame(raw_data[1:],columns=['銘柄','保有量'])
     df_crypto['保有量'] = pd.to_numeric(df_crypto['保有量'], errors='coerce').fillna(0.0)
     return df_crypto
-
 def save_crypto_data(worksheet, df_crypto):
     data_to_save = [df_crypto.columns.tolist()] + df_crypto.values.tolist()
     worksheet.batch_clear(['I:J'])
     worksheet.update(range_name='I1', values=data_to_save)
-
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
     prices = {}
@@ -153,7 +149,6 @@ def get_crypto_prices(symbols):
             except:
                 pass
     return prices
-
 @st.cache_data(ttl=3600)
 def get_usd_jpy_rate():
     try:
@@ -163,8 +158,6 @@ def get_usd_jpy_rate():
         return data["rates"]["JPY"]
     except:
         return 150.0 # エラー時は仮のレート
-
-# ミームコイン価格取得
 @st.cache_data(ttl=600)
 def get_meme_price(token_address):
     dex_url = f"https://api.dexscreener.com/latest/dex/tokens/{token_address}"
@@ -187,6 +180,38 @@ def get_meme_price(token_address):
         print(f"Meme Price Error: {e}")
         return 0.0
 
+# --- グラフ ---
+def create_combo_chart(data, x_col, x_format, tooltip_format, x_label_angle=0):
+    # 棒グラフ
+    bar_data = data.groupby([x_col, '区分'])['グラフ金額'].sum().reset_index()
+    bars = alt.Chart(bar_data).mark_bar().encode(
+        x=alt.X(x_col, axis=alt.Axis(format=x_format, title=None, labelAngle=x_label_angle)),
+        y=alt.Y('グラフ金額', axis=alt.Axis(title='収支 & 残高 (円)', grid=True)),
+        color=alt.Color('区分', scale=alt.Scale(domain=['収入', '支出'], range=["#379c72", "#A03333"]), legend=None),
+        tooltip=[
+            alt.Tooltip(x_col, format=tooltip_format, title='期間'),
+            '区分',
+            alt.Tooltip('グラフ金額', format=',', title='金額')
+        ]
+    )
+    # 折れ線グラフ
+    line_data = data.groupby(x_col)['現金推移'].last().reset_index()
+    line = alt.Chart(line_data).mark_line(color="#498dd1", point=True).encode(
+        x=alt.X(x_col, axis=alt.Axis(format=x_format, title=None)),
+        y='現金推移',
+        tooltip=[
+            alt.Tooltip(x_col, format=tooltip_format, title='期間'),
+            alt.Tooltip('現金推移', format=',', title='残高')
+        ]
+    )
+    # 重ね合わせ
+    chart = alt.layer(bars, line).resolve_scale(y='shared').properties(height=300)
+    return chart.configure_axis(
+        labelColor='#703B3B',  # 軸の文字色
+        titleColor='#703B3B',  # 軸タイトルの色
+        gridColor='#e0e0e0'    # グリッド線を薄いグレーに
+    )
+
 # --- 履歴表示 ---
 def color_coding(val):
     if val == '収入':
@@ -204,6 +229,5 @@ def get_anything_memo(worksheet):
     except:
         current_memo = ""
     return current_memo
-
 def update_anything_memo(worksheet, text):
     worksheet.update_acell('G2', text)
