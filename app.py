@@ -417,11 +417,10 @@ if not df.empty:
         .map(u.color_coding, subset=['区分'])
         .format({"金額": "{:,} 円"})
         .set_properties(**{
-                'background-color': '#ffffff',      # 中身の背景色（白）
-                'color': '#333333',                 # 中身の文字色（黒）
-                'border-color': '#e0e0e0',          # 枠線の色（薄いグレー）
-                'border-style': 'solid',            # 枠線の種類
-                'border-width': '1px'               # 枠線の太さ
+                'background-color': '#ede4ce',
+                'border-color': '#A1A3A6',
+                'border-style': 'solid',
+                'border-width': '2px'
         }),
         use_container_width=True,
         height=240,
