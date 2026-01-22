@@ -295,6 +295,11 @@ if(url_user_id =="u1"):
                 display_df.style.format({
                     "保有量": "{:.8f}",
                     "評価額": "{:,} 円" 
+                })
+                .set_properties(**{
+                'background-color': '#ede4ce',
+                'border-color': '#A1A3A6',
+                'border-style': 'solid',
                 }),
                 hide_index=True,
                 use_container_width=True
