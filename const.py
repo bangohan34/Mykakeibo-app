@@ -49,7 +49,8 @@ hide_streamlit_style = """
             [data-testid="stNumberInput"] button { display: none; }
             /* 入力フォーム */
             .stTextInput div[data-baseweb="input"],
-            .stNumberInput div[data-baseweb="input"] {
+            .stNumberInput div[data-baseweb="input"],
+            .stTextArea div[data-baseweb="textarea"] {
                 background-color: #f2ead8 !important;
                 border: 1px solid #A1A3A6 !important;
             }
