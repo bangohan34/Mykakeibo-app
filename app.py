@@ -413,8 +413,16 @@ if not df.empty:
     df_display['日付'] = df_display['日付'].dt.strftime('%y/%m/%d')
     df_display['メモ'] = df_display['メモ'].astype(str).apply(lambda x: (x[:3] + '..') if len(x) > 2 else x)
     st.dataframe(
-        df_display.iloc[::-1].style.map(u.color_coding, subset=['区分'])
-        .format({"金額": "{:,} 円"}),
+        df_display.iloc[::-1].style
+        .map(u.color_coding, subset=['区分'])
+        .format({"金額": "{:,} 円"})
+        .set_properties(**{
+                'background-color': '#ffffff',      # 中身の背景色（白）
+                'color': '#333333',                 # 中身の文字色（黒）
+                'border-color': '#e0e0e0',          # 枠線の色（薄いグレー）
+                'border-style': 'solid',            # 枠線の種類
+                'border-width': '1px'               # 枠線の太さ
+        }),
         use_container_width=True,
         height=240,
         hide_index=True
