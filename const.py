@@ -47,30 +47,5 @@ hide_streamlit_style = """
             header {visibility: hidden;}
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
-            /* 入力フォーム */
-            div[data-baseweb="input"],          /* 文字入力・数値入力の箱 */
-            div[data-baseweb="select"] > div,   /* プルダウンの箱 */
-            div[data-baseweb="textarea"] {      /* メモ帳の箱 */
-                background-color: #f2ead8 !important;  /* ベージュ */
-                border: 1px solid #A1A3A6 !important;  /* グレーの枠線 */
-                border-radius: 4px !important;
-            }
-            input[type="text"],
-            input[type="number"],
-            textarea {
-                background-color: transparent !important;
-                color: #333 !important; /* 文字色：黒 */
-            }
-            /* なんでもメモ */
-            /* 枠線の色 */
-            .stTextArea div[data-baseweb="textarea"] {
-                background-color: #f2ead8 !important;
-                border: 1px solid #A1A3A6 !important;
-            }
-            /* 背景色 */
-            .stTextArea textarea {
-                background-color: transparent !important; /* 透明にして親の色を見せる */
-                color: #333 !important;
-            }
             </style>
             """
