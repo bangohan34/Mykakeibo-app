@@ -47,25 +47,26 @@ hide_streamlit_style = """
             header {visibility: hidden;}
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
-            /* 1. テキスト入力と数値入力の箱 */
+            /* 入力エリア */
             .stTextInput div[data-baseweb="input"] > div,
-            .stNumberInput div[data-baseweb="input"] > div {
-                background-color: red !important;
-                color: yellow !important;
-                border-color: yellow !important;
+            .stNumberInput div[data-baseweb="input"] > div,
+            .stSelectbox div[data-baseweb="select"] > div,
+            .stTextArea div[data-baseweb="textarea"] {
+                background-color: F5E7C6 !important;
             }
 
-            /* 2. セレクトボックス（プルダウン）の箱 */
-            .stSelectbox div[data-baseweb="select"] > div {
-                background-color: red !important;
-                color: yellow !important;
-                border-color: yellow !important;
+            /* 表 */
+            [data-testid="stDataFrame"] th {
+                background-color: #e8e6d9 !important; /* 少し濃いベージュで区別 */
+                color: #333 !important;
+                border-bottom: 1px solid #ccc !important;
             }
 
-            /* 3. 中の文字（入力要素そのもの） */
-            input {
-                background-color: red !important;
-                color: yellow !important;
+            /* データ部分 */
+            [data-testid="stDataFrame"] td {
+                background-color: #ffffff !important; /* データは見やすく白で */
+                color: #333 !important;
+                border-bottom: 1px solid #f0f0f0 !important;
             }
             </style>
             """
