@@ -322,8 +322,6 @@ if not df.empty:
     # 表示期間の絞り込み
     graph_df = base_df[
         (base_df['日付'] >= pd.to_datetime('2026-01-01'))
-        # &
-        #(base_df['日付'] <= pd.to_datetime('2026-07-30')) 
     ]
     if not graph_df.empty:
         # タブを作成
