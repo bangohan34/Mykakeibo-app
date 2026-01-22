@@ -329,8 +329,10 @@ if not df.empty:
             )
         # 週ごと（直近30週)
         with tab_week:
-            start_date_30w = today - pd.Timedelta(weeks=30)
-            df_30w = base_df[(base_df['日付'] >= start_date_30w) & (base_df['日付'] <= today)]
+            #start_date_30w = today - pd.Timedelta(weeks=30)
+            #df_30w = base_df[(base_df['日付'] >= start_date_30w) & (base_df['日付'] <= today)]
+            start_date_fixed = pd.to_datetime('2026-01-01')
+            df_30w = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
             if not df_30w.empty:
                 st.altair_chart(
                     u.create_combo_chart(df_30w, '週', '%m/%d', '%Y-%m-%d', -45),
@@ -340,8 +342,9 @@ if not df.empty:
                 st.info("直近30週のデータはありません。")
         # 日ごと（直近30日
         with tab_day:
-            start_date_30d = today - pd.Timedelta(days=30)
-            df_30d = base_df[(base_df['日付'] >= start_date_30d) & (base_df['日付'] <= today)]
+            #start_date_30d = today - pd.Timedelta(days=30)
+            #df_30d = base_df[(base_df['日付'] >= start_date_30d) & (base_df['日付'] <= today)]
+            df_30d = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
             if not df_30d.empty:
                 st.altair_chart(
                     u.create_combo_chart(df_30d, '日付', '%m/%d', '%Y-%m-%d', -45),
