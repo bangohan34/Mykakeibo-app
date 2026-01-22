@@ -47,17 +47,11 @@ hide_streamlit_style = """
             header {visibility: hidden;}
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
-            /* 入力エリア */
+            /* 入力フォーム */
             .stTextInput div[data-baseweb="input"],
             .stNumberInput div[data-baseweb="input"] {
                 background-color: #F5E7C6 !important;
-                border: 1px solid #0068c9 !important; /* border-colorけでなくborder全体を指定すると確実です */
-            }
-            /* セレクトボックス */
-            .stSelectbox div[data-baseweb="select"] > div {
-                background-color: #F5E7C6 !important;
-                border: 1px solid #0068c9 !important;
-                color: #333 !important;
+                border: 1px solid #A1A3A6 !important;
             }
             /* なんでもメモ */
             /* 枠線の色 */
@@ -69,20 +63,6 @@ hide_streamlit_style = """
             .stTextArea textarea {
                 background-color: transparent !important; /* 透明にして親の色を見せる */
                 color: #333 !important;
-            }
-
-            /* 表 */
-            [data-testid="stDataFrame"] th {
-                background-color: #e8e6d9 !important; /* 少し濃いベージュで区別 */
-                color: #333 !important;
-                border-bottom: 1px solid #ccc !important;
-            }
-
-            /* データ部分 */
-            [data-testid="stDataFrame"] td {
-                background-color: #ffffff !important; /* データは見やすく白で */
-                color: #333 !important;
-                border-bottom: 1px solid #f0f0f0 !important;
             }
             </style>
             """
