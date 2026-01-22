@@ -420,7 +420,6 @@ if not df.empty:
                 'background-color': '#ede4ce',
                 'border-color': '#A1A3A6',
                 'border-style': 'solid',
-                'border-width': '5px'
         }),
         use_container_width=True,
         height=240,
