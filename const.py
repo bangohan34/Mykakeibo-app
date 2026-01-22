@@ -48,12 +48,27 @@ hide_streamlit_style = """
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
             /* 入力エリア */
-            .stTextInput div[data-baseweb="input"] > div,
-            .stNumberInput div[data-baseweb="input"] > div,
-            .stSelectbox div[data-baseweb="select"] > div,
+            .stTextInput div[data-baseweb="input"],
+            .stNumberInput div[data-baseweb="input"] {
+                background-color: #F5E7C6 !important;
+                border: 1px solid #0068c9 !important; /* border-colorけでなくborder全体を指定すると確実です */
+            }
+            /* セレクトボックス */
+            .stSelectbox div[data-baseweb="select"] > div {
+                background-color: #F5E7C6 !important;
+                border: 1px solid #0068c9 !important;
+                color: #333 !important;
+            }
+            /* なんでもメモ */
+            /* 枠線の色 */
             .stTextArea div[data-baseweb="textarea"] {
                 background-color: #F5E7C6 !important;
-                border-color: #0068c9 !important;
+                border: 1px solid #0068c9 !important;
+            }
+            /* 背景色 */
+            .stTextArea textarea {
+                background-color: transparent !important; /* 透明にして親の色を見せる */
+                color: #333 !important;
             }
 
             /* 表 */
