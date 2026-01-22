@@ -48,11 +48,13 @@ hide_streamlit_style = """
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
             /* 入力欄 */
-            .stTextInput div[data-baseweb="input"],
-            .stNumberInput div[data-baseweb="input"],
-            .stSelectbox div[data-baseweb="select"] > div {
+            .stSelectbox div[data-baseweb="select"] {
                 background-color: #333 !important;
                 border-color: #333 !important;
+                color: red !important;
+            }
+            .stSelectbox div[data-baseweb="select"] * {
+                color: brack !important;
             }
             /* 表 */
             div[data-testid="stDataFrame"] th {
