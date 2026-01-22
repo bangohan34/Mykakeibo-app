@@ -53,7 +53,7 @@ hide_streamlit_style = """
             .stSelectbox div[data-baseweb="select"] > div,
             .stTextArea div[data-baseweb="textarea"] {
                 background-color: #F5E7C6 !important;
-                border-color: #333333 !important;
+                border-color: #0068c9 !important;
             }
 
             /* 表 */
