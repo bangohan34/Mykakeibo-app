@@ -48,13 +48,17 @@ hide_streamlit_style = """
             .block-container { padding-top: 1rem; }
             [data-testid="stNumberInput"] button { display: none; }
             /* 入力欄 */
-            .stSelectbox div[data-baseweb="select"] {
-                background-color: #333 !important;
-                border-color: #333 !important;
-                color: red !important;
+            /* プルダウンの箱 */
+            .stSelectbox div[data-baseweb="select"] > div {
+                background-color: #fbf8e8 !important; /* 薄いクリーム色 */
+                border-color: #d0d0d0 !important;      /* 薄いグレーの枠 */
+                color: #333 !important;                /* 文字は黒 */
             }
-            .stSelectbox div[data-baseweb="select"] * {
-                color: brack !important;
+            .stTextInput div[data-baseweb="input"],
+            .stNumberInput div[data-baseweb="input"] {
+                background-color: #fbf8e8 !important; /* 薄いクリーム色 */
+                border-color: #d0d0d0 !important;      /* 薄いグレーの枠 */
+                color: #333 !important;                /* 文字は黒 */
             }
             /* 表 */
             div[data-testid="stDataFrame"] th {
