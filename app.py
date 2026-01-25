@@ -262,6 +262,9 @@ if(url_user_id =="u1"):
                 if '評価額(円)' in row and row['評価額(円)'] > 0:
                     ratio = (row['評価額(円)'] / total_all_assets) * 100
                     name = row['銘柄']
+                    if ratio < 5.0:
+                        others_ratio += ratio
+                        continue
                     # 色を決定するロジック
                     # 辞書に設定があればその色、なければ予備リストから順番に使う
                     if name.upper() in SYMBOL_COLORS:
