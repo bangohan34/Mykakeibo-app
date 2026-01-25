@@ -211,7 +211,37 @@ def create_combo_chart(data, x_col, x_format, tooltip_format, x_label_angle=0):
         titleColor='#703B3B',  # 軸タイトルの色
         gridColor='#e0e0e0'    # グリッド線を薄いグレーに
     )
-
+def create_expense_pie_chart(data):
+    # 支出データのみを抽出して集計
+    expense_df = data[data['区分'] == '支出'].copy()
+    # データがない場合は何もしない（エラー回避）
+    if expense_df.empty:
+        return None
+    # カテゴリーごとの合計を計算
+    pie_data = expense_df.groupby('カテゴリー', as_index=False)['金額'].sum()
+    # 割合（%）を計算して列に追加
+    total_expense = pie_data['金額'].sum()
+    pie_data['割合'] = pie_data['金額'] / total_expense
+    # ドーナツチャートの作成
+    base = alt.Chart(pie_data).encode(
+        theta=alt.Theta("金額", stack=True), # 金額に応じて角度を決める
+        color=alt.Color("カテゴリー", legend=alt.Legend(title="カテゴリー")), # 色分け
+        order=alt.Order("金額", sort="descending"), # 金額が大きい順に並べる
+        tooltip=[
+            "カテゴリー", 
+            alt.Tooltip("金額", format=","),
+            alt.Tooltip("割合", format=".1%", title="構成比") # %を表示
+        ]
+    )
+    # ドーナツの「輪」の部分
+    pie = base.mark_arc(innerRadius=50, outerRadius=90) # 内径50, 外径90でドーナツ化
+    # グラフの設定（背景透明、文字色など）
+    return pie.configure_view(
+        strokeOpacity=0
+    ).configure_legend(
+        labelColor='#703B3B',
+        titleColor='#703B3B'
+    )
 # --- 履歴表示 ---
 def color_coding(val):
     if val == '収入':

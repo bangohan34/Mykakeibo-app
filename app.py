@@ -357,6 +357,13 @@ if not df.empty:
 else:
     st.info("データがありません。")
 
+# --- 支出円グラフ ---
+pie_chart = u.create_expense_pie_chart(graph_df)
+if pie_chart:
+    st.altair_chart(pie_chart, use_container_width=True)
+else:
+    st.info("支出データがありません")
+
 st.divider()
 
 # --- 履歴表示 ---
