@@ -39,6 +39,17 @@ MEME_CONTRACTS = {
     '42069': 'FquUHKWfMUdSMxxSU9ZWrSc98hvTXeMnQn9nksSKpump'
 }
 
+# 円グラフのカテゴリーの色
+PIE_CHART_CATEGORIES_COLORS = {
+    '食費': "#F15832",  
+    '交通費': "#5D7DE4",
+    '日用品': "#E0B353",
+    '趣味': "#33EC64",  
+    '交際費': "#DB469B",
+    '投資': "#454444",
+    'その他': '#CFCFCF',
+}
+
 # スタイルCSS
 hide_streamlit_style = """
             <style>

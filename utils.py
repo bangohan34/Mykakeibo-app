@@ -227,13 +227,25 @@ def create_expense_pie_chart(data):
         pie_data = pd.concat([normal_rows, others_row])
     pie_data['order_index'] = range(len(pie_data))
     sort_order = pie_data['カテゴリー'].tolist()
+    # 色
+    domain = []
+    range_ = []
+    for cat in sort_order:
+        domain.append(cat)
+        # 辞書に色が定義されていればそれを使い、なければグレー(#CFCFCF)を使う
+        range_.append(c.PIE_CHART_CATEGORIES_COLORS.get(cat, '#CFCFCF'))
     # 割合（%）を計算して列に追加
     total_expense = pie_data['金額'].sum()
     pie_data['割合'] = pie_data['金額'] / total_expense
     # ドーナツチャートの作成
     base = alt.Chart(pie_data).encode(
         theta=alt.Theta("金額", stack=True), # 金額に応じて角度を決める
-        color=alt.Color("カテゴリー", legend=alt.Legend(title="カテゴリー"), sort=sort_order),
+        color=alt.Color(
+            "カテゴリー", 
+            legend=alt.Legend(title="カテゴリー"), 
+            sort=sort_order,
+            scale=alt.Scale(domain=domain, range=range_) 
+        ),
         order=alt.Order("order_index", sort="ascending"),
         tooltip=[
             "カテゴリー", 
@@ -247,7 +259,7 @@ def create_expense_pie_chart(data):
     text = alt.Chart(text_data).mark_text(
         align='center',
         baseline='middle',
-        fontSize=24,        # 文字サイズ
+        fontSize=10,        # 文字サイズ
         color='#703B3B'   # 文字色
     ).encode(
         text=alt.Text('total', format=',') # カンマ区切りで表示
