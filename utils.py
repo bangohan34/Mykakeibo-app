@@ -219,14 +219,21 @@ def create_expense_pie_chart(data):
         return None
     # カテゴリーごとの合計を計算
     pie_data = expense_df.groupby('カテゴリー', as_index=False)['金額'].sum()
+    # 順番
+    pie_data = pie_data.sort_values('金額', ascending=False)
+    if 'その他' in pie_data['カテゴリー'].values:
+        others_row = pie_data[pie_data['カテゴリー'] == 'その他']
+        normal_rows = pie_data[pie_data['カテゴリー'] != 'その他']
+        pie_data = pd.concat([normal_rows, others_row])
+    sort_order = pie_data['カテゴリー'].tolist()
     # 割合（%）を計算して列に追加
     total_expense = pie_data['金額'].sum()
     pie_data['割合'] = pie_data['金額'] / total_expense
     # ドーナツチャートの作成
     base = alt.Chart(pie_data).encode(
         theta=alt.Theta("金額", stack=True), # 金額に応じて角度を決める
-        color=alt.Color("カテゴリー", legend=alt.Legend(title="カテゴリー")), # 色分け
-        order=alt.Order("金額", sort="descending"), # 金額が大きい順に並べる
+        color=alt.Color("カテゴリー", legend=alt.Legend(title="カテゴリー"), sort=sort_order),
+        order=alt.Order("カテゴリー", sort=sort_order),
         tooltip=[
             "カテゴリー", 
             alt.Tooltip("金額", format=","),
@@ -235,6 +242,17 @@ def create_expense_pie_chart(data):
     )
     # ドーナツの「輪」の部分
     pie = base.mark_arc(innerRadius=50, outerRadius=90) # 内径50, 外径90でドーナツ化
+    text_data = pd.DataFrame({'total': [total_expense]})
+    text = alt.Chart(text_data).mark_text(
+        align='center',
+        baseline='middle',
+        fontSize=24,        # 文字サイズ
+        color='#703B3B'   # 文字色
+    ).encode(
+        text=alt.Text('total', format=',') # カンマ区切りで表示
+    )
+    # 重ね合わせ
+    chart = alt.layer(pie, text).resolve_scale(theta='independent')
     # グラフの設定（背景透明、文字色など）
     return pie.configure_view(
         strokeOpacity=0
