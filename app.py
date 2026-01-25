@@ -374,19 +374,16 @@ if not df.empty:
     months_list = pie_df['年月'].drop_duplicates().sort_values(ascending=False)
     if not months_list.empty:
         st.subheader("月ごとの支出内訳")
-        # 3. 「2026年1月」「2025年12月」... というタブを作る
+        # 「2026年1月」「2025年12月」... というタブを作る
         tab_labels = months_list.dt.strftime('%Y年%m月').tolist()
         tabs = st.tabs(tab_labels)
-
-        # 4. 各タブの中に、その月の円グラフを表示する
+        # 各タブの中に、その月の円グラフを表示する
         for tab, month_date in zip(tabs, months_list):
             with tab:
                 # その月のデータだけを抜き出す
                 target_month_df = pie_df[pie_df['年月'] == month_date]
-                
                 # utils.py の関数を使って円グラフ作成
                 pie_chart = u.create_expense_pie_chart(target_month_df)
-                
                 if pie_chart:
                     st.altair_chart(pie_chart, use_container_width=True)
                 else:
