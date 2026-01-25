@@ -366,11 +366,33 @@ else:
     st.info("データがありません。")
 
 # --- 支出円グラフ ---
-pie_chart = u.create_expense_pie_chart(graph_df)
-if pie_chart:
-    st.altair_chart(pie_chart, use_container_width=True)
-else:
-    st.info("支出データがありません")
+if not df.empty:
+    # 円グラフ用のデータを準備
+    pie_df = df.copy()
+    pie_df['年月'] = pie_df['日付'].apply(lambda x: x.replace(day=1)) # 月単位にまとめる
+    # データが存在する「年月」のリストを作る（新しい順）
+    months_list = pie_df['年月'].drop_duplicates().sort_values(ascending=False)
+    if not months_list.empty:
+        st.subheader("月ごとの支出内訳")
+        # 3. 「2026年1月」「2025年12月」... というタブを作る
+        tab_labels = months_list.dt.strftime('%Y年%m月').tolist()
+        tabs = st.tabs(tab_labels)
+
+        # 4. 各タブの中に、その月の円グラフを表示する
+        for tab, month_date in zip(tabs, months_list):
+            with tab:
+                # その月のデータだけを抜き出す
+                target_month_df = pie_df[pie_df['年月'] == month_date]
+                
+                # utils.py の関数を使って円グラフ作成
+                pie_chart = u.create_expense_pie_chart(target_month_df)
+                
+                if pie_chart:
+                    st.altair_chart(pie_chart, use_container_width=True)
+                else:
+                    st.info(f"{month_date.strftime('%Y年%m月')} の支出データはありません")
+    else:
+        st.info("データがありません")
 
 st.divider()
 
