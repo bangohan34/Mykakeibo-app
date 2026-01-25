@@ -225,6 +225,7 @@ def create_expense_pie_chart(data):
         others_row = pie_data[pie_data['カテゴリー'] == 'その他']
         normal_rows = pie_data[pie_data['カテゴリー'] != 'その他']
         pie_data = pd.concat([normal_rows, others_row])
+    pie_data['order_index'] = range(len(pie_data))
     sort_order = pie_data['カテゴリー'].tolist()
     # 割合（%）を計算して列に追加
     total_expense = pie_data['金額'].sum()
@@ -233,7 +234,7 @@ def create_expense_pie_chart(data):
     base = alt.Chart(pie_data).encode(
         theta=alt.Theta("金額", stack=True), # 金額に応じて角度を決める
         color=alt.Color("カテゴリー", legend=alt.Legend(title="カテゴリー"), sort=sort_order),
-        order=alt.Order("カテゴリー", sort=sort_order),
+        order=alt.Order("order_index", sort="ascending"),
         tooltip=[
             "カテゴリー", 
             alt.Tooltip("金額", format=","),
