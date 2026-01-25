@@ -253,19 +253,6 @@ def create_expense_pie_chart(data):
             alt.Tooltip("割合", format=".1%", title="構成比") # %を表示
         ]
     )
-    # ドーナツの「輪」の部分
-    pie = base.mark_arc(innerRadius=50, outerRadius=90) # 内径50, 外径90でドーナツ化
-    text_data = pd.DataFrame({'total': [total_expense]})
-    text = alt.Chart(text_data).mark_text(
-        align='center',
-        baseline='middle',
-        fontSize=10,        # 文字サイズ
-        color='#703B3B'   # 文字色
-    ).encode(
-        text=alt.Text('total', format=',') # カンマ区切りで表示
-    )
-    # 重ね合わせ
-    chart = alt.layer(pie, text).resolve_scale(theta='independent')
     # グラフの設定（背景透明、文字色など）
     return pie.configure_view(
         strokeOpacity=0
