@@ -264,7 +264,8 @@ def create_expense_pie_chart(data):
         strokeOpacity=0
     ).configure_legend(
         labelColor='#703B3B',
-        titleColor='#703B3B'
+        titleColor='#703B3B',
+        symbolStrokeWidth=0
     )
 # --- 履歴表示 ---
 def color_coding(val):
