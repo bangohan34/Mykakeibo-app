@@ -242,7 +242,7 @@ if(url_user_id =="u1"):
     if total_all_assets > 0:
         # 色の指定
         COLOR_YEN = '#DB4437'
-        COLOR_OTHERS = '#757575'
+        COLOR_OTHERS = "#9A9999"
         SYMBOL_COLORS = {
             'BTC':'#F4B400',
             'ETH':'#9079ad',
