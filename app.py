@@ -386,7 +386,7 @@ if not df.empty:
                 # その月のデータだけを抜き出す
                 target_month_df = pie_df[pie_df['年月'] == month_date]
                 month_total = target_month_df[target_month_df['区分'] == '支出']['金額'].sum()
-                st.metric(label=f"{month_date.strftime('%m月')}の支出合計", value=f"{month_total:,} 円")
+                st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計", value=f"{month_total:,} 円")
                 # utils.py の関数を使って円グラフ作成
                 pie_chart = u.create_expense_pie_chart(target_month_df)
                 if pie_chart:
