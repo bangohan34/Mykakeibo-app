@@ -258,6 +258,8 @@ def create_expense_pie_chart(data):
         innerRadius=50,
         outerRadius=90,
         stroke="#d3d3d3"
+        ).propertied(
+            height=300
         )
     # グラフの設定（背景透明、文字色など）
     return pie.configure_view(
