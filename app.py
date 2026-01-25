@@ -242,6 +242,7 @@ if(url_user_id =="u1"):
     if total_all_assets > 0:
         # 色の指定
         COLOR_YEN = '#DB4437'
+        COLOR_OTHERS = '#757575'
         SYMBOL_COLORS = {
             'BTC':'#F4B400',
             'ETH':'#9079ad',
@@ -250,12 +251,13 @@ if(url_user_id =="u1"):
             'PI':'#9600ff'
         }
         # 指定がない銘柄用の予備カラー（順番に使われます）
-        DEFAULT_COLORS = ['#0F9D58', '#4285F4', '#F4B400', '#AB47BC', '#00ACC1']
+        DEFAULT_COLORS = ["#088146", '#4285F4', "#F43088", "#DA972B", "#81E495"]
         # ベースのHTML
         yen_ratio = (yen_assets / total_all_assets) * 100
         bars_html = f'<div style="width: {yen_ratio}%; background-color:{COLOR_YEN};" title="日本円: {yen_ratio:.1f}%"></div>'
         legend_html = f'<span style="color:{COLOR_YEN}">■</span> 日本円 '
         # 暗号資産のバー作成
+        others_ratio = 0
         if not df_crypto.empty:
             default_color_index = 0
             for i, row in df_crypto.iterrows():
@@ -274,6 +276,9 @@ if(url_user_id =="u1"):
                         default_color_index += 1
                     bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{name}: {ratio:.1f}%"></div>'
                     legend_html += f' <span style="color:{color}; margin-left:10px;">■</span> {name}'
+        if others_ratio > 0:
+            bars_html += f'<div style="width: {others_ratio}%; background-color: {COLOR_OTHERS};" title="その他: {others_ratio:.1f}%"></div>'
+            legend_html += f' <span style="color:{COLOR_OTHERS}; margin-left:10px;">■</span> その他'
         # 全体枠と合体
         final_html = f"""
         <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden;">
