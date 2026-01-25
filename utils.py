@@ -253,6 +253,8 @@ def create_expense_pie_chart(data):
             alt.Tooltip("割合", format=".1%", title="構成比") # %を表示
         ]
     )
+    # ドーナツの「輪」の部分
+    pie = base.mark_arc(innerRadius=50, outerRadius=90) # 内径50, 外径90でドーナツ化
     # グラフの設定（背景透明、文字色など）
     return pie.configure_view(
         strokeOpacity=0
