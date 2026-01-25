@@ -370,12 +370,15 @@ if not df.empty:
     # 円グラフ用のデータを準備
     pie_df = df.copy()
     pie_df['年月'] = pie_df['日付'].apply(lambda x: x.replace(day=1)) # 月単位にまとめる
-    # データが存在する「年月」のリストを作る（新しい順）
-    months_list = pie_df['年月'].drop_duplicates().sort_values(ascending=False)
+    start_limit = pd.to_datetime('2026-01-01')
+    current_month = pd.to_datetime('today').replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    months_series = pie_df['年月'].drop_duplicates()
+    months_list = months_series[
+        (months_series >= start_limit) &   # 2025年12月以降
+        (months_series <= current_month)   # 今月以前（未来は除外）
+    ].sort_values(ascending=False)         # 新しい順（今月→先月...）
     if not months_list.empty:
-        st.subheader("月ごとの支出内訳")
-        # 「2026年1月」「2025年12月」... というタブを作る
-        tab_labels = months_list.dt.strftime('%Y年%m月').tolist()
+        tab_labels = months_list.dt.strftime('%Y/%m').tolist()
         tabs = st.tabs(tab_labels)
         # 各タブの中に、その月の円グラフを表示する
         for tab, month_date in zip(tabs, months_list):
@@ -387,7 +390,7 @@ if not df.empty:
                 if pie_chart:
                     st.altair_chart(pie_chart, use_container_width=True)
                 else:
-                    st.info(f"{month_date.strftime('%Y年%m月')} の支出データはありません")
+                    st.info(f"{month_date.strftime('%Y/%m')} の支出データはありません")
     else:
         st.info("データがありません")
 
