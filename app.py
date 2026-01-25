@@ -246,7 +246,7 @@ if(url_user_id =="u1"):
         SYMBOL_COLORS = {
             'BTC':'#F4B400',
             'ETH':'#9079ad',
-            'XRP':"#6161ec",
+            'XRP':"#8585e7",
             'IOST':'#00c8c8',
             'PI':'#9600ff'
         }
