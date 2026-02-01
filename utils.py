@@ -164,35 +164,38 @@ def get_crypto_prices(symbols):
                 pass
     return prices
 @st.cache_data(ttl=600)
-def get_meme_prices(token_address):
-    dex_url = f"https://api.dexscreener.com/latest/dex/tokens/{token_address}"
-    try:
-        dex_response = requests.get(dex_url, timeout=5)
-        dex_data = dex_response.json()
-        # データがない場合
-        if dex_data.get("pairs") is None or len(dex_data["pairs"]) == 0:
-            return 0.0
-        # メインのペアからUSD価格を取り出す
-        price_usd_str = dex_data["pairs"][0].get("priceUsd")
-        if not price_usd_str:
-            return 0.0
-        price_usd = float(price_usd_str)
-        # 日本円に換算
-        usd_jpy_rate = get_usd_jpy_rate()
-        price_jpy = price_usd * usd_jpy_rate
-        return price_jpy
-    except Exception as e:
-        print(f"Meme Price Error: {e}")
-        return 0.0
+def get_meme_prices(symbols):
+    prices = {}
+    usd_jpy_rate = get_usd_jpy_rate()
+    for sym in symbols:
+        key = sym.upper()
+        if key in c.MEME_CONTRACTS:
+            address = c.MEME_CONTRACTS[key]
+            dex_url = f"https://api.dexscreener.com/latest/dex/tokens/{address}"
+            try:
+                res = requests.get(dex_url, timeout=5).json()
+                if res.get("pairs"):
+                    price_usd = float(res["pairs"][0].get("priceUsd", 0))
+                    prices[sym] = price_usd * usd_jpy_rate
+            except:
+                prices[sym] = 0.0
+    return prices
 
 # --- 貴金属データの操作 ---
-def get_metal_prices():
-    symbols = {"gold": "GC=F", "silver": "SI=F"}
+def get_metal_prices(symbols):
+    target_map = {"Gold": "GC=F", "Silver": "SI=F"}
     metal_prices = {}
-    for name, ticker in symbols.items():
-        data = yf.Ticker(ticker)
-        price = data.history(period="1d")['Close'].iloc[-1]
-        metal_prices[name] = f"{price:.2f}$"
+    try:
+        usd_jpy_rate = get_usd_jpy_rate()
+        for sym in symbols:
+            # 渡されたリストの中に Gold や Silver があれば取得
+            if sym in target_map:
+                ticker = target_map[sym]
+                data = yf.Ticker(ticker)
+                price_usd = data.history(period="1d")['Close'].iloc[-1]
+                metal_prices[sym] = float(price_usd * usd_jpy_rate)
+    except Exception as e:
+        print(f"Metal price error: {e}")
     return metal_prices
 
 # --- グラフ ---
