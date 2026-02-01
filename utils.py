@@ -127,41 +127,22 @@ def get_usd_jpy_rate():
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
     prices = {}
-    valid_symbols = []
-    for s in symbols:
-        if s is not None and str(s).strip() != "":
-            valid_symbols.append(str(s))
-    upper_symbols = list(set([s.upper() for s in symbols]))
-    if not upper_symbols:
+    valid_symbols = [str(s).upper() for s in symbols if s and str(s).strip() != ""]
+    if not valid_symbols:
         return {}
-    meme_symbols = []
-    normal_symbols = []
-    for s in symbols:
-        if s.upper() in c.MEME_CONTRACTS:
-            meme_symbols.append(s.upper())
-        else:
-            normal_symbols.append(s)
-    for sym in meme_symbols:
-        address = c.MEME_CONTRACTS[sym]
-        prices[sym] = get_meme_price(address)
+    normal_symbols = [s for s in valid_symbols if s not in c.MEME_CONTRACTS]
     if normal_symbols:
-        upper_symbols = list(set([s.upper() for s in normal_symbols]))
-        api_symbols = [s for s in upper_symbols if c.CRYPTO_ID_MAP.get(s) != 'FIXED_JPY']
-        if api_symbols:
-            fsyms = ",".join(api_symbols)
-            url = "https://min-api.cryptocompare.com/data/pricemulti"
-            params = {'fsyms': fsyms, 'tsyms': 'JPY'}
-            try:
-                response = requests.get(url, params=params)
-                data = response.json()
-                for sym in normal_symbols:
-                    key = sym.upper()
-                    if key in data and 'JPY' in data[key]:
-                        prices[sym] = data[key]['JPY']
-                    elif sym not in prices:
-                        prices[sym] = 0
-            except:
-                pass
+        fsyms = ",".join(normal_symbols)
+        url = "https://min-api.cryptocompare.com/data/pricemulti"
+        params = {'fsyms': fsyms, 'tsyms': 'JPY'}
+        try:
+            response = requests.get(url, params=params, timeout=5)
+            data = response.json()
+            for sym in normal_symbols:
+                if sym in data and 'JPY' in data[sym]:
+                    prices[sym] = float(data[sym]['JPY'])
+        except:
+            pass
     return prices
 @st.cache_data(ttl=600)
 def get_meme_prices(symbols):
