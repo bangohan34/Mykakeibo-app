@@ -255,18 +255,16 @@ if(url_user_id =="u1"):
         """
         st.markdown(final_html, unsafe_allow_html=True)
 
-# --- 暗号資産の内訳リスト ---
+# --- 投資資産の内訳リスト ---
 if(url_user_id =="u1"):
     st.write("")
     if not df_crypto.empty:
-        with st.expander("暗号資産の内訳を見る", expanded=False):
-            display_df = df_crypto[['銘柄', '保有量', '評価額(円)']].copy()
+        with st.expander("資産の内訳を見る", expanded=False):
+            display_df = df_investment[['銘柄', '評価額(円)']].copy()
             display_df = display_df.rename(columns={'評価額(円)': '評価額'})
-            display_df['保有量'] = display_df['保有量'].astype(float)
             display_df['評価額'] = display_df['評価額'].astype(int)
             st.dataframe(
                 display_df.style.format({
-                    "保有量": "{:.8f}",
                     "評価額": "{:,} 円" 
                 })
                 .set_properties(**{
@@ -278,7 +276,7 @@ if(url_user_id =="u1"):
                 use_container_width=True
             )
     else:
-        st.info("暗号資産の登録はまだありません。")
+        st.info("投資資産の登録はまだありません。")
 
 # --- 現金グラフ ---
 if not df.empty:
