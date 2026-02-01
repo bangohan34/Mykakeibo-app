@@ -33,7 +33,7 @@ else:
 # --- データの準備 ---
 worksheet = u.get_worksheet(st.session_state["target_sheet"])
 df = u.load_kakeibo_data(worksheet)
-df_crypto = u.load_crypto_data(worksheet)
+df_investment = u.load_investment_data(worksheet)
 today = pd.Timestamp.now(tz='Asia/Tokyo').normalize().tz_localize(None)
 
 # --- 入力フォーム ---
@@ -149,24 +149,21 @@ if not df.empty:
     yen_assets = total_income - total_expense
 else:
     yen_assets = 0
-# 暗号資産の価値計算
-crypto_total_val = 0 
-if not df_crypto.empty:
-    # 現在価格を取得
-    symbols = df_crypto['銘柄'].tolist()
-    current_prices = u.get_crypto_prices(symbols)
-    # データフレームに価格情報を結合
-    # map関数を使って、銘柄に対応する価格を列に追加
-    df_crypto['現在レート'] = df_crypto['銘柄'].map(current_prices).fillna(0)
-    df_crypto['評価額(円)'] = df_crypto['保有量'] * df_crypto['現在レート']
-    # 合計を計算
-    crypto_total_val = df_crypto['評価額(円)'].sum()
-    # 評価額(円)で並び替え
-    df_crypto = df_crypto.sort_values(by='評価額(円)', ascending=False)
-# 貴金属資産の価値計算
-
-# 資産合計の計算
-total_investment_assets = crypto_total_val
+# 投資資産の価値計算
+total_investment_assets = 0
+if not df_investment.empty:
+    all_prices = {}
+    symbols = df_investment['銘柄'].unique().tolist()
+    try:
+        all_prices.update(u.get_crypto_prices(symbols))
+        all_prices.update(u.get_meme_prices(symbols))
+        all_prices.update(u.get_metal_prices(symbols))
+    except Exception as e:
+        st.error(f"価格取得中にエラーが発生しました: {e}")
+    df_investment['現在レート'] = df_investment['銘柄'].map(all_prices).fillna(0)
+    df_investment['評価額(円)'] = df_investment['数量'] * df_investment['現在レート']
+    investment_total_val = df_investment['評価額(円)'].sum()
+    df_crypto = df_investment.sort_values(by='評価額(円)', ascending=False)
 # 表示
 if(url_user_id =="u1"):
     st.markdown(f"""

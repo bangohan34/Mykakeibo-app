@@ -164,7 +164,7 @@ def get_crypto_prices(symbols):
                 pass
     return prices
 @st.cache_data(ttl=600)
-def get_meme_price(token_address):
+def get_meme_prices(token_address):
     dex_url = f"https://api.dexscreener.com/latest/dex/tokens/{token_address}"
     try:
         dex_response = requests.get(dex_url, timeout=5)
