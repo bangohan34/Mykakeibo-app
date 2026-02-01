@@ -10,7 +10,7 @@ import utils as u
 st.set_page_config(page_title="家計簿", page_icon="💰")
 st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 
-# --- 自動ログイン ---
+# --- ログイン ---
 if "target_sheet" not in st.session_state:
     st.session_state["target_sheet"] = ""
 if "current_user_name" not in st.session_state:
@@ -20,13 +20,13 @@ query_params = st.query_params
 url_user_id = query_params.get("u",None)
 # ユーザー情報の取得
 users_cfg = st.secrets["users"]
-# 自動ログイン
+# ログイン
 if url_user_id in users_cfg:
     user_data = users_cfg[url_user_id]
     st.session_state["target_sheet"] = user_data["sheet"]
     st.session_state["current_user_name"] = user_data["name"]
 else:
-    # ユーザーが見つからない、またはURLに ?u= がない場合
+    # URLに ?u= がない場合
     st.error("⚠️ アクセス権限がありません。専用のURLからアクセスしてください。")
     st.stop()
 
