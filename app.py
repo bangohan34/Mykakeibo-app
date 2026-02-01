@@ -198,12 +198,12 @@ if(url_user_id =="u2"):
 if(url_user_id =="u1"):
     total_all_assets = yen_assets + total_investment_assets
     cols = ['銘柄', '評価額(円)']
-    if not df_crypto.empty and not df_metal.empty:
-        df_invest = pd.concat([df_crypto[cols], df_metal[cols]], ignore_index=True)
+    if not df_crypto.empty and not df_investment.empty:
+        df_invest = pd.concat([df_crypto[cols], df_investment[cols]], ignore_index=True)
     elif not df_crypto.empty:
         df_invest = df_crypto[cols]
     else:
-        df_invest = df_metal[cols]
+        df_invest = df_investment[cols]
     if total_all_assets > 0:
         # 色の指定
         COLOR_YEN = '#DB4437'
