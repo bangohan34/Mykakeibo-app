@@ -6,6 +6,7 @@ import json
 import requests
 import const as c
 import altair as alt
+import yfinance as yf
 
 # --- 認証と接続 ---
 scopes = [
@@ -179,6 +180,34 @@ def get_meme_price(token_address):
     except Exception as e:
         print(f"Meme Price Error: {e}")
         return 0.0
+
+# --- 貴金属データの操作 ---
+def get_metal_prices_jpy_per_gram():
+    try:
+        tickers = ["XAU-USD", "XAG-USD", "JPY=X"]
+        data = yf.download(tickers, period="1d", interval="1m", progress=False)['Close'].iloc[-1]
+        # 最新価格を取得（取得できない場合は安全策で0にする）
+        gold_usd_oz = data.get('XAU-USD', 0)
+        silver_usd_oz = data.get('XAG-USD', 0)
+        usd_jpy = data.get('JPY=X', 0)
+        # 1トロイオンス = 31.1035グラム
+        GRAMS_PER_OZ = 31.1035
+        # 円/グラムに換算
+        # 計算式: (ドル価格 × ドル円レート) ÷ 31.1035
+        if GRAMS_PER_OZ > 0:
+            gold_jpy_g = (gold_usd_oz * usd_jpy) / GRAMS_PER_OZ
+            silver_jpy_g = (silver_usd_oz * usd_jpy) / GRAMS_PER_OZ
+        else:
+            gold_jpy_g = 0
+            silver_jpy_g = 0
+        return {
+            'GOLD': gold_jpy_g,
+            'SILVER': silver_jpy_g
+        }
+    except Exception as e:
+        # エラー時はログに出すか、0を返す
+        print(f"貴金属データ取得エラー: {e}")
+        return {'GOLD': 0, 'SILVER': 0}
 
 # --- グラフ ---
 def create_combo_chart(data, x_col, x_format, tooltip_format, x_label_angle=0):

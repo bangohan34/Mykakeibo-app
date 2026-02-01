@@ -55,6 +55,10 @@ if not st.session_state["is_logged_in"]:
 worksheet = u.get_worksheet(st.session_state["target_sheet"])
 df = u.load_kakeibo_data(worksheet)
 df_crypto = u.load_crypto_data(worksheet)
+my_metals = {
+    'GOLD': 100.0,   # グラム
+    'SILVER': 500.0  # グラム
+}
 # 日本時間
 t_delta = datetime.timedelta(hours=9)
 JST = datetime.timezone(t_delta, 'JST')
@@ -205,6 +209,20 @@ if not df_crypto.empty:
     crypto_total_val = df_crypto['評価額(円)'].sum()
     # 評価額(円)で並び替え
     df_crypto = df_crypto.sort_values(by='評価額(円)', ascending=False)
+# 貴金属資産の価値計算
+metal_prices = u.get_metal_prices_jpy_per_gram()
+metal_data = []
+for symbol, amount in my_metals.items():
+    if amount > 0:
+        price = metal_prices.get(symbol, 0)
+        value = price * amount
+        metal_data.append({
+            '銘柄': symbol,
+            '保有量': amount,
+            '単価(円)': price,
+            '評価額(円)': value
+        })
+df_metal = pd.DataFrame(metal_data)
 # 合計の計算
 total_all_assets = yen_assets + crypto_total_val
 # 表示
