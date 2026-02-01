@@ -99,18 +99,31 @@ def delete_callback():
         except Exception as e:
             st.session_state["delete_msg"] = f"削除エラー: {e}"
 
-# --- 暗号資産データの操作 ---
-def load_crypto_data(worksheet):
-    raw_data = worksheet.get('I:J')
+# --- 投資データの操作 ---
+def load_investment_data(worksheet):
+    raw_data = worksheet.get('I:M')
     if len(raw_data) < 2:
-        return pd.DataFrame(columns=['銘柄','保有量'])
-    df_crypto = pd.DataFrame(raw_data[1:],columns=['銘柄','保有量'])
-    df_crypto['保有量'] = pd.to_numeric(df_crypto['保有量'], errors='coerce').fillna(0.0)
-    return df_crypto
-def save_crypto_data(worksheet, df_crypto):
-    data_to_save = [df_crypto.columns.tolist()] + df_crypto.values.tolist()
-    worksheet.batch_clear(['I:J'])
-    worksheet.update(range_name='I1', values=data_to_save)
+        return pd.DataFrame(columns=['日付','銘柄','数量','支払金額','メモ'])
+    df = pd.DataFrame(raw_data[1:], columns=['日付','銘柄','数量','支払金額','メモ'])
+    df['数量'] = pd.to_numeric(df['保有量'], errors='coerce').fillna(0.0)
+    return df
+def add_investment_data(worksheet, date, investment_name, investment_amount, pay_amount, memo):
+    col_a_values = worksheet.col_values(9)
+    next_row = len(col_a_values) + 1
+    row_data = [[str(date), investment_name, investment_amount, pay_amount, memo]]
+    range_str = f"I{next_row}:M{next_row}"
+    worksheet.update(range_name=range_str,values=row_data)
+@st.cache_data(ttl=3600)
+def get_usd_jpy_rate():
+    try:
+        url = "https://api.exchangerate-api.com/v4/latest/USD"
+        response = requests.get(url, timeout=5)
+        data = response.json()
+        return data["rates"]["JPY"]
+    except:
+        return 150.0 # エラー時は仮のレート
+
+# --- 暗号資産データの操作 ---
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
     prices = {}
@@ -150,15 +163,6 @@ def get_crypto_prices(symbols):
             except:
                 pass
     return prices
-@st.cache_data(ttl=3600)
-def get_usd_jpy_rate():
-    try:
-        url = "https://api.exchangerate-api.com/v4/latest/USD"
-        response = requests.get(url, timeout=5)
-        data = response.json()
-        return data["rates"]["JPY"]
-    except:
-        return 150.0 # エラー時は仮のレート
 @st.cache_data(ttl=600)
 def get_meme_price(token_address):
     dex_url = f"https://api.dexscreener.com/latest/dex/tokens/{token_address}"

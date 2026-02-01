@@ -122,8 +122,20 @@ if submit_btn:
                 st.error(f'書き込みエラー: {e}')
     # 投資
     if balance_type == "投資":
-        if amount == None:
-            st.warning('金額が入力されていません。入力してください。')
+        if not investment_name:
+            st.warning('銘柄名を入力してください。')
+        elif amount is None or amount == 0:
+            st.warning('金額を入力してください。')
+        else:
+            try:
+                u.add_entry(worksheet, date, "支出", "投資費", amount, final_memo)
+                u.add_investment_data(worksheet, date, investment_name, investment_amount, amount, final_memo)
+                st.success(f'{investment_name}を登録しました！')
+                st.balloons()
+                time.sleep(3)
+                st.rerun()
+            except Exception as e:
+                st.error(f'書き込みエラー:{e}')
 
 st.divider()
 
