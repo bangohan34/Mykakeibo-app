@@ -184,12 +184,11 @@ def get_meme_price(token_address):
 # --- 貴金属データの操作 ---
 def get_metal_prices_jpy_per_gram():
     try:
-        tickers = ["XAU-USD", "XAG-USD", "JPY=X"]
+        tickers = ["XAUUSD=X", "XAGUSD=X", "JPY=X"]
         df = yf.download(tickers, period="5d", interval="1m", progress=False)['Close'].iloc[-1]
         data = df.ffill().iloc[-1]
         # 最新価格を取得（取得できない場合は安全策で0にする）
         gold_usd_oz = data.get('XAU-USD', 0)
-        gold_usd_oz
         silver_usd_oz = data.get('XAG-USD', 0)
         usd_jpy = data.get('JPY=X', 0)
         # 1トロイオンス = 31.1035グラム
