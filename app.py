@@ -242,7 +242,7 @@ if(url_user_id =="u1"):
         <div style="flex: 1; padding: 10px; text-align: center;">
             <div style="font-size: 14px; color: gray;">投資資産</div>
             <div style="font-size: 30px; font-weight: bold; color: #ff8c00;">
-                {f"{int(metal_total_val):,} 円"}
+                {f"{int(total_investment_assets):,} 円"}
             </div>
         </div>
     </div>
