@@ -84,7 +84,7 @@ with st.form(key='entry_form', clear_on_submit=True):
         investment_name = st.text_input("銘柄名")
         investment_amount = st.number_input('数量', min_value=0.0, step=0.00000001, value=None, placeholder="0.0",format="%.8f")
         # 支払う日本円
-        amount = st.number_input('支払い金額', min_value=0, step=1, help="家計簿には「支出」として記録されます")
+        amount = st.number_input('支払い金額', min_value=0, step=1, value=None, placeholder="0")
         memo = st.text_input('メモ', value=f"{investment_name}購入")
         # 家計簿用のカテゴリーは自動で「投資」などにする
         category = "投資"
