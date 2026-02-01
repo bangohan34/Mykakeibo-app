@@ -220,6 +220,7 @@ if(url_user_id =="u1"):
         if not df_investment.empty:
             # 同じ銘柄を合算してからループ
             df_grouped = df_investment.groupby('銘柄', as_index=False).sum()
+            df_grouped = df_grouped.sort_values(by='評価額(円)', ascending=False)
             default_color_index = 0
             for i, row in df_grouped.iterrows():
                 if '評価額(円)' in row and row['評価額(円)'] > 0:
