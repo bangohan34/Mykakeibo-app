@@ -189,18 +189,15 @@ def get_metal_prices_jpy_per_gram():
         data = df.ffill().iloc[-1]
         # 最新価格を取得（取得できない場合は安全策で0にする）
         gold_usd_oz = data.get('XAU-USD', 0)
+        gold_usd_oz
         silver_usd_oz = data.get('XAG-USD', 0)
         usd_jpy = data.get('JPY=X', 0)
         # 1トロイオンス = 31.1035グラム
         GRAMS_PER_OZ = 31.1035
         # 円/グラムに換算
         # 計算式: (ドル価格 × ドル円レート) ÷ 31.1035
-        if GRAMS_PER_OZ > 0:
-            gold_jpy_g = (gold_usd_oz * usd_jpy) / GRAMS_PER_OZ
-            silver_jpy_g = (silver_usd_oz * usd_jpy) / GRAMS_PER_OZ
-        else:
-            gold_jpy_g = 0
-            silver_jpy_g = 0
+        gold_jpy_g = (gold_usd_oz * usd_jpy) / GRAMS_PER_OZ
+        silver_jpy_g = (silver_usd_oz * usd_jpy) / GRAMS_PER_OZ
         return {
             'GOLD': gold_jpy_g,
             'SILVER': silver_jpy_g
