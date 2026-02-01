@@ -34,7 +34,6 @@ CRYPTO_ID_MAP = {
     'PI': 'pi-network',
     'IOST': 'iostoken'
 }
-
 MEME_CONTRACTS = {
     '114514': 'AGdGTQa8iRnSx4fQJehWo4Xwbh1bzTazs55R6Jwupump',
     '42069': 'FquUHKWfMUdSMxxSU9ZWrSc98hvTXeMnQn9nksSKpump'

@@ -212,6 +212,7 @@ if not df_crypto.empty:
 # 貴金属資産の価値計算
 metal_prices = u.get_metal_prices_jpy_per_gram()
 metal_data = []
+metal_total_val = 0
 for symbol, amount in my_metals.items():
     if amount > 0:
         price = metal_prices.get(symbol, 0)
@@ -223,8 +224,10 @@ for symbol, amount in my_metals.items():
             '評価額(円)': value
         })
 df_metal = pd.DataFrame(metal_data)
-# 合計の計算
-total_all_assets = yen_assets + crypto_total_val
+if not df_metal.empty:
+    metal_total_val = df_metal['評価額(円)'].sum()
+# 資産合計の計算
+total_investment_assets = crypto_total_val + metal_total_val
 # 表示
 if(url_user_id =="u1"):
     st.markdown(f"""
@@ -236,9 +239,9 @@ if(url_user_id =="u1"):
             </div>
         </div>
         <div style="flex: 1; padding: 10px; text-align: center;">
-            <div style="font-size: 14px; color: gray;">暗号資産</div>
+            <div style="font-size: 14px; color: gray;">投資資産</div>
             <div style="font-size: 30px; font-weight: bold; color: #ff8c00;">
-                {f"{int(crypto_total_val):,} 円"}
+                {f"{int(total_investment_assets):,} 円"}
             </div>
         </div>
     </div>
@@ -257,6 +260,14 @@ if(url_user_id =="u2"):
 
 # --- 資産割合バー ---
 if(url_user_id =="u1"):
+    total_all_assets = yen_assets + total_investment_assets
+    cols = ['銘柄', '評価額(円)']
+    if not df_crypto.empty and not df_metal.empty:
+        df_invest = pd.concat([df_crypto[cols], df_metal[cols]], ignore_index=True)
+    elif not df_crypto.empty:
+        df_invest = df_crypto[cols]
+    else:
+        df_invest = df_metal[cols]
     if total_all_assets > 0:
         # 色の指定
         COLOR_YEN = '#DB4437'
