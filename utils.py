@@ -172,12 +172,11 @@ def get_metal_prices(symbols):
     try:
         usd_jpy_rate = get_usd_jpy_rate()
         for sym in symbols:
-            # 渡されたリストの中に Gold や Silver があれば取得
             if sym in target_map:
                 ticker = target_map[sym]
                 data = yf.Ticker(ticker)
-                price_usd = data.history(period="1d")['Close'].iloc[-1]
-                metal_prices[sym] = float(price_usd * usd_jpy_rate)
+                price_usd = data.history(period="5d")['Close'].iloc[-1]
+                metal_prices[sym] = float(price_usd * usd_jpy_rate / 31.1035)
     except Exception as e:
         print(f"Metal price error: {e}")
     return metal_prices
