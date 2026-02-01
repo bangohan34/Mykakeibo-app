@@ -197,15 +197,7 @@ if(url_user_id =="u2"):
 # --- 資産割合バー ---
 if(url_user_id =="u1"):
     total_all_assets = yen_assets + total_investment_assets
-    cols = ['銘柄', '評価額(円)']
-    if not df_crypto.empty and not df_investment.empty:
-        df_invest = pd.concat([df_crypto[cols], df_investment[cols]], ignore_index=True)
-    elif not df_crypto.empty:
-        df_invest = df_crypto[cols]
-    else:
-        df_invest = df_investment[cols]
     if total_all_assets > 0:
-        # 色の指定
         COLOR_YEN = '#DB4437'
         COLOR_OTHERS = "#9A9999"
         SYMBOL_COLORS = {
@@ -213,29 +205,34 @@ if(url_user_id =="u1"):
             'ETH':'#9079ad',
             'XRP':"#8585e7",
             'IOST':'#00c8c8',
-            'PI':'#9600ff'
+            'PI':'#9600ff',
+            'GOLD': '#D4AF37',
+            'SILVER': '#C0C0C0'
         }
-        # 指定がない銘柄用の予備カラー（順番に使われます）
+        # 指定がない銘柄用の予備カラー
         DEFAULT_COLORS = ["#088146", '#4285F4', "#F43088", "#DA972B", "#81E495"]
         # ベースのHTML
         yen_ratio = (yen_assets / total_all_assets) * 100
         bars_html = f'<div style="width: {yen_ratio}%; background-color:{COLOR_YEN};" title="日本円: {yen_ratio:.1f}%"></div>'
         legend_html = f'<span style="color:{COLOR_YEN}">■</span> 日本円 '
-        # 暗号資産のバー作成
+        # 投資資産のバー作成
         others_ratio = 0
-        if not df_crypto.empty:
+        if not df_investment.empty:
+            # 同じ銘柄を合算してからループ
+            df_grouped = df_investment.groupby('銘柄', as_index=False).sum()
             default_color_index = 0
-            for i, row in df_crypto.iterrows():
+            for i, row in df_grouped.iterrows():
                 if '評価額(円)' in row and row['評価額(円)'] > 0:
                     ratio = (row['評価額(円)'] / total_all_assets) * 100
                     name = row['銘柄']
+                    # 5%未満は「その他」にまとめる
                     if ratio < 5.0:
                         others_ratio += ratio
                         continue
-                    # 色を決定するロジック
-                    # 辞書に設定があればその色、なければ予備リストから順番に使う
-                    if name.upper() in SYMBOL_COLORS:
-                        color = SYMBOL_COLORS[name.upper()]
+                    # 色の決定
+                    upper_name = str(name).upper()
+                    if upper_name in SYMBOL_COLORS:
+                        color = SYMBOL_COLORS[upper_name]
                     else:
                         color = DEFAULT_COLORS[default_color_index % len(DEFAULT_COLORS)]
                         default_color_index += 1
