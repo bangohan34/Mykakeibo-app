@@ -144,25 +144,9 @@ if not df_crypto.empty:
     # 評価額(円)で並び替え
     df_crypto = df_crypto.sort_values(by='評価額(円)', ascending=False)
 # 貴金属資産の価値計算
-metal_prices = u.get_metal_prices_jpy_per_gram()
-metal_data = []
-metal_total_val = 0
-for symbol, amount in my_metals.items():
-    if amount > 0:
-        price = metal_prices.get(symbol, 0)
-        st.write("取得価格デバッグ:", metal_prices)
-        value = price * amount
-        metal_data.append({
-            '銘柄': symbol,
-            '保有量': amount,
-            '単価(円)': price,
-            '評価額(円)': value
-        })
-df_metal = pd.DataFrame(metal_data)
-if not df_metal.empty:
-    metal_total_val = df_metal['評価額(円)'].sum()
+
 # 資産合計の計算
-total_investment_assets = crypto_total_val + metal_total_val
+total_investment_assets = crypto_total_val
 # 表示
 if(url_user_id =="u1"):
     st.markdown(f"""
