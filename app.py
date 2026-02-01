@@ -77,23 +77,21 @@ elif balance_type =="収入":
         category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
     elif(url_user_id =="u2"):
         category = st.radio('項目', c.INCOME_CATEGORIES_saya, horizontal=True, label_visibility="collapsed")
+# 入力欄
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
+    # 支出・収入
+    if balance_type == "支出" or balance_type == "収入":
+        amount = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0")
     # 投資
     if balance_type == "投資":
+        category = "投資"
         investment_name = st.text_input("銘柄名")
         investment_amount = st.number_input('数量', min_value=0.0, step=0.00000001, value=None, placeholder="0.0",format="%.8f")
-        # 支払う日本円
         amount = st.number_input('支払い金額', min_value=0, step=1, value=None, placeholder="0")
-        memo = st.text_input('メモ', value=f"{investment_name}購入")
-        # 家計簿用のカテゴリーは自動で「投資」などにする
-        category = "投資"
-    # 支出、収入
-    else:
-        val = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0",format="%d")
-        amount = val if val is not None else 0
-        memo = st.text_input('メモ（任意）')
+    memo = st.text_input('メモ（任意）')
     submit_btn = st.form_submit_button('登録する')
+# データ登録
 if submit_btn:
     final_memo = memo
     if sub_category:
