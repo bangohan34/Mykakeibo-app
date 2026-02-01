@@ -102,9 +102,15 @@ def delete_callback():
 # --- 投資データの操作 ---
 def load_investment_data(worksheet):
     raw_data = worksheet.get('I:M')
+    cols = ['日付','銘柄','数量','支払金額','メモ']
     if len(raw_data) < 2:
-        return pd.DataFrame(columns=['日付','銘柄','数量','支払金額','メモ'])
-    df = pd.DataFrame(raw_data[1:], columns=['日付','銘柄','数量','支払金額','メモ'])
+        return pd.DataFrame(columns=cols)
+    data_rows = raw_data[1:]
+    clean_data = []
+    for row in data_rows:
+        padded_row = (row + [""] * 5)[:5]
+        clean_data.append(padded_row)
+    df = pd.DataFrame(data_rows, columns=cols)
     df['数量'] = pd.to_numeric(df['保有量'], errors='coerce').fillna(0.0)
     return df
 def add_investment_data(worksheet, date, investment_name, investment_amount, pay_amount, memo):
