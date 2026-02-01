@@ -34,7 +34,7 @@ else:
 worksheet = u.get_worksheet(st.session_state["target_sheet"])
 df = u.load_kakeibo_data(worksheet)
 df_crypto = u.load_crypto_data(worksheet)
-today = pd.Timestamp.now(tz='Asia/Tokyo').normalize()
+today = pd.Timestamp.now(tz='Asia/Tokyo').normalize().tz_localize(None)
 
 # --- 入力フォーム ---
 st.subheader("収支入力")
