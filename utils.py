@@ -138,8 +138,6 @@ def get_crypto_prices(symbols):
             upper_sym = str(sym).upper()
             if upper_sym in data and 'JPY' in data[upper_sym]:
                 prices[sym] = float(data[upper_sym]['JPY'])
-            elif upper_sym == 'FIXED_JPY':
-                prices[sym] = 1.0
     except Exception as e:
         print(f"Crypto Price Error: {e}")
     return prices
