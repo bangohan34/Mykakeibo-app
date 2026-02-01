@@ -182,31 +182,14 @@ def get_meme_price(token_address):
         return 0.0
 
 # --- 貴金属データの操作 ---
-def get_metal_prices_jpy_per_gram():
-    try:
-        tickers = ["GC=F", "SI=F", "JPY=X"]
-        data = yf.download(tickers, period="5d", interval="1h", progress=False)['Close']
-        # 最新価格を取得（取得できない場合は安全策で0にする）
-        gold_usd_oz = data.get('GC=F', 0)
-        if pd.isna(gold_usd_oz): gold_usd_oz = 0
-        silver_usd_oz = data.get('SI=F', 0)
-        if pd.isna(silver_usd_oz): silver_usd_oz = 0
-        usd_jpy = data.get('JPY=X', 0)
-        if pd.isna(usd_jpy): usd_jpy = 0
-        # 1トロイオンス = 31.1035グラム
-        GRAMS_PER_OZ = 31.1035
-        # 円/グラムに換算
-        # 計算式: (ドル価格 × ドル円レート) ÷ 31.1035
-        gold_jpy_g = (gold_usd_oz * usd_jpy) / GRAMS_PER_OZ
-        silver_jpy_g = (silver_usd_oz * usd_jpy) / GRAMS_PER_OZ
-        return {
-            'GOLD': gold_jpy_g,
-            'SILVER': silver_jpy_g
-        }
-    except Exception as e:
-        # エラー時はログに出すか、0を返す
-        print(f"貴金属データ取得エラー: {e}")
-        return {'GOLD': 0, 'SILVER': 0}
+def get_metal_prices():
+    symbols = {"gold": "GC=F", "silver": "SI=F"}
+    metal_prices = {}
+    for name, ticker in symbols.items():
+        data = yf.Ticker(ticker)
+        price = data.history(period="1d")['Close'].iloc[-1]
+        metal_prices[name] = f"{price:.2f}$"
+    return metal_prices
 
 # --- グラフ ---
 def create_combo_chart(data, x_col, x_format, tooltip_format, x_label_angle=0):
