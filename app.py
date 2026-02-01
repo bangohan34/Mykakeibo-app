@@ -263,6 +263,7 @@ if(url_user_id =="u1"):
             display_df = df_investment[['銘柄', '評価額(円)']].copy()
             display_df = display_df.rename(columns={'評価額(円)': '評価額'})
             display_df['評価額'] = display_df['評価額'].astype(int)
+            display_df = display_df.sort_values(by='評価額', ascending=False)
             st.dataframe(
                 display_df.style.format({
                     "評価額": "{:,} 円" 
