@@ -111,7 +111,7 @@ def load_investment_data(worksheet):
         padded_row = (row + [""] * 5)[:5]
         clean_data.append(padded_row)
     df = pd.DataFrame(data_rows, columns=cols)
-    df['数量'] = pd.to_numeric(df['保有量'], errors='coerce').fillna(0.0)
+    df['数量'] = pd.to_numeric(df['数量'], errors='coerce').fillna(0.0)
     return df
 def add_investment_data(worksheet, date, investment_name, investment_amount, pay_amount, memo):
     col_a_values = worksheet.col_values(9)
