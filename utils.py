@@ -186,8 +186,6 @@ def get_metal_prices_jpy_per_gram():
     try:
         tickers = ["GC=F", "SI=F", "JPY=X"]
         df = yf.download(tickers, period="5d", interval="1h", progress=False)['Close']
-        df_filled = df.ffill()
-        data = df.ffill().iloc[-1]
         # 最新価格を取得（取得できない場合は安全策で0にする）
         gold_usd_oz = data.get('GC=F', 0)
         if pd.isna(gold_usd_oz): gold_usd_oz = 0
