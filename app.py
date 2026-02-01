@@ -162,7 +162,7 @@ if not df_investment.empty:
         st.error(f"価格取得中にエラーが発生しました: {e}")
     df_investment['現在レート'] = df_investment['銘柄'].map(all_prices).fillna(0)
     df_investment['評価額(円)'] = df_investment['数量'] * df_investment['現在レート']
-    investment_total_assets = df_investment['評価額(円)'].sum()
+    total_investment_assets = df_investment['評価額(円)'].sum()
     df_crypto = df_investment.sort_values(by='評価額(円)', ascending=False)
 # 表示
 if(url_user_id =="u1"):
