@@ -216,6 +216,7 @@ metal_total_val = 0
 for symbol, amount in my_metals.items():
     if amount > 0:
         price = metal_prices.get(symbol, 0)
+        st.write("取得価格デバッグ:", metal_prices)
         value = price * amount
         metal_data.append({
             '銘柄': symbol,
