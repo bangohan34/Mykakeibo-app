@@ -82,7 +82,7 @@ with st.form(key='entry_form', clear_on_submit=True):
     # 投資
     if balance_type == "投資":
         investment_name = st.text_input("銘柄名")
-        investment_amount = st.number_input("数量", min_value=0.0, step=0.00001)
+        investment_amount = st.number_input("数量", min_value=0)
         # 支払う日本円
         amount = st.number_input('支払い金額', min_value=0, step=1, help="家計簿には「支出」として記録されます")
         memo = st.text_input('メモ', value=f"{investment_name}購入")
