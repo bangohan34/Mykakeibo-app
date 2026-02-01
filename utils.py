@@ -127,22 +127,21 @@ def get_usd_jpy_rate():
 @st.cache_data(ttl=600) # 600秒間、キャッシュする
 def get_crypto_prices(symbols):
     prices = {}
-    valid_symbols = [str(s).upper() for s in symbols if s and str(s).strip() != ""]
-    if not valid_symbols:
-        return {}
-    normal_symbols = [s for s in valid_symbols if s not in c.MEME_CONTRACTS]
-    if normal_symbols:
-        fsyms = ",".join(normal_symbols)
-        url = "https://min-api.cryptocompare.com/data/pricemulti"
-        params = {'fsyms': fsyms, 'tsyms': 'JPY'}
-        try:
-            response = requests.get(url, params=params, timeout=5)
-            data = response.json()
-            for sym in normal_symbols:
-                if sym in data and 'JPY' in data[sym]:
-                    prices[sym] = float(data[sym]['JPY'])
-        except:
-            pass
+    fsyms =",".join(symbols)
+    url = "https://min-api.cryptocompare.com/data/pricemulti"
+    params = {'fsyms': fsyms, 'tsyms': 'JPY'}
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        data = response.json()
+        for sym in symbols:
+            if not sym: continue
+            upper_sym = str(sym).upper()
+            if upper_sym in data and 'JPY' in data[upper_sym]:
+                prices[sym] = float(data[upper_sym]['JPY'])
+            elif upper_sym == 'FIXED_JPY':
+                prices[sym] = 1.0
+    except Exception as e:
+        print(f"Crypto Price Error: {e}")
     return prices
 @st.cache_data(ttl=600)
 def get_meme_prices(symbols):
