@@ -82,7 +82,7 @@ with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
     # 支出・収入
     if balance_type == "支出" or balance_type == "収入":
-        amount = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0")
+        amount = st.number_input('金額', min_value=0, step=1, value=0, placeholder="0")
     # 投資
     if balance_type == "投資":
         category = "投資"
@@ -99,6 +99,11 @@ if submit_btn:
             final_memo = f"{sub_category} {final_memo}"
         else:
             final_memo = sub_category
+    if balance_type == "投資":
+        if final_memo:
+            final_memo = f"{investment_name} 購入 {final_memo}"
+        else:
+            final_memo = f"{investment_name} 購入"
     # 支出、収入
     if amount == 0:
         st.warning('金額が0円です。入力してください。')
@@ -110,7 +115,7 @@ if submit_btn:
             else:
                 st.info(f'{category} ({sub_category if sub_category else ""}) : {amount}円を登録しました。')
             st.balloons()
-            time.sleep(2)
+            time.sleep(3)
             st.rerun()
         except Exception as e:
             st.error(f'書き込みエラー: {e}')
