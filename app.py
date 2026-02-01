@@ -11,8 +11,6 @@ st.set_page_config(page_title="家計簿", page_icon="💰")
 st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 
 # --- 自動ログイン ---
-if "is_logged_in" not in st.session_state:
-    st.session_state["is_logged_in"] = False
 if "target_sheet" not in st.session_state:
     st.session_state["target_sheet"] = ""
 if "current_user_name" not in st.session_state:
@@ -23,32 +21,13 @@ url_user_id = query_params.get("u",None)
 # ユーザー情報の取得
 users_cfg = st.secrets["users"]
 # 自動ログイン
-if not st.session_state["is_logged_in"] and url_user_id in users_cfg:
+if url_user_id in users_cfg:
     user_data = users_cfg[url_user_id]
-    st.session_state["is_logged_in"] = True
     st.session_state["target_sheet"] = user_data["sheet"]
     st.session_state["current_user_name"] = user_data["name"]
-
-# --- ログイン画面 ---
-if not st.session_state["is_logged_in"]:
-    st.header("🔒 ログイン")
-    st.write("パスワードを入力するか、**専用URL**からアクセスしてください。")
-    # 選択肢の作成 (表示名 -> ID の逆引き辞書を作る)
-    name_to_id = {v["name"]: k for k, v in users_cfg.items()}
-    selected_name = st.selectbox("ユーザーを選択", list(name_to_id.keys()))
-    input_pass = st.text_input("パスワード", type="password")
-    if st.button("ログイン"):
-        selected_id = name_to_id[selected_name]
-        correct_data = users_cfg[selected_id]
-        if input_pass == correct_data["pass"]:
-            st.session_state["is_logged_in"] = True
-            st.session_state["target_sheet"] = correct_data["sheet"]
-            st.session_state["current_user_name"] = correct_data["name"]
-            st.success("ログイン成功！")
-            time.sleep(0.5)
-            st.rerun()
-        else:
-            st.error("パスワードが違います")
+else:
+    # ユーザーが見つからない、またはURLに ?u= がない場合
+    st.error("⚠️ アクセス権限がありません。専用のURLからアクセスしてください。")
     st.stop()
 
 # --- データの準備 ---
