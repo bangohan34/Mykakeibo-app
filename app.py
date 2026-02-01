@@ -40,7 +40,7 @@ today = pd.Timestamp.now(tz='Asia/Tokyo').normalize()
 st.subheader("収支入力")
 balance_type = st.radio(
     "区分",
-    ["支出","収入","資産移動"],
+    ["支出","収入","投資"],
     horizontal=True,
     label_visibility="collapsed"
     )
@@ -76,20 +76,16 @@ elif balance_type =="収入":
     if(url_user_id =="u1"):
         category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
     elif(url_user_id =="u2"):
-        category = st.radio('項目', c.EXPENSE_CATEGORIES_saya, horizontal=True, label_visibility="collapsed")
+        category = st.radio('項目', c.INCOME_CATEGORIES_saya, horizontal=True, label_visibility="collapsed")
 with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
-    # 資産移動
-    if balance_type == "資産移動":
-        st.caption("資産を移動します")
-        col1, col2 = st.columns(2)
-        with col1:
-            crypto_name = st.text_input("銘柄名")
-        with col2:
-            crypto_amount = st.number_input("増える量", min_value=0.0, step=0.0001, format="%.8f")
+    # 投資
+    if balance_type == "投資":
+        investment_name = st.text_input("銘柄名")
+        investment_amount = st.number_input("数量", min_value=0.0, step=0.00001)
         # 支払う日本円
-        amount = st.number_input('支払った日本円', min_value=0, step=1, help="家計簿には「支出」として記録されます")
-        memo = st.text_input('メモ', value=f"{crypto_name}購入")
+        amount = st.number_input('支払い金額', min_value=0, step=1, help="家計簿には「支出」として記録されます")
+        memo = st.text_input('メモ', value=f"{investment_name}購入")
         # 家計簿用のカテゴリーは自動で「投資」などにする
         category = "投資"
     # 支出、収入
@@ -105,55 +101,21 @@ if submit_btn:
             final_memo = f"{sub_category} {final_memo}"
         else:
             final_memo = sub_category
-    # 資産移動
-    if balance_type == "資産移動":
-        if not crypto_name:
-            st.warning("銘柄名を入力してください")
-        elif crypto_amount == 0 and amount == 0:
-            st.warning("数量または金額を入力してください")
-        else:
-            try:
-                # 暗号資産の保有量を増やす
-                df_curr = u.load_crypto_data(worksheet)
-                # 既存の保有量を取得
-                if crypto_name in df_curr['銘柄'].values:
-                    current_val = df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'].values[0]
-                    new_val = current_val + crypto_amount
-                    df_curr.loc[df_curr['銘柄'] == crypto_name, '保有量'] = new_val
-                else:
-                    new_row = pd.DataFrame({'銘柄': [crypto_name], '保有量': [crypto_amount]})
-                    df_curr = pd.concat([df_curr, new_row], ignore_index=True)
-                u.save_crypto_data(worksheet, df_curr)
-                # 家計簿に「支出」として記録する（金額が1円以上の場合）
-                if amount > 0:
-                    # 区分はわかりやすく「支出」にするか、あえて「資産移動」と記録するか選べます
-                    # ここでは資産集計の計算を合わせるため「支出」として記録します
-                    u.add_entry(worksheet, date, "支出", category, amount, memo)
-                    msg = f"💰 {amount:,}円で {crypto_name} を {crypto_amount} 購入しました。"
-                else:
-                    msg = f"💎 {crypto_name} が {crypto_amount} 増えました"
-                st.success(msg)
-                st.balloons()
-                time.sleep(2)
-                st.rerun()
-            except Exception as e:
-                st.error(f"資産移動エラー: {e}")
     # 支出、収入
+    if amount == 0:
+        st.warning('金額が0円です。入力してください。')
     else:
-        if amount == 0:
-            st.warning('金額が0円です。入力してください。')
-        else:
-            try:
-                u.add_entry(worksheet, date, balance_type, category, amount, final_memo)
-                if balance_type =="収入":
-                    st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
-                else:
-                    st.info(f'{category} ({sub_category if sub_category else ""}) : {amount}円を登録しました。')
-                st.balloons()
-                time.sleep(2)
-                st.rerun()
-            except Exception as e:
-                st.error(f'書き込みエラー: {e}')
+        try:
+            u.add_entry(worksheet, date, balance_type, category, amount, final_memo)
+            if balance_type =="収入":
+                st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
+            else:
+                st.info(f'{category} ({sub_category if sub_category else ""}) : {amount}円を登録しました。')
+            st.balloons()
+            time.sleep(2)
+            st.rerun()
+        except Exception as e:
+            st.error(f'書き込みエラー: {e}')
 
 st.divider()
 
