@@ -82,7 +82,7 @@ with st.form(key='entry_form', clear_on_submit=True):
     date = st.date_input('日付', datetime.date.today())
     # 支出・収入
     if balance_type == "支出" or balance_type == "収入":
-        amount = st.number_input('金額', min_value=0, step=1, value=0, placeholder="0")
+        amount = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0")
     # 投資
     if balance_type == "投資":
         category = "投資"
@@ -105,20 +105,25 @@ if submit_btn:
         else:
             final_memo = f"{investment_name} 購入"
     # 支出、収入
-    if amount == 0:
-        st.warning('金額が0円です。入力してください。')
-    else:
-        try:
-            u.add_entry(worksheet, date, balance_type, category, amount, final_memo)
-            if balance_type =="収入":
-                st.success(f'お疲れさま！ {category} : {amount}円の収入を登録しました。')
-            else:
-                st.info(f'{category} ({sub_category if sub_category else ""}) : {amount}円を登録しました。')
-            st.balloons()
-            time.sleep(3)
-            st.rerun()
-        except Exception as e:
-            st.error(f'書き込みエラー: {e}')
+    if balance_type == "支出" or balance_type == "収入":
+        if amount == None:
+            st.warning('金額が0円です。入力してください。')
+        else:
+            try:
+                u.add_entry(worksheet, date, balance_type, category, amount, final_memo)
+                if balance_type =="収入":
+                    st.success(f'お疲れさま！ {category} : {amount}円を登録しました。')
+                else:
+                    st.info(f'{category} ({sub_category if sub_category else ""}) : {amount}円を登録しました。')
+                st.balloons()
+                time.sleep(3)
+                st.rerun()
+            except Exception as e:
+                st.error(f'書き込みエラー: {e}')
+    # 投資
+    if balance_type == "投資":
+        if amount == None:
+            st.warning('金額が入力されていません。入力してください。')
 
 st.divider()
 
