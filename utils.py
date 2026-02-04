@@ -176,7 +176,7 @@ def get_metal_prices(symbols):
                 ticker = target_map[sym]
                 data = yf.Ticker(ticker)
                 price_usd = data.history(period="5d")['Close'].iloc[-1]
-                metal_prices[sym] = float(price_usd * usd_jpy_rate / 31.1035)
+                metal_prices[sym] = float(price_usd * usd_jpy_rate * 1.1 / 31.1)
     except Exception as e:
         print(f"Metal price error: {e}")
     return metal_prices
