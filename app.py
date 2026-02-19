@@ -35,6 +35,13 @@ worksheet = u.get_worksheet(st.session_state["target_sheet"])
 df = u.load_kakeibo_data(worksheet)
 df_investment = u.load_investment_data(worksheet)
 today = pd.Timestamp.now(tz='Asia/Tokyo').normalize().tz_localize(None)
+# サブスク追加
+if "subscriptions_auto_added" not in st.session_state:
+    added_count = u.auto_add_subscriptions(worksheet, df)
+    if added_count > 0:
+        st.toast(f"📅 今月のサブスク {added_count}件 を自動で家計簿に追加しました！", icon="✅")
+        df = u.load_kakeibo_data(worksheet)  # データを再読み込み
+    st.session_state["subscriptions_auto_added"] = True
 
 # --- 入力フォーム ---
 st.subheader("収支入力")
@@ -441,6 +448,77 @@ with st.expander("削除メニューを開く", expanded=False):
         st.info("データがありません。")
 
 st.divider()
+
+# --- サブスク管理 ---
+st.subheader("📅 サブスク管理")
+if url_user_id == "u1":
+    sub_expense_categories = c.EXPENSE_CATEGORIES
+elif url_user_id == "u2":
+    sub_expense_categories = c.EXPENSE_CATEGORIES_saya
+else:
+    sub_expense_categories = c.EXPENSE_CATEGORIES
+# サブスクデータ読み込み
+df_sub = u.load_subscription_data(worksheet)
+# --- 一覧表示 ---
+if not df_sub.empty:
+    monthly_total = df_sub['金額'].sum()
+    yearly_total = monthly_total * 12
+    col_m, col_y = st.columns(2)
+    col_m.metric("月額合計", f"{monthly_total:,} 円")
+    col_y.metric("年額換算", f"{yearly_total:,} 円")
+
+    display_sub = df_sub[['No', 'サービス名', '金額', 'カテゴリー', '支払日', 'メモ']].copy()
+    display_sub['支払日'] = display_sub['支払日'].astype(str) + "日"
+    display_sub['金額'] = display_sub['金額'].apply(lambda x: f"{x:,} 円")
+    st.dataframe(
+        display_sub.style.set_properties(**{
+            'background-color': '#ede4ce',
+            'border-color': '#A1A3A6',
+            'border-style': 'solid',
+        }),
+        hide_index=True,
+        use_container_width=True
+    )
+else:
+    st.info("サブスクはまだ登録されていません。")
+# --- 追加フォーム ---
+with st.expander("➕ サブスクを追加する", expanded=False):
+    with st.form(key="sub_add_form", clear_on_submit=True):
+        sub_service_name = st.text_input("サービス名（例：Netflix, Spotify）")
+        sub_amount = st.number_input("月額金額", min_value=0, step=1, value=None, placeholder="0")
+        sub_category = st.selectbox("カテゴリー", sub_expense_categories)
+        sub_pay_day = st.number_input("毎月の支払日", min_value=1, max_value=31, step=1, value=1)
+        sub_memo = st.text_input("メモ（任意）")
+        sub_submit = st.form_submit_button("登録する")
+    if sub_submit:
+        if not sub_service_name:
+            st.warning("サービス名を入力してください。")
+        elif sub_amount is None or sub_amount == 0:
+            st.warning("金額を入力してください。")
+        else:
+            try:
+                u.add_subscription(worksheet, sub_service_name, sub_amount, sub_category, sub_pay_day, sub_memo)
+                st.success(f"「{sub_service_name}」を登録しました！")
+                st.rerun()
+            except Exception as e:
+                st.error(f"登録エラー: {e}")
+# 削除フォーム
+with st.expander("🗑️ サブスクを削除する", expanded=False):
+    if not df_sub.empty:
+        del_service_options = df_sub['サービス名'].tolist()
+        del_target = st.selectbox("削除するサービスを選択", del_service_options)
+        if st.button("削除する", key="sub_delete_btn"):
+            target_row = df_sub[df_sub['サービス名'] == del_target]
+            if not target_row.empty:
+                row_index = int(target_row.iloc[0]['No'])
+                try:
+                    u.delete_subscription(worksheet, row_index)
+                    st.success(f"「{del_target}」を削除しました！")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"削除エラー: {e}")
+    else:
+        st.info("削除するサブスクがありません。")
 
 # --- なんでもメモ ---
 st.subheader("なんでもメモ")

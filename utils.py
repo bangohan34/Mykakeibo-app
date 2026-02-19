@@ -278,6 +278,85 @@ def color_coding(val):
         return 'color: #A03333; font-weight: bold;'
     return ''
 
+# --- サブスク ---
+def load_subscription_data(worksheet):
+    raw_data = worksheet.get('N:R')
+    cols = ['サービス名', '金額', 'カテゴリー', '支払日', 'メモ']
+    if not raw_data or len(raw_data) < 2:
+        return pd.DataFrame(columns=cols)
+    data_rows = raw_data[1:]  # ヘッダー行を除く
+    clean_data = []
+    for row in data_rows:
+        padded = (row + [""] * 5)[:5]
+        clean_data.append(padded)
+    df = pd.DataFrame(clean_data, columns=cols)
+    # 空行を除去
+    df = df[df['サービス名'].astype(str).str.strip() != ""]
+    df['金額'] = pd.to_numeric(df['金額'], errors='coerce').fillna(0).astype(int)
+    df['支払日'] = pd.to_numeric(df['支払日'], errors='coerce').fillna(1).astype(int)
+    # 行番号（スプレッドシート上の実際の行）を保持（削除に使う）
+    df.insert(0, 'No', range(2, 2 + len(df)))  # ヘッダーが1行目なので2行目から
+    return df
+
+def add_subscription(worksheet, service_name, amount, category, pay_day, memo):
+    """サブスクをN列から追加"""
+    col_n_values = worksheet.col_values(14)  # N列 = 14列目
+    next_row = len(col_n_values) + 1
+    # ヘッダーがなければ書く
+    if next_row == 1:
+        worksheet.update(range_name='N1:R1', values=[['サービス名', '金額', 'カテゴリー', '支払日', 'メモ']])
+        next_row = 2
+    row_data = [[service_name, amount, category, pay_day, memo]]
+    worksheet.update(range_name=f'N{next_row}:R{next_row}', values=row_data)
+
+def delete_subscription(worksheet, row_index):
+    """サブスクをN〜R列から削除（行を詰める）"""
+    current_data = worksheet.get('N:R')
+    target_list_index = int(row_index) - 1  # 0始まりのインデックスに変換
+    if 0 <= target_list_index < len(current_data):
+        current_data.pop(target_list_index)
+        worksheet.batch_clear(['N:R'])
+        if current_data:
+            worksheet.update(range_name='N1', values=current_data)
+
+def auto_add_subscriptions(worksheet, df_kakeibo):
+    """
+    アプリ起動時に今月分のサブスクをまだ追加していなければ家計簿に追加する。
+    判定：家計簿のメモ列に「[サブスク_YYYYMM_サービス名]」という識別子があれば追加済みとみなす。
+    """
+    df_sub = load_subscription_data(worksheet)
+    if df_sub.empty:
+        return 0  # 追加した件数
+
+    now = pd.Timestamp.now(tz='Asia/Tokyo')
+    year = now.year
+    month = now.month
+    added_count = 0
+
+    for _, row in df_sub.iterrows():
+        service_name = row['サービス名']
+        identifier = f"[サブスク_{year}{month:02d}_{service_name}]"
+
+        # 今月分がすでに登録されているか確認
+        already_added = False
+        if not df_kakeibo.empty:
+            already_added = df_kakeibo['メモ'].astype(str).str.contains(
+                identifier, regex=False
+            ).any()
+
+        if not already_added:
+            # 支払日を決定（月末を超えないようにする）
+            import calendar
+            last_day = calendar.monthrange(year, month)[1]
+            pay_day = min(int(row['支払日']), last_day)
+            pay_date = pd.Timestamp(year=year, month=month, day=pay_day).date()
+
+            memo_with_id = f"{row['メモ']} {identifier}".strip()
+            add_entry(worksheet, pay_date, '支出', row['カテゴリー'], int(row['金額']), memo_with_id)
+            added_count += 1
+
+    return added_count
+
 # --- なんでもメモの操作 ---
 def get_anything_memo(worksheet):
     try:
