@@ -459,16 +459,27 @@ else:
     sub_expense_categories = c.EXPENSE_CATEGORIES
 # サブスクデータ読み込み
 df_sub = u.load_subscription_data(worksheet)
-# --- 一覧表示 ---
+# 一覧表示
 if not df_sub.empty:
     monthly_total = df_sub['金額'].sum()
     yearly_total = monthly_total * 12
-    col_m, col_y = st.columns(2)
-    col_m.metric("月額合計", f"{monthly_total:,} 円")
-    col_y.metric("年額換算", f"{yearly_total:,} 円")
-
-    display_sub = df_sub[['No', 'サービス名', '金額', 'カテゴリー', '支払日', 'メモ']].copy()
-    display_sub['支払日'] = display_sub['支払日'].astype(str) + "日"
+    st.markdown(f"""
+    <div style="display: flex; gap: 10px; justify-content: space-between;">
+        <div style="flex: 1; padding: 10px; text-align: center;">
+            <div style="font-size: 14px; color: gray;">月額合計</div>
+            <div style="font-size: 30px; font-weight: bold; color: #7970CA;">
+                {monthly_total:,} 円
+            </div>
+        </div>
+        <div style="flex: 1; padding: 10px; text-align: center;">
+            <div style="font-size: 14px; color: gray;">年額換算</div>
+            <div style="font-size: 30px; font-weight: bold; color: #7970CA;">
+                {yearly_total:,} 円
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    display_sub = df_sub[['サービス名', '金額', 'メモ']].copy()
     display_sub['金額'] = display_sub['金額'].apply(lambda x: f"{x:,} 円")
     st.dataframe(
         display_sub.style.set_properties(**{
@@ -481,7 +492,7 @@ if not df_sub.empty:
     )
 else:
     st.info("サブスクはまだ登録されていません。")
-# --- 追加フォーム ---
+# 追加
 with st.expander("サブスクを追加する", expanded=False):
     with st.form(key="sub_add_form", clear_on_submit=True):
         sub_service_name = st.text_input("サービス名（例：Netflix, Spotify）")
@@ -502,7 +513,7 @@ with st.expander("サブスクを追加する", expanded=False):
                 st.rerun()
             except Exception as e:
                 st.error(f"登録エラー: {e}")
-# 削除フォーム
+# 削除
 with st.expander("サブスクを削除する", expanded=False):
     if not df_sub.empty:
         del_service_options = df_sub['サービス名'].tolist()
