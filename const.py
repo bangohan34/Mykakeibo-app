@@ -26,6 +26,10 @@ EXPENSE_SUB_CATEGORIES_saya = {
     "医療費": ["通院","薬","その他"],
 }
 
+# 資産確認用
+ASSET_CHECK_ACCOUNTS = ['ゆうちょ', 'SMBC', 'PayPay']
+ASSET_CHECK_CREDITS = ['JCB', 'メルカリ', 'SMBC']
+
 # 暗号資産のIDマップ
 CRYPTO_ID_MAP = {
     'BTC': 'bitcoin',

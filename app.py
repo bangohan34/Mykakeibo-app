@@ -546,6 +546,50 @@ with st.expander("サブスクを削除する", expanded=False):
     else:
         st.info("削除するサブスクがありません。")
 
+st.divider()
+
+# --- 資産確認・調整 ---
+if url_user_id == "u1":
+    st.divider()
+    st.subheader("資産確認・調整")
+    with st.expander("資産確認を開く", expanded=False):
+        st.caption("現在の残高・未払い額を入力してください")
+        # 口座・電子マネー入力
+        account_total = 0
+        for account in c.ASSET_CHECK_ACCOUNTS:
+            val = st.number_input(account, min_value=0, step=1, value=0, key=f"ac_{account}")
+            account_total += val
+        # クレカ未払い（引き算）
+        credit_total = 0
+        st.caption("クレカ未払い分（残高から引かれます）")
+        for credit in c.ASSET_CHECK_CREDITS:
+            val = st.number_input(credit, min_value=0, step=1, value=0, key=f"cr_{credit}")
+            credit_total += val
+        # 実際の資産合計
+        real_assets = account_total - credit_total
+
+        st.divider()
+        col1, col2, col3 = st.columns(3)
+        col1.metric("実際の資産", f"{real_assets:,} 円")
+        col2.metric("アプリ上の資産", f"{int(yen_assets):,} 円")
+        diff = real_assets - int(yen_assets)
+        col3.metric("差額", f"{diff:,} 円", delta=f"{diff:,}")
+        # 調整ボタン
+        if diff != 0:
+            st.warning(f"{'不足' if diff < 0 else '超過'} {abs(diff):,} 円のズレがあります")
+            if st.button("この差額を家計簿に記入する"):
+                if diff > 0:
+                    # 実際の方が多い → 収入として記入
+                    u.add_entry(worksheet, datetime.date.today(), '収入', 'その他', abs(diff), '資産調整')
+                else:
+                    # 実際の方が少ない → 支出として記入
+                    u.add_entry(worksheet, datetime.date.today(), '支出', 'その他', abs(diff), '資産調整')
+                st.success(f"差額 {abs(diff):,} 円を「その他」で記入しました！")
+                time.sleep(1)
+                st.rerun()
+        else:
+            st.success("✅ アプリ上の資産と実際の資産が一致しています！")
+
 # --- なんでもメモ ---
 st.subheader("なんでもメモ")
 # データの準備
