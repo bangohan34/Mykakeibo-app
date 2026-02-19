@@ -590,6 +590,8 @@ if url_user_id == "u1":
         else:
             st.success("✅ アプリ上の資産と実際の資産が一致しています！")
 
+st.divider()
+
 # --- なんでもメモ ---
 st.subheader("なんでもメモ")
 # データの準備
