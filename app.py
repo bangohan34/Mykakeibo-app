@@ -447,8 +447,6 @@ with st.expander("削除メニューを開く", expanded=False):
     else:
         st.info("データがありません。")
 
-st.divider()
-
 # --- サブスク管理 ---
 st.subheader("サブスク管理")
 if url_user_id == "u1":
@@ -545,8 +543,6 @@ with st.expander("サブスクを削除する", expanded=False):
                         st.error(f"削除エラー: {e}")
     else:
         st.info("削除するサブスクがありません。")
-
-st.divider()
 
 # --- 資産確認・調整 ---
 if url_user_id == "u1":
