@@ -450,7 +450,7 @@ with st.expander("削除メニューを開く", expanded=False):
 st.divider()
 
 # --- サブスク管理 ---
-st.subheader("📅 サブスク管理")
+st.subheader("サブスク管理")
 if url_user_id == "u1":
     sub_expense_categories = c.EXPENSE_CATEGORIES
 elif url_user_id == "u2":
@@ -482,7 +482,7 @@ if not df_sub.empty:
 else:
     st.info("サブスクはまだ登録されていません。")
 # --- 追加フォーム ---
-with st.expander("➕ サブスクを追加する", expanded=False):
+with st.expander("サブスクを追加する", expanded=False):
     with st.form(key="sub_add_form", clear_on_submit=True):
         sub_service_name = st.text_input("サービス名（例：Netflix, Spotify）")
         sub_amount = st.number_input("月額金額", min_value=0, step=1, value=None, placeholder="0")
@@ -503,7 +503,7 @@ with st.expander("➕ サブスクを追加する", expanded=False):
             except Exception as e:
                 st.error(f"登録エラー: {e}")
 # 削除フォーム
-with st.expander("🗑️ サブスクを削除する", expanded=False):
+with st.expander("サブスクを削除する", expanded=False):
     if not df_sub.empty:
         del_service_options = df_sub['サービス名'].tolist()
         del_target = st.selectbox("削除するサービスを選択", del_service_options)
