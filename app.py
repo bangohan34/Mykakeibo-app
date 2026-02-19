@@ -332,6 +332,7 @@ if not df.empty:
                 st.info("直近30日のデータはありません。")
     elif url_user_id == "u2" and not graph_df.empty:
         tab_day, tab_week, tab_month = st.tabs(["日ごと", "週ごと", "月ごと"])
+        start_date_fixed = pd.to_datetime('2026-01-01')
         with tab_day:
             df_30d = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
             if not df_30d.empty:
