@@ -154,6 +154,9 @@ if not df.empty:
     total_income = totals.get('収入', 0)
     total_expense = totals.get('支出', 0)
     yen_assets = total_income - total_expense
+    current_month = pd.Timestamp.now(tz='Asia/Tokyo').normalize().tz_localize(None).replace(day=1)
+    df_this_month = df[df['日付'] >= current_month]
+    current_month_expense = df_this_month[df_this_month['区分'] == '支出']['金額'].sum()
 else:
     yen_assets = 0
 # 投資資産の価値計算
@@ -193,9 +196,9 @@ if(url_user_id =="u2"):
     st.markdown(f"""
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
-            <div style="font-size: 20px; color: gray;">支出合計</div>
+            <div style="font-size: 20px; color: gray;">今月の支出</div>
             <div style="font-size: 48px; font-weight: bold; color: #A03333;">
-                {f"{int(total_expense):,} 円"}
+                {f"{int(current_month_expense):,} 円"}
             </div>
         </div>
     </div>
