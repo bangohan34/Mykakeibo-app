@@ -467,13 +467,13 @@ if not df_sub.empty:
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
             <div style="font-size: 14px; color: gray;">月額合計</div>
-            <div style="font-size: 30px; font-weight: bold; color: #7970CA;">
+            <div style="font-size: 30px; font-weight: bold; color: #b22222;">
                 {monthly_total:,} 円
             </div>
         </div>
         <div style="flex: 1; padding: 10px; text-align: center;">
             <div style="font-size: 14px; color: gray;">年額換算</div>
-            <div style="font-size: 30px; font-weight: bold; color: #7970CA;">
+            <div style="font-size: 30px; font-weight: bold; color: #b22222;">
                 {yearly_total:,} 円
             </div>
         </div>
