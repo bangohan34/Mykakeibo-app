@@ -516,18 +516,33 @@ with st.expander("サブスクを追加する", expanded=False):
 # 削除
 with st.expander("サブスクを削除する", expanded=False):
     if not df_sub.empty:
-        del_service_options = df_sub['サービス名'].tolist()
-        del_target = st.selectbox("削除するサービスを選択", del_service_options)
-        if st.button("削除する", key="sub_delete_btn"):
+        # 初期値なしのセレクトボックス
+        del_options = [""] + df_sub['サービス名'].tolist()
+        del_target = st.selectbox("削除するサービスを選択", del_options, index=0)
+
+        if del_target:
             target_row = df_sub[df_sub['サービス名'] == del_target]
-            if not target_row.empty:
-                row_index = int(target_row.iloc[0]['No'])
-                try:
-                    u.delete_subscription(worksheet, row_index)
-                    st.success(f"「{del_target}」を削除しました！")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"削除エラー: {e}")
+            if st.checkbox("削除対象を確認する", key="sub_del_confirm"):
+                st.warning("⚠️ 以下のサブスクを本当に削除しますか？")
+                preview = target_row[['No', 'サービス名', '金額', 'メモ']].copy()
+                preview['金額'] = preview['金額'].apply(lambda x: f"{x:,} 円")
+                st.dataframe(
+                    preview.style.set_properties(**{
+                        'background-color': '#ede4ce',
+                        'border-color': '#A1A3A6',
+                        'border-style': 'solid',
+                    }),
+                    hide_index=True,
+                    use_container_width=True
+                )
+                if st.button("はい、削除します", key="sub_delete_btn"):
+                    row_index = int(target_row.iloc[0]['No'])
+                    try:
+                        u.delete_subscription(worksheet, row_index)
+                        st.success(f"「{del_target}」を削除しました！")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"削除エラー: {e}")
     else:
         st.info("削除するサブスクがありません。")
 
