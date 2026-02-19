@@ -7,6 +7,7 @@ import requests
 import const as c
 import altair as alt
 import yfinance as yf
+import calendar
 
 # --- 認証と接続 ---
 scopes = [
@@ -280,18 +281,29 @@ def color_coding(val):
 
 # --- サブスク ---
 def load_subscription_data(worksheet):
-    raw_data = worksheet.get('N:R')
+    """サブスクデータをN〜R列から読み込む"""
     cols = ['サービス名', '金額', 'カテゴリー', '支払日', 'メモ']
+    try:
+        raw_data = worksheet.get('N:R')
+    except Exception:
+        return pd.DataFrame(columns=cols)
+
+    # 空 or ヘッダーのみの場合
     if not raw_data or len(raw_data) < 2:
         return pd.DataFrame(columns=cols)
+
     data_rows = raw_data[1:]  # ヘッダー行を除く
     clean_data = []
     for row in data_rows:
         padded = (row + [""] * 5)[:5]
         clean_data.append(padded)
+
     df = pd.DataFrame(clean_data, columns=cols)
     # 空行を除去
     df = df[df['サービス名'].astype(str).str.strip() != ""]
+    if df.empty:
+        return pd.DataFrame(columns=cols)
+
     df['金額'] = pd.to_numeric(df['金額'], errors='coerce').fillna(0).astype(int)
     df['支払日'] = pd.to_numeric(df['支払日'], errors='coerce').fillna(1).astype(int)
     # 行番号（スプレッドシート上の実際の行）を保持（削除に使う）
@@ -310,7 +322,7 @@ def add_subscription(worksheet, service_name, amount, category, pay_day, memo):
     worksheet.update(range_name=f'N{next_row}:R{next_row}', values=row_data)
 
 def delete_subscription(worksheet, row_index):
-    """サブスクをN〜R列から削除（行を詰める）"""
+    """サブスクをN〜R列から削除（対象行のみクリア後に詰める）"""
     current_data = worksheet.get('N:R')
     target_list_index = int(row_index) - 1  # 0始まりのインデックスに変換
     if 0 <= target_list_index < len(current_data):
@@ -323,10 +335,15 @@ def auto_add_subscriptions(worksheet, df_kakeibo):
     """
     アプリ起動時に今月分のサブスクをまだ追加していなければ家計簿に追加する。
     判定：家計簿のメモ列に「[サブスク_YYYYMM_サービス名]」という識別子があれば追加済みとみなす。
+    N列が空の場合は何もしない。
     """
-    df_sub = load_subscription_data(worksheet)
+    try:
+        df_sub = load_subscription_data(worksheet)
+    except Exception:
+        return 0
+
     if df_sub.empty:
-        return 0  # 追加した件数
+        return 0
 
     now = pd.Timestamp.now(tz='Asia/Tokyo')
     year = now.year
@@ -334,19 +351,19 @@ def auto_add_subscriptions(worksheet, df_kakeibo):
     added_count = 0
 
     for _, row in df_sub.iterrows():
-        service_name = row['サービス名']
+        service_name = str(row['サービス名']).strip()
+        if not service_name:
+            continue
         identifier = f"[サブスク_{year}{month:02d}_{service_name}]"
 
         # 今月分がすでに登録されているか確認
         already_added = False
-        if not df_kakeibo.empty:
+        if not df_kakeibo.empty and 'メモ' in df_kakeibo.columns:
             already_added = df_kakeibo['メモ'].astype(str).str.contains(
                 identifier, regex=False
             ).any()
 
         if not already_added:
-            # 支払日を決定（月末を超えないようにする）
-            import calendar
             last_day = calendar.monthrange(year, month)[1]
             pay_day = min(int(row['支払日']), last_day)
             pay_date = pd.Timestamp(year=year, month=month, day=pay_day).date()
