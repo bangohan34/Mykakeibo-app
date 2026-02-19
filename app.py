@@ -193,9 +193,9 @@ if(url_user_id =="u2"):
     st.markdown(f"""
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
-            <div style="font-size: 20px; color: gray;">現金・預金</div>
-            <div style="font-size: 48px; font-weight: bold; color: #0068c9;">
-                {f"{int(yen_assets):,} 円"}
+            <div style="font-size: 20px; color: gray;">支出合計</div>
+            <div style="font-size: 48px; font-weight: bold; color: #A03333;">
+                {f"{int(total_expense):,} 円"}
             </div>
         </div>
     </div>
@@ -297,8 +297,8 @@ if not df.empty:
     base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
     # 表示期間の絞り込み（2026年以降）
     graph_df = base_df[base_df['日付'] >= pd.to_datetime('2026-01-01')]
-    if not graph_df.empty:
-        tab_month, tab_week, tab_day = st.tabs(["月ごと", "週ごと", "日ごと"])
+    if url_user_id == "u1" and not graph_df.empty:
+        tab_day, tab_week, tab_month = st.tabs(["日ごと", "週ごと", "月ごと"])
         # 月ごと
         with tab_month:
             st.altair_chart(
@@ -330,6 +330,25 @@ if not df.empty:
                 )
             else:
                 st.info("直近30日のデータはありません。")
+    elif url_user_id == "u2" and not graph_df.empty:
+        tab_day, tab_week, tab_month = st.tabs(["日ごと", "週ごと", "月ごと"])
+        with tab_day:
+            df_30d = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
+            if not df_30d.empty:
+                st.altair_chart(u.create_expense_bar_chart(df_30d, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+            else:
+                st.info("データはありません。")
+        with tab_week:
+            df_30w = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
+            if not df_30w.empty:
+                st.altair_chart(u.create_expense_bar_chart(df_30w, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+            else:
+                st.info("データはありません。")
+        with tab_month:
+            if not graph_df.empty:
+                st.altair_chart(u.create_expense_bar_chart(graph_df, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+            else:
+                st.info("データはありません。")
     else:
         st.info("指定期間のデータはありません。")
 else:

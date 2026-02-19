@@ -271,6 +271,22 @@ def create_expense_pie_chart(data):
         titleColor='#703B3B',
         symbolStrokeWidth=0
     )
+def create_expense_bar_chart(data, x_col, x_format, tooltip_format, x_label_angle=0):
+    bar_data = data[data['区分'] == '支出'].groupby(x_col)['金額'].sum().reset_index()
+    bars = alt.Chart(bar_data).mark_bar(color="#A03333").encode(
+        x=alt.X(x_col, axis=alt.Axis(format=x_format, title=None, labelAngle=x_label_angle)),
+        y=alt.Y('金額', axis=alt.Axis(title='支出 (円)', grid=True)),
+        tooltip=[
+            alt.Tooltip(x_col, format=tooltip_format, title='期間'),
+            alt.Tooltip('金額', format=',', title='支出'),
+        ]
+    ).properties(height=300)
+    return bars.configure_axis(
+        labelColor='#703B3B',
+        titleColor='#703B3B',
+        gridColor='#e0e0e0'
+    )
+
 # --- 履歴表示 ---
 def color_coding(val):
     if val == '収入':
@@ -309,7 +325,6 @@ def load_subscription_data(worksheet):
     # 行番号（スプレッドシート上の実際の行）を保持（削除に使う）
     df.insert(0, 'No', range(2, 2 + len(df)))  # ヘッダーが1行目なので2行目から
     return df
-
 def add_subscription(worksheet, service_name, amount, category, pay_day, memo):
     """サブスクをN列から追加"""
     col_n_values = worksheet.col_values(14)  # N列 = 14列目
@@ -320,7 +335,6 @@ def add_subscription(worksheet, service_name, amount, category, pay_day, memo):
         next_row = 2
     row_data = [[service_name, amount, category, pay_day, memo]]
     worksheet.update(range_name=f'N{next_row}:R{next_row}', values=row_data)
-
 def delete_subscription(worksheet, row_index):
     """サブスクをN〜R列から削除（対象行のみクリア後に詰める）"""
     current_data = worksheet.get('N:R')
@@ -330,7 +344,6 @@ def delete_subscription(worksheet, row_index):
         worksheet.batch_clear(['N:R'])
         if current_data:
             worksheet.update(range_name='N1', values=current_data)
-
 def auto_add_subscriptions(worksheet, df_kakeibo):
     """
     アプリ起動時に今月分のサブスクをまだ追加していなければ家計簿に追加する。
