@@ -524,7 +524,7 @@ with st.expander("サブスクを削除する", expanded=False):
             target_row = df_sub[df_sub['サービス名'] == del_target]
             if st.checkbox("削除対象を確認する", key="sub_del_confirm"):
                 st.warning("⚠️ 以下のサブスクを本当に削除しますか？")
-                preview = target_row[['No', 'サービス名', '金額', 'メモ']].copy()
+                preview = target_row[['サービス名', '金額', 'メモ']].copy()
                 preview['金額'] = preview['金額'].apply(lambda x: f"{x:,} 円")
                 st.dataframe(
                     preview.style.set_properties(**{
