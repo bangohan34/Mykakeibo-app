@@ -447,6 +447,8 @@ with st.expander("削除メニューを開く", expanded=False):
     else:
         st.info("データがありません。")
 
+st.divider()
+
 # --- サブスク管理 ---
 st.subheader("サブスク管理")
 if url_user_id == "u1":
