@@ -131,22 +131,34 @@ def get_usd_jpy_rate():
         return 150.0 # エラー時は仮のレート
 
 # --- 暗号資産データの操作 ---
-@st.cache_data(ttl=600) # 600秒間、キャッシュする
+@st.cache_data(ttl=600)
 def get_crypto_prices(symbols):
     prices = {}
-    fsyms =",".join(symbols)
-    url = "https://min-api.cryptocompare.com/data/pricemulti"
-    params = {'fsyms': fsyms, 'tsyms': 'JPY'}
+    valid_symbols = [str(sym).upper() for sym in symbols if sym]
+    cg_ids = [c.CRYPTO_ID_MAP[sym] for sym in valid_symbols if sym in c.CRYPTO_ID_MAP]
+    if not cg_ids:
+        return prices
+    ids_str = ",".join(cg_ids)
+    url = "https://api.coingecko.com/api/v3/simple/price"
+    params = {
+        'ids': ids_str,
+        'vs_currencies': 'jpy'
+    }
     try:
         response = requests.get(url, params=params, timeout=5)
+        response.raise_for_status()
         data = response.json()
-        for sym in symbols:
-            if not sym: continue
-            upper_sym = str(sym).upper()
-            if upper_sym in data and 'JPY' in data[upper_sym]:
-                prices[sym] = float(data[upper_sym]['JPY'])
+        for sym in valid_symbols:
+            if sym in c.CRYPTO_ID_MAP:
+                cg_id = c.CRYPTO_ID_MAP[sym]
+                if cg_id in data and 'jpy' in data[cg_id]:
+                    prices[sym] = float(data[cg_id]['jpy'])
+    except requests.exceptions.RequestException as e:
+        print(f"HTTP Request Error: {e}")
+    except ValueError as e:
+        print(f"JSON Decode Error: {e}")
     except Exception as e:
-        print(f"Crypto Price Error: {e}")
+        print(f"Unexpected Error: {e}")
     return prices
 @st.cache_data(ttl=600)
 def get_meme_prices(symbols):
