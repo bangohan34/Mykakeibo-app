@@ -471,10 +471,11 @@ else:
     st.stop()
 
 # --- データの準備 ---
+JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
+today_jst = datetime.datetime.now(JST).date()
 worksheet = u.get_worksheet(st.session_state["target_sheet"])
 df = u.load_kakeibo_data(worksheet)
 df_investment = u.load_investment_data(worksheet)
-today = pd.Timestamp.now(tz='Asia/Tokyo').normalize().tz_localize(None)
 if "subscriptions_auto_added" not in st.session_state:
     added_count = u.auto_add_subscriptions(worksheet, df)
     if added_count > 0:
@@ -524,7 +525,7 @@ elif balance_type == "収入":
         category = st.radio('項目', c.INCOME_CATEGORIES_saya, horizontal=True, label_visibility="collapsed")
 
 with st.form(key='entry_form', clear_on_submit=True):
-    date = st.date_input('日付', datetime.date.today())
+    date = st.date_input('日付', today_jst)
     if balance_type == "支出" or balance_type == "収入":
         amount = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0")
     if balance_type == "投資":
@@ -576,7 +577,7 @@ st.divider()
 
 # --- 資産表示 ---
 if not df.empty:
-    df_current = df[df['日付'] <= today]
+    df_current = df[df['日付'] <= today_jst]
     totals = df_current.groupby('区分')['金額'].sum()
     total_income = totals.get('収入', 0)
     total_expense = totals.get('支出', 0)
@@ -784,14 +785,14 @@ if not df.empty:
             st.altair_chart(u.create_combo_chart(graph_df, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
         with tab_week:
             start_date_fixed = pd.to_datetime('2026-01-01')
-            df_30w = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
+            df_30w = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today_jst)]
             if not df_30w.empty:
                 st.altair_chart(u.create_combo_chart(df_30w, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
             else:
                 st.info("直近30週のデータはありません。")
         with tab_day:
             start_date_fixed = pd.to_datetime('2026-01-01')
-            df_30d = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
+            df_30d = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today_jst)]
             if not df_30d.empty:
                 st.altair_chart(u.create_combo_chart(df_30d, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
             else:
@@ -800,13 +801,13 @@ if not df.empty:
         tab_day, tab_week, tab_month = st.tabs(["日ごと", "週ごと", "月ごと"])
         start_date_fixed = pd.to_datetime('2026-01-01')
         with tab_day:
-            df_30d = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
+            df_30d = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today_jst)]
             if not df_30d.empty:
                 st.altair_chart(u.create_expense_bar_chart(df_30d, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
             else:
                 st.info("データはありません。")
         with tab_week:
-            df_30w = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today)]
+            df_30w = base_df[(base_df['日付'] >= start_date_fixed) & (base_df['日付'] <= today_jst)]
             if not df_30w.empty:
                 st.altair_chart(u.create_expense_bar_chart(df_30w, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
             else:
@@ -1060,9 +1061,9 @@ if url_user_id == "u1":
             st.warning(f"{'不足' if diff < 0 else '超過'} {abs(diff):,} 円のズレがあります")
             if st.button("この差額を家計簿に記入する"):
                 if diff > 0:
-                    u.add_entry(worksheet, datetime.date.today(), '収入', 'その他', abs(diff), '資産調整')
+                    u.add_entry(worksheet, today_jst, '収入', 'その他', abs(diff), '資産調整')
                 else:
-                    u.add_entry(worksheet, datetime.date.today(), '支出', 'その他', abs(diff), '資産調整')
+                    u.add_entry(worksheet, today_jst, '支出', 'その他', abs(diff), '資産調整')
                 st.success(f"差額 {abs(diff):,} 円を「その他」で記入しました！")
                 time.sleep(1)
                 st.rerun()
