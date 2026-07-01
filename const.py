@@ -36,7 +36,9 @@ CRYPTO_ID_MAP = {
     'ETH': 'ethereum',
     'XRP': 'ripple',
     'PI': 'pi-network',
-    'IOST': 'iostoken'
+    'IOST': 'iostoken',
+    'DOGE': 'dogecoin',
+    'BNB': 'binancecoin'
 }
 MEME_CONTRACTS = {
     '114514': 'AGdGTQa8iRnSx4fQJehWo4Xwbh1bzTazs55R6Jwupump',
