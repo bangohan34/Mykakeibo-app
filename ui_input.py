@@ -7,33 +7,54 @@ import gsheets
 def render(worksheet, today_jst):
     st.subheader("収支入力")
     
-    # ── 1. スマホでも絶対に縦並びさせず、3等分を維持する最強のCSS ──
+    # ── スマホで「縦並び」にも「はみ出し」にもさせない完全なCSS ──
     st.markdown("""
     <style>
-    @media (max-width: 768px) {
-        /* 日付入力欄が含まれるカラム群の「縦並び化」を強制解除 */
-        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            gap: 4px !important;
-        }
-        /* 各ブロックをピッタリ3分の1（33.33%）に強制する */
-        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) > div[data-testid="column"] {
-            width: 33.33% !important;
-            flex: 1 1 0% !important;
-            min-width: 0 !important;
-        }
-        /* 枠内に収まるように文字サイズと余白を小さくする */
-        div[data-testid="stDateInput"] input {
-            font-size: 13px !important;
-            padding: 4px 6px !important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) button {
-            font-size: 13px !important;
-            padding: 4px !important;
-            min-height: 38px !important;
-        }
+    /* 強制横並びコンテナ */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+        overflow: hidden !important; /* はみ出しを絶対に防止 */
+    }
+    /* フック用の空要素を隠す */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container:nth-child(1) {
+        display: none !important;
+    }
+    /* 【超重要】全ての子要素が均等に縮むように設定 (min-width: 0 がはみ出し防止の鍵) */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container {
+        flex: 1 1 0% !important;
+        min-width: 0 !important; 
+    }
+    /* カレンダー枠をボタンより少し広くする(比率 1.4 : 1 : 1) */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container:nth-child(2) {
+        flex: 1.4 1 0% !important;
+    }
+    
+    /* 内部の細かい要素（文字入力欄など）の突っ張りをすべて強制解除 */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) * {
+        min-width: 0 !important;
+    }
+    
+    /* ボタンの調整 (文字サイズと余白を詰める) */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) button {
+        width: 100% !important;
+        padding: 0 !important;
+        font-size: 13px !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        white-space: nowrap !important; /* 文字の折り返しを防ぐ */
+    }
+    
+    /* カレンダーの調整 */
+    div[data-testid="stDateInput"] input {
+        padding: 4px 6px !important;
+        font-size: 13px !important;
+        min-height: 38px !important;
+        height: 38px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -48,18 +69,16 @@ def render(worksheet, today_jst):
 
     st.caption("日付を選択")
     
-    # あなたのアイデア通り、st.columns(3)を使用！
-    col1, col2, col3 = st.columns(3)
-    with col1:
+    # st.columns を使わず、コンテナ内にそのまま置いてCSSで制御
+    with st.container():
+        st.markdown('<div class="date-row-container"></div>', unsafe_allow_html=True)
         st.date_input(" ", value=st.session_state['input_date'], key='input_date_picker', on_change=sync_date, label_visibility="collapsed")
-    with col2:
-        st.button("1日前", on_click=set_date_offset, args=(1,), use_container_width=True)
-    with col3:
-        st.button("2日前", on_click=set_date_offset, args=(2,), use_container_width=True)
+        st.button("1日前", on_click=set_date_offset, args=(1,))
+        st.button("2日前", on_click=set_date_offset, args=(2,))
         
     date = st.session_state['input_date']
 
-    # --- 以下、既存の入力フォーム処理（省略せずに残してください） ---
+    # --- 以下、既存の入力フォーム処理 ---
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
@@ -78,6 +97,7 @@ def render(worksheet, today_jst):
     with st.form(key='entry_form', clear_on_submit=True):
         if balance_type == "収入" and category == "給与":
             st.markdown("**【給与内訳入力】**")
+            # ※給与内訳は項目が多いので、スマホで見やすいように「あえて縦並びになる」st.columnsのままにしています
             col_a, col_b, col_c = st.columns(3)
             with col_a:
                 st.caption("支給")
@@ -98,8 +118,10 @@ def render(worksheet, today_jst):
                 d_seimei = st.number_input('生命保険', min_value=0, step=1, value=0)
                 d_kumiai = st.number_input('組合費', min_value=0, step=1, value=0)
                 d_shokudou = st.number_input('食堂喫食代', min_value=0, step=1, value=0)
+            
             memo = st.text_input('メモ（任意）')
             submit_btn = st.form_submit_button('一括登録する')
+            
         else:
             if balance_type in ["支出", "収入"]:
                 amount = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0")
@@ -127,6 +149,7 @@ def render(worksheet, today_jst):
                 if d_seimei > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_seimei, f"保険 生命保険 {memo}".strip())
                 if d_kumiai > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_kumiai, f"その他 組合費 {memo}".strip())
                 if d_shokudou > 0: gsheets.add_entry(worksheet, date, '支出', '食費', d_shokudou, f"社食 食堂喫食代 {memo}".strip())
+                
                 st.success('給与・各種控除を一括登録しました。')
                 st.balloons()
                 time.sleep(3)
@@ -137,28 +160,30 @@ def render(worksheet, today_jst):
             final_memo = f"{sub_category} {memo}" if sub_category and memo else sub_category or memo
             if balance_type == "投資":
                 final_memo = f"{investment_name} 購入 {final_memo}" if final_memo else f"{investment_name} 購入"
+
             if balance_type in ["支出", "収入"]:
                 if amount is None:
                     st.warning('金額が0円です。入力してください。')
                 else:
                     try:
                         gsheets.add_entry(worksheet, date, balance_type, category, amount, final_memo)
-                        st.success(f'{category} : {amount}円を登録しました。')
+                        msg = f'お疲れさま！ {category} : {amount}円を登録しました。' if balance_type == "収入" else f'{category} ({sub_category if sub_category else ""}) : {amount}円を登録しました。'
+                        st.success(msg) if balance_type == "収入" else st.info(msg)
                         st.balloons()
-                        time.sleep(2)
+                        time.sleep(3)
                         st.rerun()
                     except Exception as e:
                         st.error(f'書き込みエラー: {e}')
             elif balance_type == "投資":
-                if not investment_name or amount is None or amount == 0:
-                    st.warning('銘柄名と金額を正しく入力してください。')
+                if not investment_name: st.warning('銘柄名を入力してください。')
+                elif amount is None or amount == 0: st.warning('金額を入力してください。')
                 else:
                     try:
                         gsheets.add_entry(worksheet, date, "支出", "投資費", amount, final_memo)
                         gsheets.add_investment_data(worksheet, date, investment_name, investment_amount, amount, final_memo)
                         st.success(f'{investment_name}を登録しました！')
                         st.balloons()
-                        time.sleep(2)
+                        time.sleep(3)
                         st.rerun()
                     except Exception as e:
                         st.error(f'書き込みエラー:{e}')
