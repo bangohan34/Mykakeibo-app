@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import api
 import charts
+import const as c
 
 def render(df, df_investment, today_ts):
     if not df.empty:
@@ -87,6 +88,10 @@ def render(df, df_investment, today_ts):
     else:
         st.info("投資資産の登録はまだありません。")
 
+    st.divider()
+
+    # --- グラフ表示 ---
+    st.subheader("資産・支出推移")
     if not df.empty:
         base_df = df.copy()
         base_df['グラフ金額'] = base_df.apply(lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], axis=1)
@@ -99,28 +104,81 @@ def render(df, df_investment, today_ts):
         if not graph_df.empty:
             tab_day, tab_week, tab_month = st.tabs(["日ごと", "週ごと", "月ごと"])
             with tab_month:
-                st.altair_chart(charts.create_combo_chart(graph_df, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+                st.caption("現金残高推移")
+                st.altair_chart(charts.create_balance_chart(graph_df, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+                st.caption("支出推移")
+                st.altair_chart(charts.create_expense_chart(graph_df, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
             with tab_week:
                 df_30w = base_df[(base_df['日付'] >= pd.to_datetime('2026-01-01')) & (base_df['日付'] <= today_ts)]
-                if not df_30w.empty: st.altair_chart(charts.create_combo_chart(df_30w, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+                if not df_30w.empty:
+                    st.caption("現金残高推移")
+                    st.altair_chart(charts.create_balance_chart(df_30w, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+                    st.caption("支出推移")
+                    st.altair_chart(charts.create_expense_chart(df_30w, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
             with tab_day:
                 df_30d = base_df[(base_df['日付'] >= pd.to_datetime('2026-01-01')) & (base_df['日付'] <= today_ts)]
-                if not df_30d.empty: st.altair_chart(charts.create_combo_chart(df_30d, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+                if not df_30d.empty:
+                    st.caption("現金残高推移")
+                    st.altair_chart(charts.create_balance_chart(df_30d, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+                    st.caption("支出推移")
+                    st.altair_chart(charts.create_expense_chart(df_30d, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
 
+    st.divider()
+
+    # --- 光熱費の比較 ---
+    st.subheader("光熱費の比較")
+    if not df.empty:
+        utils_df = df[(df['区分'] == '支出') & (df['カテゴリー'] == '生活費')].copy()
+        def classify_utility(memo):
+            memo_str = str(memo)
+            if '電気' in memo_str: return '電気'
+            if 'ガス' in memo_str: return 'ガス'
+            if '水道' in memo_str: return '水道'
+            return None
+        
+        utils_df['種類'] = utils_df['メモ'].apply(classify_utility)
+        utils_df = utils_df.dropna(subset=['種類'])
+        
+        if not utils_df.empty:
+            utils_df['年月'] = utils_df['日付'].apply(lambda x: x.replace(day=1).strftime('%Y-%m'))
+            utils_grouped = utils_df.groupby(['年月', '種類'])['金額'].sum().reset_index()
+            st.altair_chart(charts.create_utilities_chart(utils_grouped), use_container_width=True)
+        else:
+            st.info("光熱費のデータがありません（生活費カテゴリー内でメモに「ガス」「電気」「水道」を含むデータが対象です）")
+
+    st.divider()
+
+    # --- 支出内訳 (横棒グラフ) ---
+    st.subheader("支出内訳 (月別)")
     if not df.empty:
         pie_df = df.copy()
         pie_df['年月'] = pie_df['日付'].apply(lambda x: x.replace(day=1))
         months_series = pie_df['年月'].drop_duplicates()
         months_list = months_series[(months_series >= pd.to_datetime('2026-01-01')) & (months_series <= today_ts.replace(day=1))].sort_values(ascending=False)
+        
         if not months_list.empty:
             tabs = st.tabs(months_list.dt.strftime('%Y/%m').tolist())
             for tab, month_date in zip(tabs, months_list):
                 with tab:
-                    target_month_df = pie_df[pie_df['年月'] == month_date]
-                    month_total = target_month_df[target_month_df['区分'] == '支出']['金額'].sum()
+                    target_month_df = pie_df[(pie_df['年月'] == month_date) & (pie_df['区分'] == '支出')]
+                    month_total = target_month_df['金額'].sum()
                     st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計", value=f"{month_total:,} 円")
-                    pie_chart = charts.create_expense_pie_chart(target_month_df)
-                    if pie_chart: st.altair_chart(pie_chart, use_container_width=True)
-                    else: st.info(f"{month_date.strftime('%Y/%m')} の支出データはありません")
-    
+                    
+                    if month_total > 0:
+                        cat_grouped = target_month_df.groupby('カテゴリー')['金額'].sum().sort_values(ascending=False)
+                        bars_html = ""
+                        legend_html = ""
+                        for cat, val in cat_grouped.items():
+                            ratio = (val / month_total) * 100
+                            color = c.PIE_CHART_CATEGORIES_COLORS.get(cat, '#CFCFCF')
+                            bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{cat}: {ratio:.1f}%"></div>'
+                            legend_html += f' <span style="display:inline-block; margin: 4px 10px 4px 0;"><span style="color:{color};">■</span> {cat} ({val:,}円)</span>'
+                        
+                        st.markdown(f"""
+                        <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">{bars_html}</div>
+                        <div style="font-size: 13px; color: #333; line-height: 1.5;">{legend_html}</div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.info(f"{month_date.strftime('%Y/%m')} の支出データはありません")
+
     return yen_assets
