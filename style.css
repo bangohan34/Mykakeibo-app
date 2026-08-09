@@ -1,0 +1,404 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Cormorant+Garamond:wght@300;400;600&display=swap');
+
+/* ── Root Variables ── */
+:root {
+  --bg-primary:    #0c0c10;
+  --bg-card:       #13131a;
+  --bg-elevated:   #1a1a24;
+  --bg-hover:      #1f1f2c;
+  --accent-gold:   #c9a84c;
+  --accent-gold-dim:#8a6f30;
+  --accent-blue:   #4a90d9;
+  --accent-red:    #e05555;
+  --accent-green:  #4caf7d;
+  --text-primary:  #e8e6e0;
+  --text-secondary:#8a8890;
+  --text-muted:    #504e5c;
+  --border:        rgba(201,168,76,0.15);
+  --border-subtle: rgba(255,255,255,0.06);
+  --glow-gold:     0 0 20px rgba(201,168,76,0.12);
+  --radius:        12px;
+  --radius-sm:     8px;
+  --shadow:        0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* ── Global Reset ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── App Background ── */
+.stApp {
+  background: var(--bg-primary) !important;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(201,168,76,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(74,144,217,0.04) 0%, transparent 60%) !important;
+  font-family: 'Noto Sans JP', sans-serif !important;
+}
+
+/* ── Hide Streamlit Branding ── */
+#MainMenu, footer, header, .stDeployButton,
+[data-testid="stToolbar"], [data-testid="stDecoration"] {
+  display: none !important;
+}
+
+/* ── Main Content Width ── */
+.block-container {
+  max-width: 720px !important;
+  padding: 2rem 1.5rem 4rem !important;
+}
+
+/* ── Page Title / Subheader ── */
+.stApp h1 {
+  font-family: 'Cormorant Garamond', serif !important;
+  font-weight: 300 !important;
+  font-size: 2.4rem !important;
+  color: var(--accent-gold) !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+}
+
+.stApp h2, .stApp h3,
+[data-testid="stHeadingWithActionElements"] h2,
+[data-testid="stHeadingWithActionElements"] h3 {
+  font-family: 'Noto Sans JP', sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 0.78rem !important;
+  color: var(--text-secondary) !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  padding-bottom: 0.5rem !important;
+  border-bottom: 1px solid var(--border) !important;
+  margin-bottom: 1.2rem !important;
+}
+
+/* ── Divider ── */
+hr, [data-testid="stHorizontalBlock"] hr {
+  border: none !important;
+  border-top: 1px solid var(--border-subtle) !important;
+  margin: 2rem 0 !important;
+}
+
+/* ── Streamlit Divider ── */
+[data-testid="stDivider"] > hr {
+  border: none !important;
+  border-top: 1px solid var(--border-subtle) !important;
+}
+
+/* ── Radio Buttons ── */
+.stRadio > div {
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+}
+.stRadio label {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 6px !important;
+  padding: 5px 16px !important;
+  color: var(--text-secondary) !important;
+  font-size: 0.82rem !important;
+  letter-spacing: 0.05em !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+.stRadio label:hover {
+  border-color: var(--accent-gold-dim) !important;
+  color: var(--accent-gold) !important;
+  background: var(--bg-hover) !important;
+}
+.stRadio [aria-checked="true"] + label,
+.stRadio input:checked ~ label,
+.stRadio [data-checked="true"] label {
+  border-color: var(--accent-gold) !important;
+  color: var(--accent-gold) !important;
+  background: rgba(201,168,76,0.08) !important;
+}
+/* Hide radio circle */
+.stRadio [data-testid="stMarkdownContainer"] p { margin: 0 !important; }
+div[role="radio"] > div:first-child { display: none !important; }
+div[data-baseweb="radio"] > div:first-child { 
+  display: none !important; 
+}
+
+/* ── Select / Input Fields ── */
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input,
+.stDateInput > div > div > input,
+.stSelectbox > div > div > div,
+.stTextArea > div > div > textarea {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-primary) !important;
+  font-family: 'DM Mono', monospace !important;
+  font-size: 0.88rem !important;
+  padding: 10px 14px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus,
+.stDateInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+  border-color: var(--accent-gold-dim) !important;
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.1) !important;
+  outline: none !important;
+}
+.stTextInput > div > div > input::placeholder,
+.stNumberInput > div > div > input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Selectbox */
+.stSelectbox > div > div {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.stSelectbox > div > div > div {
+  color: var(--text-primary) !important;
+}
+
+/* ── Form Container ── */
+[data-testid="stForm"] {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  padding: 1.4rem !important;
+  box-shadow: var(--shadow) !important;
+}
+
+/* ── Buttons ── */
+.stButton > button {
+  background: transparent !important;
+  border: 1px solid var(--accent-gold-dim) !important;
+  border-radius: 6px !important;
+  color: var(--accent-gold) !important;
+  font-family: 'Noto Sans JP', sans-serif !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em !important;
+  padding: 8px 22px !important;
+  transition: all 0.25s ease !important;
+  cursor: pointer !important;
+}
+.stButton > button:hover {
+  background: rgba(201,168,76,0.1) !important;
+  border-color: var(--accent-gold) !important;
+  box-shadow: var(--glow-gold) !important;
+  transform: translateY(-1px) !important;
+}
+.stButton > button:active {
+  transform: translateY(0) !important;
+}
+
+/* Primary form submit button */
+[data-testid="stFormSubmitButton"] > button {
+  background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.08)) !important;
+  border: 1px solid var(--accent-gold) !important;
+  color: var(--accent-gold) !important;
+  width: 100% !important;
+  padding: 11px !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.15em !important;
+}
+[data-testid="stFormSubmitButton"] > button:hover {
+  background: rgba(201,168,76,0.2) !important;
+  box-shadow: 0 0 28px rgba(201,168,76,0.2) !important;
+}
+
+/* Primary type button (保存) */
+.stButton > button[kind="primary"] {
+  background: rgba(201,168,76,0.15) !important;
+  border-color: var(--accent-gold) !important;
+}
+
+/* Danger / warning button  */
+.stButton > button[kind="secondary"] {
+  border-color: var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  gap: 0 !important;
+}
+.stTabs [data-baseweb="tab"] {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  color: var(--text-muted) !important;
+  font-family: 'Noto Sans JP', sans-serif !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.08em !important;
+  padding: 8px 18px !important;
+  margin-bottom: -1px !important;
+  transition: all 0.2s ease !important;
+}
+.stTabs [data-baseweb="tab"]:hover {
+  color: var(--text-secondary) !important;
+  border-bottom-color: var(--accent-gold-dim) !important;
+}
+.stTabs [aria-selected="true"] {
+  color: var(--accent-gold) !important;
+  border-bottom: 2px solid var(--accent-gold) !important;
+  background: transparent !important;
+}
+.stTabs [data-baseweb="tab-panel"] {
+  padding: 1.2rem 0 0 !important;
+}
+
+/* ── Expander ── */
+[data-testid="stExpander"] {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden !important;
+}
+[data-testid="stExpander"] > details > summary {
+  color: var(--text-secondary) !important;
+  font-size: 0.82rem !important;
+  font-family: 'Noto Sans JP', sans-serif !important;
+  letter-spacing: 0.08em !important;
+  padding: 12px 16px !important;
+  background: transparent !important;
+  transition: background 0.2s ease !important;
+}
+[data-testid="stExpander"] > details > summary:hover {
+  background: var(--bg-elevated) !important;
+  color: var(--accent-gold) !important;
+}
+[data-testid="stExpander"] > details > summary svg {
+  fill: var(--text-muted) !important;
+}
+[data-testid="stExpander"] details[open] > summary {
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+[data-testid="stExpander"] .streamlit-expanderContent {
+  padding: 16px !important;
+  background: var(--bg-card) !important;
+}
+
+/* ── DataFrames / Tables ── */
+[data-testid="stDataFrame"] {
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+[data-testid="stDataFrame"] iframe {
+  border-radius: var(--radius-sm) !important;
+}
+
+/* ── Metrics ── */
+[data-testid="stMetric"] {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 14px 18px !important;
+}
+[data-testid="stMetricLabel"] {
+  color: var(--text-secondary) !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+}
+[data-testid="stMetricValue"] {
+  color: var(--text-primary) !important;
+  font-family: 'DM Mono', monospace !important;
+  font-size: 1.4rem !important;
+}
+[data-testid="stMetricDelta"] {
+  font-family: 'DM Mono', monospace !important;
+  font-size: 0.8rem !important;
+}
+
+/* ── Success / Error / Warning / Info Boxes ── */
+[data-testid="stAlert"] {
+  border-radius: var(--radius-sm) !important;
+  border: none !important;
+  font-size: 0.83rem !important;
+  font-family: 'Noto Sans JP', sans-serif !important;
+}
+[data-testid="stNotification"] {
+  background: var(--bg-elevated) !important;
+}
+.stSuccess {
+  background: rgba(76,175,125,0.1) !important;
+  border-left: 3px solid var(--accent-green) !important;
+  color: #9de8c0 !important;
+}
+.stError {
+  background: rgba(224,85,85,0.1) !important;
+  border-left: 3px solid var(--accent-red) !important;
+  color: #f0a0a0 !important;
+}
+.stWarning {
+  background: rgba(255,180,0,0.08) !important;
+  border-left: 3px solid #ffb400 !important;
+  color: #ffd070 !important;
+}
+.stInfo {
+  background: rgba(74,144,217,0.08) !important;
+  border-left: 3px solid var(--accent-blue) !important;
+  color: #9ac4f0 !important;
+}
+
+/* ── Caption / Small text ── */
+.stCaption, [data-testid="stCaptionContainer"] p {
+  color: var(--text-muted) !important;
+  font-size: 0.74rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* ── Checkbox ── */
+.stCheckbox label {
+  color: var(--text-secondary) !important;
+  font-size: 0.83rem !important;
+}
+
+/* ── Date Input icon ── */
+.stDateInput button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-gold-dim); }
+
+/* ── Number Inputs stepper buttons ── */
+.stNumberInput button {
+  background: var(--bg-elevated) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+}
+.stNumberInput button:hover {
+  background: var(--bg-hover) !important;
+  color: var(--accent-gold) !important;
+}
+
+/* ── Toast ── */
+[data-testid="stToast"] {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-primary) !important;
+  font-size: 0.82rem !important;
+}
+
+/* ── Spinner ── */
+.stSpinner > div {
+  border-top-color: var(--accent-gold) !important;
+}
+
+/* ── Column gaps ── */
+[data-testid="stHorizontalBlock"] {
+  gap: 12px !important;
+}
+
+/* ── Altair Chart backgrounds ── */
+.vega-embed {
+  background: transparent !important;
+}
