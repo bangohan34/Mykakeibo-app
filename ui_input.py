@@ -7,26 +7,53 @@ import gsheets
 def render(worksheet, today_jst):
     st.subheader("収支入力")
     
-    # ── 新設: 日付選択用のワンタッチボタン ──
+    # ── スマホで縦並びになるのを防ぐCSSハック ──
+    # st.date_input が含まれる行だけを狙い撃ちして、強制的に横並び（row）にします。
+    st.markdown("""
+    <style>
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) > div[data-testid="column"] {
+        width: auto !important;
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        padding-top: 0 !important; 
+    }
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) > div[data-testid="column"]:nth-child(1) {
+        flex: 2 1 0% !important; /* カレンダー入力欄をボタンより少し広めにする */
+    }
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) button {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ── 日付選択用のワンタッチボタン ──
     if 'input_date' not in st.session_state:
         st.session_state['input_date'] = today_jst
 
     # ボタンが押されたら日付をずらす関数
     def set_date_offset(days):
         st.session_state['input_date'] = today_jst - datetime.timedelta(days=days)
+    
     # 手動でカレンダー入力した際にセッションと同期させる関数
     def sync_date():
         st.session_state['input_date'] = st.session_state['input_date_picker']
 
     st.caption("日付を選択")
-    col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+    
+    # 「今日」ボタンを削除し、[日付(初期値:今日)] → [1日前] → [2日前] の3列に変更
+    col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
         st.date_input(" ", value=st.session_state['input_date'], key='input_date_picker', on_change=sync_date, label_visibility="collapsed")
     with col2:
-        st.button("今日", on_click=set_date_offset, args=(0,), use_container_width=True)
-    with col3:
         st.button("1日前", on_click=set_date_offset, args=(1,), use_container_width=True)
-    with col4:
+    with col3:
         st.button("2日前", on_click=set_date_offset, args=(2,), use_container_width=True)
         
     date = st.session_state['input_date']
