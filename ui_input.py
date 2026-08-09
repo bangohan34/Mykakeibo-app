@@ -7,28 +7,29 @@ import gsheets
 def render(worksheet, today_jst):
     st.subheader("収支入力")
     
-    # ── スマホで縦並びになるのを防ぐCSSハック ──
-    # st.date_input が含まれる行だけを狙い撃ちして、強制的に横並び（row）にします。
+    # ── スマホで横にはみ出さないための「3等分」CSSハック ──
     st.markdown("""
     <style>
     div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) {
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 8px !important;
-        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
     }
     div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) > div[data-testid="column"] {
-        width: auto !important;
+        width: 33.33% !important;  /* ピッタリ3分の1にする */
+        min-width: 0 !important;   /* はみ出しを防止 */
         flex: 1 1 0% !important;
-        min-width: 0 !important;
-        padding-top: 0 !important; 
     }
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) > div[data-testid="column"]:nth-child(1) {
-        flex: 2 1 0% !important; /* カレンダー入力欄をボタンより少し広めにする */
+    /* カレンダー入力枠の余白や文字を少し小さくして枠内に収める */
+    div[data-testid="stDateInput"] input {
+        padding: 6px 8px !important;
+        font-size: 0.85rem !important;
     }
+    /* ボタンの余白や文字を調整して枠内に収める */
     div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) button {
-        padding-left: 0px !important;
-        padding-right: 0px !important;
+        padding: 6px 0px !important;
+        font-size: 0.85rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -47,8 +48,8 @@ def render(worksheet, today_jst):
 
     st.caption("日付を選択")
     
-    # 「今日」ボタンを削除し、[日付(初期値:今日)] → [1日前] → [2日前] の3列に変更
-    col1, col2, col3 = st.columns([2, 1, 1])
+    # ご提案通り、キレイに3等分（1:1:1）のレイアウトに変更
+    col1, col2, col3 = st.columns(3)
     with col1:
         st.date_input(" ", value=st.session_state['input_date'], key='input_date_picker', on_change=sync_date, label_visibility="collapsed")
     with col2:
