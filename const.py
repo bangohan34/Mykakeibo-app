@@ -58,3 +58,14 @@ PIE_CHART_CATEGORIES_COLORS = {
     'チャリガッチャン': "#7970CA", # saya
     '美容費': "#CA4D71",
 }
+
+# スタイルCSS
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            .block-container { padding-top: 1rem; }
+            [data-testid="stNumberInput"] button { display: none; }
+            </style>
+            """
