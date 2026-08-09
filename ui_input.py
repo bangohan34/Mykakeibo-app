@@ -7,78 +7,19 @@ import gsheets
 def render(worksheet, today_jst):
     st.subheader("収支入力")
     
-    # ── スマホで「縦並び」にも「はみ出し」にもさせない完全なCSS ──
-    st.markdown("""
-    <style>
-    /* 強制横並びコンテナ */
-    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 6px !important;
-        width: 100% !important;
-        overflow: hidden !important; /* はみ出しを絶対に防止 */
-    }
-    /* フック用の空要素を隠す */
-    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container:nth-child(1) {
-        display: none !important;
-    }
-    /* 【超重要】全ての子要素が均等に縮むように設定 (min-width: 0 がはみ出し防止の鍵) */
-    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container {
-        flex: 1 1 0% !important;
-        min-width: 0 !important; 
-    }
-    /* カレンダー枠をボタンより少し広くする(比率 1.4 : 1 : 1) */
-    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container:nth-child(2) {
-        flex: 1.4 1 0% !important;
-    }
+    # --- 絶対にスマホで崩れない日付ショートカット ---
+    # radioボタンを使うことで、スマホでも綺麗に横に並びます
+    offset = st.radio("日付ショートカット", ["今日", "1日前", "2日前"], horizontal=True)
     
-    /* 内部の細かい要素（文字入力欄など）の突っ張りをすべて強制解除 */
-    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) * {
-        min-width: 0 !important;
-    }
-    
-    /* ボタンの調整 (文字サイズと余白を詰める) */
-    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) button {
-        width: 100% !important;
-        padding: 0 !important;
-        font-size: 13px !important;
-        min-height: 38px !important;
-        height: 38px !important;
-        white-space: nowrap !important; /* 文字の折り返しを防ぐ */
-    }
-    
-    /* カレンダーの調整 */
-    div[data-testid="stDateInput"] input {
-        padding: 4px 6px !important;
-        font-size: 13px !important;
-        min-height: 38px !important;
-        height: 38px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    if 'input_date' not in st.session_state:
-        st.session_state['input_date'] = today_jst
-
-    def set_date_offset(days):
-        st.session_state['input_date'] = today_jst - datetime.timedelta(days=days)
-    def sync_date():
-        st.session_state['input_date'] = st.session_state['input_date_picker']
-
-    st.caption("日付を選択")
-    
-    # st.columns を使わず、コンテナ内にそのまま置いてCSSで制御
-    with st.container():
-        st.markdown('<div class="date-row-container"></div>', unsafe_allow_html=True)
-        st.date_input(" ", value=st.session_state['input_date'], key='input_date_picker', on_change=sync_date, label_visibility="collapsed")
-        st.button("1日前", on_click=set_date_offset, args=(1,))
-        st.button("2日前", on_click=set_date_offset, args=(2,))
+    if offset == "今日":
+        target_date = today_jst
+    elif offset == "1日前":
+        target_date = today_jst - datetime.timedelta(days=1)
+    else:
+        target_date = today_jst - datetime.timedelta(days=2)
         
-    date = st.session_state['input_date']
+    date = st.date_input("日付を選択", value=target_date)
 
-    # --- 以下、既存の入力フォーム処理 ---
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
@@ -97,7 +38,6 @@ def render(worksheet, today_jst):
     with st.form(key='entry_form', clear_on_submit=True):
         if balance_type == "収入" and category == "給与":
             st.markdown("**【給与内訳入力】**")
-            # ※給与内訳は項目が多いので、スマホで見やすいように「あえて縦並びになる」st.columnsのままにしています
             col_a, col_b, col_c = st.columns(3)
             with col_a:
                 st.caption("支給")
@@ -118,7 +58,6 @@ def render(worksheet, today_jst):
                 d_seimei = st.number_input('生命保険', min_value=0, step=1, value=0)
                 d_kumiai = st.number_input('組合費', min_value=0, step=1, value=0)
                 d_shokudou = st.number_input('食堂喫食代', min_value=0, step=1, value=0)
-            
             memo = st.text_input('メモ（任意）')
             submit_btn = st.form_submit_button('一括登録する')
             
@@ -149,7 +88,6 @@ def render(worksheet, today_jst):
                 if d_seimei > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_seimei, f"保険 生命保険 {memo}".strip())
                 if d_kumiai > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_kumiai, f"その他 組合費 {memo}".strip())
                 if d_shokudou > 0: gsheets.add_entry(worksheet, date, '支出', '食費', d_shokudou, f"社食 食堂喫食代 {memo}".strip())
-                
                 st.success('給与・各種控除を一括登録しました。')
                 st.balloons()
                 time.sleep(3)
