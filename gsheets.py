@@ -10,9 +10,13 @@ scopes = [
     'https://www.googleapis.com/auth/drive'
 ]
 
-# ★ キャッシュを追加して、Google認証の時間をスキップ（劇的に速くなります）
 @st.cache_resource(ttl=3600)
 def get_worksheet(sheet_name):
+    """
+    注意: 関数名は get_worksheet のままですが、
+    複数のシート（タブ）を操作するため、
+    スプレッドシート全体（ブック）のオブジェクトを返します。
+    """
     try:
         if "gcp_service_account" in st.secrets:
             secret_val = st.secrets["gcp_service_account"]
@@ -26,17 +30,27 @@ def get_worksheet(sheet_name):
         else:
             credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
         gc = gspread.authorize(credentials)
+        
+        # ID指定か名前指定かで開く
         if len(sheet_name) > 30 and " " not in sheet_name:
             sh = gc.open_by_key(sheet_name)
         else:
             sh = gc.open(sheet_name)
-        return sh.sheet1
+        
+        # これまでは sh.sheet1 を返していましたが、
+        # タブを分けたため「スプレッドシート全体」を返します
+        return sh
     except Exception as e:
         st.error(f"接続エラー: スプレッドシート '{sheet_name}' が見つかりません。共有設定を確認してください。エラー詳細: {e}")
         st.stop()
 
-def load_kakeibo_data(worksheet):
-    all_rows = worksheet.get_all_values()
+def load_kakeibo_data(sh):
+    try:
+        ws = sh.worksheet('家計簿')
+        all_rows = ws.get_all_values()
+    except Exception:
+        return pd.DataFrame(columns=['No','日付','区分','カテゴリー','金額','メモ'])
+    
     columns=['No','日付','区分','カテゴリー','金額','メモ']
     if len(all_rows) < 2:
         return pd.DataFrame(columns=columns)
@@ -44,6 +58,7 @@ def load_kakeibo_data(worksheet):
     for i, row in enumerate(all_rows):
         if i == 0: continue
         row_num = i
+        # 家計簿はA〜E列を使用
         row_data = [row_num] + row[:5]
         data.append(row_data)
     df = pd.DataFrame(data, columns=columns)
@@ -53,20 +68,22 @@ def load_kakeibo_data(worksheet):
     df['日付'] = pd.to_datetime(df['日付'], errors='coerce')
     return df
 
-def add_entry(worksheet, date, balance_type, category, amount, memo):
-    col_a_values = worksheet.col_values(1)
+def add_entry(sh, date, balance_type, category, amount, memo):
+    ws = sh.worksheet('家計簿')
+    col_a_values = ws.col_values(1)
     next_row = len(col_a_values) + 1
     row_data = [[str(date), balance_type, category, amount, memo]]
-    range_str = f"A{next_row}:E{next_row}"
-    worksheet.update(range_name=range_str, values=row_data)
+    ws.update(range_name=f"A{next_row}:E{next_row}", values=row_data)
 
-def delete_entry(worksheet, row_index):
-    current_data = worksheet.get('A:E')
+def delete_entry(sh, row_index):
+    ws = sh.worksheet('家計簿')
+    current_data = ws.get('A:E')
     target_list_index = int(row_index) - 1
     if 0 <= target_list_index < len(current_data):
         current_data.pop(target_list_index)
-        worksheet.batch_clear(['A:E'])
-        worksheet.update(range_name='A1', values=current_data)
+        ws.batch_clear(['A:E'])
+        if current_data:
+            ws.update(range_name='A1', values=current_data)
 
 def delete_callback():
     target_no = st.session_state.get("delete_input_no")
@@ -76,8 +93,8 @@ def delete_callback():
             target_sheet_name = st.session_state.get("target_sheet")
             if not target_sheet_name:
                 raise Exception("ログイン情報が見つかりません")
-            ws = get_worksheet(target_sheet_name)
-            delete_entry(ws, real_row_index)
+            sh = get_worksheet(target_sheet_name)
+            delete_entry(sh, real_row_index)
             st.session_state["delete_input_no"] = None
             st.session_state["del_confirm_ckeck"] = False
             st.session_state["menu_reset_id"] += 1
@@ -85,35 +102,48 @@ def delete_callback():
         except Exception as e:
             st.session_state["delete_msg"] = f"削除エラー: {e}"
 
-def load_investment_data(worksheet):
-    raw_data = worksheet.get('I:M')
+def load_investment_data(sh):
     cols = ['日付','銘柄','数量','支払金額','メモ']
-    if len(raw_data) < 2:
+    try:
+        ws = sh.worksheet('投資')
+        raw_data = ws.get('A:E')
+    except Exception:
         return pd.DataFrame(columns=cols)
+    
+    if not raw_data or len(raw_data) < 2:
+        return pd.DataFrame(columns=cols)
+        
     data_rows = raw_data[1:]
     clean_data = []
     for row in data_rows:
         padded_row = (row + [""] * 5)[:5]
         clean_data.append(padded_row)
-    df = pd.DataFrame(data_rows, columns=cols)
+    df = pd.DataFrame(clean_data, columns=cols)
     df['数量'] = pd.to_numeric(df['数量'], errors='coerce').fillna(0.0)
     return df
 
-def add_investment_data(worksheet, date, investment_name, investment_amount, pay_amount, memo):
-    col_a_values = worksheet.col_values(9)
+def add_investment_data(sh, date, investment_name, investment_amount, pay_amount, memo):
+    ws = sh.worksheet('投資')
+    col_a_values = ws.col_values(1)
     next_row = len(col_a_values) + 1
+    if next_row == 1:
+        # ヘッダーがない場合は作成
+        ws.update(range_name='A1:E1', values=[['日付', '銘柄', '数量', '支払い金額', 'メモ']])
+        next_row = 2
     row_data = [[str(date), investment_name, investment_amount, pay_amount, memo]]
-    range_str = f"I{next_row}:M{next_row}"
-    worksheet.update(range_name=range_str, values=row_data)
+    ws.update(range_name=f"A{next_row}:E{next_row}", values=row_data)
 
-def load_subscription_data(worksheet):
+def load_subscription_data(sh):
     cols = ['サービス名', '金額', 'カテゴリー', '支払日', 'メモ']
     try:
-        raw_data = worksheet.get('N:R')
+        ws = sh.worksheet('サブスク')
+        raw_data = ws.get('A:E')
     except Exception:
         return pd.DataFrame(columns=cols)
+    
     if not raw_data or len(raw_data) < 2:
         return pd.DataFrame(columns=cols)
+        
     data_rows = raw_data[1:]
     clean_data = []
     for row in data_rows:
@@ -128,33 +158,33 @@ def load_subscription_data(worksheet):
     df.insert(0, 'No', range(2, 2 + len(df)))
     return df
 
-def add_subscription(worksheet, service_name, amount, category, pay_day, memo):
-    col_n_values = worksheet.col_values(14)
-    next_row = len(col_n_values) + 1
+def add_subscription(sh, service_name, amount, category, pay_day, memo):
+    ws = sh.worksheet('サブスク')
+    col_a_values = ws.col_values(1)
+    next_row = len(col_a_values) + 1
     if next_row == 1:
-        worksheet.update(range_name='N1:R1', values=[['サービス名', '金額', 'カテゴリー', '支払日', 'メモ']])
+        ws.update(range_name='A1:E1', values=[['サービス名', '金額', 'カテゴリー', '支払日', 'メモ']])
         next_row = 2
     row_data = [[service_name, amount, category, pay_day, memo]]
-    worksheet.update(range_name=f'N{next_row}:R{next_row}', values=row_data)
+    ws.update(range_name=f'A{next_row}:E{next_row}', values=row_data)
 
-def delete_subscription(worksheet, row_index):
-    current_data = worksheet.get('N:R')
+def delete_subscription(sh, row_index):
+    ws = sh.worksheet('サブスク')
+    current_data = ws.get('A:E')
     target_list_index = int(row_index) - 1
     if 0 <= target_list_index < len(current_data):
         current_data.pop(target_list_index)
-        worksheet.batch_clear(['N:R'])
+        ws.batch_clear(['A:E'])
         if current_data:
-            worksheet.update(range_name='N1', values=current_data)
+            ws.update(range_name='A1', values=current_data)
 
-def auto_add_subscriptions(worksheet, df_kakeibo):
+def auto_add_subscriptions(sh, df_kakeibo):
     try:
-        df_sub = load_subscription_data(worksheet)
+        df_sub = load_subscription_data(sh)
     except Exception:
         return 0
     if df_sub.empty:
         return 0
-    
-    # ★ ここもJSTで現在時刻を取得
     now = pd.Timestamp.now(tz='Asia/Tokyo')
     year = now.year
     month = now.month
@@ -174,21 +204,29 @@ def auto_add_subscriptions(worksheet, df_kakeibo):
             pay_day = min(int(row['支払日']), last_day)
             pay_date = pd.Timestamp(year=year, month=month, day=pay_day).date()
             memo_with_id = f"{row['メモ']} {identifier}".strip()
-            add_entry(worksheet, pay_date, '支出', row['カテゴリー'], int(row['金額']), memo_with_id)
+            add_entry(sh, pay_date, '支出', row['カテゴリー'], int(row['金額']), memo_with_id)
             added_count += 1
     return added_count
 
-def get_anything_memo(worksheet):
+def get_anything_memo(sh):
     try:
-        current_memo = worksheet.acell('G2').value
+        ws = sh.worksheet('なんでもメモ')
+        # 新しいシートではA2セルを使います
+        current_memo = ws.acell('A2').value
         if current_memo is None:
             current_memo = ""
-    except:
+    except Exception:
         current_memo = ""
     return current_memo
 
-def update_anything_memo(worksheet, text):
-    worksheet.update_acell('G2', text)
+def update_anything_memo(sh, text):
+    try:
+        ws = sh.worksheet('なんでもメモ')
+        if str(ws.acell('A1').value) != 'なんでもメモ':
+            ws.update_acell('A1', 'なんでもメモ')
+        ws.update_acell('A2', text)
+    except Exception:
+        pass
 
 def format_money(amount, is_visible):
     if is_visible:
