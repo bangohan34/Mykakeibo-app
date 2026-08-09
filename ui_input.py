@@ -7,29 +7,36 @@ import gsheets
 def render(worksheet, today_jst):
     st.subheader("収支入力")
     
-    # ── スマホで横にはみ出さないための「3等分」CSSハック ──
+    # ── スマホで強制的に横並びにするレイアウト（columns完全不使用） ──
     st.markdown("""
     <style>
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) {
+    /* st.columns の仕様を完全に回避し、独自の横並びブロックを作成 */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) {
+        display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 6px !important;
-        width: 100% !important;
+        align-items: center !important;
+        gap: 8px !important;
     }
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) > div[data-testid="column"] {
-        width: 33.33% !important;  /* ピッタリ3分の1にする */
-        min-width: 0 !important;   /* はみ出しを防止 */
+    /* フック用の空divを非表示 */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container:nth-child(1) {
+        display: none !important;
+    }
+    /* 子要素（日付枠とボタン）を横並びに配置し、はみ出しを防ぐ */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container {
         flex: 1 1 0% !important;
+        min-width: 0 !important;
     }
-    /* カレンダー入力枠の余白や文字を少し小さくして枠内に収める */
-    div[data-testid="stDateInput"] input {
-        padding: 6px 8px !important;
-        font-size: 0.85rem !important;
+    /* カレンダー枠をボタンより少し広くする（お好みで調整可能） */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) > div.element-container:nth-child(2) {
+        flex: 1.5 1 0% !important;
     }
-    /* ボタンの余白や文字を調整して枠内に収める */
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stDateInput"]) button {
-        padding: 6px 0px !important;
-        font-size: 0.85rem !important;
+    /* ボタンの高さを揃える */
+    div[data-testid="stVerticalBlock"]:has(> div.element-container > .date-row-container) button {
+        width: 100% !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -38,24 +45,20 @@ def render(worksheet, today_jst):
     if 'input_date' not in st.session_state:
         st.session_state['input_date'] = today_jst
 
-    # ボタンが押されたら日付をずらす関数
     def set_date_offset(days):
         st.session_state['input_date'] = today_jst - datetime.timedelta(days=days)
     
-    # 手動でカレンダー入力した際にセッションと同期させる関数
     def sync_date():
         st.session_state['input_date'] = st.session_state['input_date_picker']
 
     st.caption("日付を選択")
     
-    # ご提案通り、キレイに3等分（1:1:1）のレイアウトに変更
-    col1, col2, col3 = st.columns(3)
-    with col1:
+    # ★ ここで columns は使わず、コンテナの中に要素をそのまま置きます
+    with st.container():
+        st.markdown('<div class="date-row-container"></div>', unsafe_allow_html=True)
         st.date_input(" ", value=st.session_state['input_date'], key='input_date_picker', on_change=sync_date, label_visibility="collapsed")
-    with col2:
-        st.button("1日前", on_click=set_date_offset, args=(1,), use_container_width=True)
-    with col3:
-        st.button("2日前", on_click=set_date_offset, args=(2,), use_container_width=True)
+        st.button("1日前", on_click=set_date_offset, args=(1,))
+        st.button("2日前", on_click=set_date_offset, args=(2,))
         
     date = st.session_state['input_date']
 
@@ -77,6 +80,8 @@ def render(worksheet, today_jst):
     with st.form(key='entry_form', clear_on_submit=True):
         if balance_type == "収入" and category == "給与":
             st.markdown("**【給与内訳入力】**")
+            
+            # ※給与内訳は項目が多いので、スマホでも見やすいように「あえて縦並びになる」st.columnsのままにしています
             col_a, col_b, col_c = st.columns(3)
             with col_a:
                 st.caption("支給")
