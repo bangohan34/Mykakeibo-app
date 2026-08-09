@@ -49,7 +49,8 @@ if "subscriptions_auto_added" not in st.session_state:
 ui_input.render(worksheet, today_jst)
 st.divider()
 
-yen_assets = ui_dashboard.render(df, df_investment, today_ts)
+# ★ 修正: キャッシュの保存/読込のために worksheet を引数に追加
+yen_assets = ui_dashboard.render(df, df_investment, today_ts, worksheet)
 st.divider()
 
 ui_history.render(df, worksheet)

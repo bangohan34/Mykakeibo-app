@@ -12,11 +12,6 @@ scopes = [
 
 @st.cache_resource(ttl=3600)
 def get_worksheet(sheet_name):
-    """
-    注意: 関数名は get_worksheet のままですが、
-    複数のシート（タブ）を操作するため、
-    スプレッドシート全体（ブック）のオブジェクトを返します。
-    """
     try:
         if "gcp_service_account" in st.secrets:
             secret_val = st.secrets["gcp_service_account"]
@@ -30,15 +25,10 @@ def get_worksheet(sheet_name):
         else:
             credentials = Credentials.from_service_account_file('secrets.json', scopes=scopes)
         gc = gspread.authorize(credentials)
-        
-        # ID指定か名前指定かで開く
         if len(sheet_name) > 30 and " " not in sheet_name:
             sh = gc.open_by_key(sheet_name)
         else:
             sh = gc.open(sheet_name)
-        
-        # これまでは sh.sheet1 を返していましたが、
-        # タブを分けたため「スプレッドシート全体」を返します
         return sh
     except Exception as e:
         st.error(f"接続エラー: スプレッドシート '{sheet_name}' が見つかりません。共有設定を確認してください。エラー詳細: {e}")
@@ -58,7 +48,6 @@ def load_kakeibo_data(sh):
     for i, row in enumerate(all_rows):
         if i == 0: continue
         row_num = i
-        # 家計簿はA〜E列を使用
         row_data = [row_num] + row[:5]
         data.append(row_data)
     df = pd.DataFrame(data, columns=columns)
@@ -109,7 +98,6 @@ def load_investment_data(sh):
         raw_data = ws.get('A:E')
     except Exception:
         return pd.DataFrame(columns=cols)
-    
     if not raw_data or len(raw_data) < 2:
         return pd.DataFrame(columns=cols)
         
@@ -127,7 +115,6 @@ def add_investment_data(sh, date, investment_name, investment_amount, pay_amount
     col_a_values = ws.col_values(1)
     next_row = len(col_a_values) + 1
     if next_row == 1:
-        # ヘッダーがない場合は作成
         ws.update(range_name='A1:E1', values=[['日付', '銘柄', '数量', '支払い金額', 'メモ']])
         next_row = 2
     row_data = [[str(date), investment_name, investment_amount, pay_amount, memo]]
@@ -140,7 +127,6 @@ def load_subscription_data(sh):
         raw_data = ws.get('A:E')
     except Exception:
         return pd.DataFrame(columns=cols)
-    
     if not raw_data or len(raw_data) < 2:
         return pd.DataFrame(columns=cols)
         
@@ -211,7 +197,6 @@ def auto_add_subscriptions(sh, df_kakeibo):
 def get_anything_memo(sh):
     try:
         ws = sh.worksheet('なんでもメモ')
-        # 新しいシートではA2セルを使います
         current_memo = ws.acell('A2').value
         if current_memo is None:
             current_memo = ""
@@ -228,15 +213,50 @@ def update_anything_memo(sh, text):
     except Exception:
         pass
 
-def format_money(amount, is_visible):
-    if is_visible:
-        return f"{int(amount):,} 円"
-    else:
-        return "******* 円"
-
 def color_coding(val):
     if val == '収入':
         return 'color: #379c72; font-weight: bold;'
     elif val == '支出':
         return 'color: #A03333; font-weight: bold;'
     return ''
+
+# ==========================================
+# ★ 新設：投資資産の価格キャッシュ用関数
+# ==========================================
+def save_price_cache(sh, prices_dict, timestamp):
+    """API取得が成功したときに、時刻と価格をスプレッドシートに保存する"""
+    try:
+        ws = sh.worksheet('価格キャッシュ')
+    except Exception:
+        # シートが無ければ作成
+        ws = sh.add_worksheet(title='価格キャッシュ', rows="100", cols="3")
+    
+    data = []
+    for symbol, price in prices_dict.items():
+        data.append([str(timestamp), symbol, price])
+    
+    if data:
+        ws.clear()
+        ws.update(range_name='A1', values=[['取得日時', '銘柄', '価格']] + data)
+
+def load_price_cache(sh):
+    """API取得が失敗したときに、スプレッドシートのキャッシュを読み込む"""
+    try:
+        ws = sh.worksheet('価格キャッシュ')
+        raw_data = ws.get_all_values()
+        if len(raw_data) < 2:
+            return {}, None
+        
+        prices_dict = {}
+        timestamp = raw_data[1][0] # A2のセルに記録されている時刻
+        for row in raw_data[1:]:
+            if len(row) >= 3:
+                symbol = row[1]
+                try:
+                    price = float(row[2])
+                    prices_dict[symbol] = price
+                except ValueError:
+                    pass
+        return prices_dict, timestamp
+    except Exception:
+        return {}, None

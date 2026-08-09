@@ -1,10 +1,36 @@
 import streamlit as st
+import datetime
 import time
 import const as c
 import gsheets
 
 def render(worksheet, today_jst):
     st.subheader("収支入力")
+    
+    # ── 新設: 日付選択用のワンタッチボタン ──
+    if 'input_date' not in st.session_state:
+        st.session_state['input_date'] = today_jst
+
+    # ボタンが押されたら日付をずらす関数
+    def set_date_offset(days):
+        st.session_state['input_date'] = today_jst - datetime.timedelta(days=days)
+    # 手動でカレンダー入力した際にセッションと同期させる関数
+    def sync_date():
+        st.session_state['input_date'] = st.session_state['input_date_picker']
+
+    st.caption("日付を選択")
+    col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+    with col1:
+        st.date_input(" ", value=st.session_state['input_date'], key='input_date_picker', on_change=sync_date, label_visibility="collapsed")
+    with col2:
+        st.button("今日", on_click=set_date_offset, args=(0,), use_container_width=True)
+    with col3:
+        st.button("1日前", on_click=set_date_offset, args=(1,), use_container_width=True)
+    with col4:
+        st.button("2日前", on_click=set_date_offset, args=(2,), use_container_width=True)
+        
+    date = st.session_state['input_date']
+
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
@@ -21,24 +47,22 @@ def render(worksheet, today_jst):
         category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
 
     with st.form(key='entry_form', clear_on_submit=True):
-        date = st.date_input('日付', today_jst)
-        
         if balance_type == "収入" and category == "給与":
             st.markdown("**【給与内訳入力】**")
-            col1, col2, col3 = st.columns(3)
-            with col1:
+            col_a, col_b, col_c = st.columns(3)
+            with col_a:
                 st.caption("支給")
                 s_honkyu = st.number_input('本給', min_value=0, step=1, value=0)
                 s_choukin = st.number_input('超勤手当', min_value=0, step=1, value=0)
                 s_remote = st.number_input('リモートワーク手当', min_value=0, step=1, value=0)
                 s_tsukin = st.number_input('通勤手当', min_value=0, step=1, value=0)
-            with col2:
+            with col_b:
                 st.caption("法定控除（自動的に支出へ反映）")
                 d_kenpo = st.number_input('健康保険', min_value=0, step=1, value=0)
                 d_kousei = st.number_input('厚年保険', min_value=0, step=1, value=0)
                 d_koyou = st.number_input('雇用保険', min_value=0, step=1, value=0)
                 d_shotoku = st.number_input('所得税', min_value=0, step=1, value=0)
-            with col3:
+            with col_c:
                 st.caption("控除（自動的に支出・投資へ反映）")
                 d_mochikabu = st.number_input('持株積立', min_value=0, step=1, value=0)
                 d_shataku = st.number_input('社宅利用料', min_value=0, step=1, value=0)
