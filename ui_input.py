@@ -97,7 +97,8 @@ def render(worksheet, today_jst):
     entry_vals = {}
     
     # --- 日付選択 ---
-    offset = st.radio("日付を選んでください", ["今日", "1日前", "2日前"], horizontal=True)
+    st.caption("日付を選んでください")
+    offset = st.radio('日付', ["今日", "1日前", "2日前"], horizontal=True)
     
     if offset == "今日":
         target_date = today_jst
