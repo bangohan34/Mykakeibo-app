@@ -115,12 +115,12 @@ def render(df, df_investment, today_ts, worksheet):
                 display_df.style.format({"評価額": "{:,} 円"}).set_properties(**{'background-color': '#ede4ce', 'border-color': '#A1A3A6', 'border-style': 'solid'}),
                 hide_index=True, use_container_width=True
             )
-    else:
-        st.info("投資資産の登録はまだありません。")
 
     st.divider()
 
-    # --- グラフ表示 ── 期間制限対応 ──
+    # ==================================================
+    # グラフ表示 ── 未来データ除外 ＆ 期間フィルターを徹底 ──
+    # ==================================================
     st.subheader("資産・支出推移")
     if not df.empty:
         base_df = df.copy()
@@ -130,33 +130,19 @@ def render(df, df_investment, today_ts, worksheet):
         base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
         base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
         
-        # ▼▼▼【修正箇所】現在(today_ts) より未来のデータは完全に除外する ▼▼▼
+        # 1. 2026/01/01 以降のデータに絞る
         start_date = pd.to_datetime('2026-01-01')
-        graph_df = base_df[(base_df['日付'] >= start_date) & (base_df['日付'] <= today_ts)]
+        graph_df = base_df[base_df['日付'] >= start_date]
+        
+        # 2. 現在（today_ts）より未来のデータは完全に除外する
+        graph_df = graph_df[graph_df['日付'] <= today_ts]
 
         if not graph_df.empty:
             tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
             
-            with tab_month:
-                start_12m = max(today_ts - pd.DateOffset(months=12), start_date)
-                df_month = graph_df[graph_df['年月'] >= start_12m]
-                if not df_month.empty:
-                    st.caption("現金残高推移")
-                    st.altair_chart(charts.create_balance_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
-                    st.caption("支出推移")
-                    st.altair_chart(charts.create_expense_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
-                    
-            with tab_week:
-                start_24w = max(today_ts - pd.Timedelta(weeks=24), start_date)
-                df_week = graph_df[graph_df['週'] >= start_24w]
-                if not df_week.empty:
-                    st.caption("現金残高推移")
-                    st.altair_chart(charts.create_balance_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                    st.caption("支出推移")
-                    st.altair_chart(charts.create_expense_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                    
             with tab_day:
-                start_30d = max(today_ts - pd.Timedelta(days=30), start_date)
+                # 日ごと: ぴったり30日前から現在まで
+                start_30d = today_ts - pd.Timedelta(days=30)
                 df_day = graph_df[graph_df['日付'] >= start_30d]
                 if not df_day.empty:
                     st.caption("現金残高推移")
@@ -164,7 +150,28 @@ def render(df, df_investment, today_ts, worksheet):
                     st.caption("支出推移")
                     st.altair_chart(charts.create_expense_chart(df_day, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                     
+            with tab_week:
+                # 週ごと: ぴったり24週前から現在まで
+                start_24w = today_ts - pd.Timedelta(weeks=24)
+                df_week = graph_df[graph_df['週'] >= start_24w]
+                if not df_week.empty:
+                    st.caption("現金残高推移")
+                    st.altair_chart(charts.create_balance_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+                    st.caption("支出推移")
+                    st.altair_chart(charts.create_expense_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+            
+            with tab_month:
+                # 月ごと: ぴったり12ヶ月前から現在まで
+                start_12m = today_ts - pd.DateOffset(months=12)
+                df_month = graph_df[graph_df['年月'] >= start_12m]
+                if not df_month.empty:
+                    st.caption("現金残高推移")
+                    st.altair_chart(charts.create_balance_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+                    st.caption("支出推移")
+                    st.altair_chart(charts.create_expense_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+                    
             with tab_all:
+                # 全期間: 2026/01/01から現在まで日ごと
                 st.caption("現金残高推移 (全期間・日ごと)")
                 st.altair_chart(charts.create_balance_chart(graph_df, '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                 st.caption("支出推移 (全期間・日ごと)")
@@ -188,10 +195,10 @@ def render(df, df_investment, today_ts, worksheet):
         
         if not utils_df.empty:
             utils_df['年月'] = utils_df['日付'].apply(lambda x: x.replace(day=1).strftime('%Y-%m'))
+            # 未来の光熱費予定などを防ぐためにここでも現在までに絞る
+            utils_df = utils_df[utils_df['日付'] <= today_ts]
             utils_grouped = utils_df.groupby(['年月', '種類'])['金額'].sum().reset_index()
             st.altair_chart(charts.create_utilities_chart(utils_grouped), use_container_width=True)
-        else:
-            st.info("光熱費のデータがありません（生活費カテゴリー内でメモに「ガス」「電気」「水道」を含むデータが対象です）")
 
     st.divider()
 
