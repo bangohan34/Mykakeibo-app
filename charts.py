@@ -28,12 +28,12 @@ def create_expense_chart(data, x_col, x_format, tooltip_format, x_label_angle=0)
 
 def create_utilities_chart(data):
     chart = alt.Chart(data).mark_bar().encode(
-        # X軸を「年月」に変更し、横向きに表示
+        # X軸を「年月」に設定（横並びの分割を解除）
         x=alt.X('年月:O', title=None, axis=alt.Axis(labelAngle=0)),
-        # xOffsetを使って、ガス・電気・水道の棒を横に並べる
-        xOffset=alt.XOffset('種類:N'),
+        # Y軸に金額を設定（自動的に積み上げになります）
         y=alt.Y('金額:Q', title='金額 (円)', grid=True),
         color=alt.Color('種類:N', scale=alt.Scale(domain=['ガス', '電気', '水道'], range=['#f08976', '#f2d879', '#63a3d8'])),
+        # ツールチップの表示内容
         tooltip=[
             alt.Tooltip('年月:O', title='月'),
             alt.Tooltip('種類:N', title='種類'),
