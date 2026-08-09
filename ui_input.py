@@ -4,19 +4,20 @@ import time
 import const as c
 import gsheets
 
-def render_salary_form():
-    """給与内訳の入力フォームを描画し、入力された辞書を返す"""
-    st.markdown("**【給与内訳入力】**")
+def render_salary_form(title_prefix="給与"):
+    """給与・賞与内訳の入力フォームを描画し、入力された辞書を返す"""
+    st.markdown(f"**【{title_prefix}内訳入力】**")
     col_a, col_b, col_c = st.columns(3)
     vals = {}
-    defs = c.SALARY_DEFAULTS # constから初期値を取得
+    defs = c.SALARY_DEFAULTS
     
     with col_a:
         st.caption("支給")
-        vals['本給'] = st.number_input('本給', min_value=0, step=1, value=defs['本給'])
+        vals['本給'] = st.number_input(f'{title_prefix}額', min_value=0, step=1, value=defs['本給'])
         vals['超勤手当'] = st.number_input('超勤手当', min_value=0, step=1, value=defs['超勤手当'])
         vals['リモートワーク手当'] = st.number_input('リモートワーク手当', min_value=0, step=1, value=defs['リモートワーク手当'])
         vals['通勤手当'] = st.number_input('通勤手当', min_value=0, step=1, value=defs['通勤手当'])
+        vals['その他（収入）'] = st.number_input('その他（収入）', min_value=0, step=1, value=defs['その他（収入）'])
     with col_b:
         st.caption("法定控除")
         vals['健康保険'] = st.number_input('健康保険', min_value=0, step=1, value=defs['健康保険'])
@@ -30,32 +31,37 @@ def render_salary_form():
         vals['生命保険'] = st.number_input('生命保険', min_value=0, step=1, value=defs['生命保険'])
         vals['組合費'] = st.number_input('組合費', min_value=0, step=1, value=defs['組合費'])
         vals['食堂喫食代'] = st.number_input('食堂喫食代', min_value=0, step=1, value=defs['食堂喫食代'])
+        vals['その他（支出）'] = st.number_input('その他（支出）', min_value=0, step=1, value=defs['その他（支出）'])
         
     return vals
 
-def process_salary_entry(worksheet, date, vals, memo):
-    """給与内訳のスプレッドシートへの書き込み処理"""
-    if vals['本給'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['本給'], f"本給 {memo}".strip())
-    if vals['超勤手当'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['超勤手当'], f"超勤手当 {memo}".strip())
-    if vals['リモートワーク手当'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['リモートワーク手当'], f"リモートワーク手当 {memo}".strip())
-    if vals['通勤手当'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['通勤手当'], f"通勤手当 {memo}".strip())
+def process_salary_entry(worksheet, date, vals, memo, category_name="給与"):
+    """給与・賞与内訳のスプレッドシートへの書き込み処理"""
+    # 支給 (収入)
+    if vals['本給'] > 0: gsheets.add_entry(worksheet, date, '収入', category_name, vals['本給'], f"本給 {memo}".strip())
+    if vals['超勤手当'] > 0: gsheets.add_entry(worksheet, date, '収入', category_name, vals['超勤手当'], f"超勤手当 {memo}".strip())
+    if vals['リモートワーク手当'] > 0: gsheets.add_entry(worksheet, date, '収入', category_name, vals['リモートワーク手当'], f"リモートワーク手当 {memo}".strip())
+    if vals['通勤手当'] > 0: gsheets.add_entry(worksheet, date, '収入', category_name, vals['通勤手当'], f"通勤手当 {memo}".strip())
+    if vals['その他（収入）'] > 0: gsheets.add_entry(worksheet, date, '収入', category_name, vals['その他（収入）'], f"その他（収入） {memo}".strip())
     
-    if vals['健康保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['健康保険'], f"保険 健康保険 {memo}".strip())
-    if vals['厚年保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['厚年保険'], f"保険 厚年保険 {memo}".strip())
-    if vals['雇用保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['雇用保険'], f"保険 雇用保険 {memo}".strip())
-    if vals['所得税'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['所得税'], f"税金 所得税 {memo}".strip())
+    # 法定控除 (支出 - 「税金」カテゴリーとして登録)
+    if vals['健康保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '税金', vals['健康保険'], f"保険 健康保険 {memo}".strip())
+    if vals['厚年保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '税金', vals['厚年保険'], f"保険 厚年保険 {memo}".strip())
+    if vals['雇用保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '税金', vals['雇用保険'], f"保険 雇用保険 {memo}".strip())
+    if vals['所得税'] > 0: gsheets.add_entry(worksheet, date, '支出', '税金', vals['所得税'], f"税金 所得税 {memo}".strip())
     
+    # 控除 (支出)
     if vals['持株積立'] > 0: gsheets.add_entry(worksheet, date, '支出', '投資費', vals['持株積立'], f"株 持株積立 {memo}".strip())
     if vals['社宅利用料'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['社宅利用料'], f"その他 社宅利用料 {memo}".strip())
     if vals['生命保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['生命保険'], f"保険 生命保険 {memo}".strip())
     if vals['組合費'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['組合費'], f"その他 組合費 {memo}".strip())
     if vals['食堂喫食代'] > 0: gsheets.add_entry(worksheet, date, '支出', '食費', vals['食堂喫食代'], f"社食 食堂喫食代 {memo}".strip())
+    if vals['その他（支出）'] > 0: gsheets.add_entry(worksheet, date, '支出', 'その他', vals['その他（支出）'], f"その他（支出） {memo}".strip())
 
 def render(worksheet, today_jst):
     st.subheader("収支入力")
     
     # --- 日付選択 ---
-    # 表記を「日付ショートカット」から「日付を選んでください」に変更
     offset = st.radio("日付を選んでください", ["今日", "1日前", "2日前"], horizontal=True)
     
     if offset == "今日":
@@ -65,7 +71,6 @@ def render(worksheet, today_jst):
     else:
         target_date = today_jst - datetime.timedelta(days=2)
         
-    # カレンダーの上の「日付を選択」という文字を削除（label_visibility="collapsed"）
     date = st.date_input(" ", value=target_date, label_visibility="collapsed")
 
     # --- 区分とカテゴリー選択 ---
@@ -87,9 +92,8 @@ def render(worksheet, today_jst):
 
     # --- 入力フォーム ---
     with st.form(key='entry_form', clear_on_submit=True):
-        if balance_type == "収入" and category == "給与":
-            # 切り出した関数でフォームを描画し、入力値の辞書を受け取る
-            salary_vals = render_salary_form()
+        if balance_type == "収入" and category in ["給与", "賞与"]:
+            salary_vals = render_salary_form(title_prefix=category)
             memo = st.text_input('メモ（任意）')
             submit_btn = st.form_submit_button('一括登録する')
             
@@ -106,11 +110,10 @@ def render(worksheet, today_jst):
 
     # --- 送信処理 ---
     if submit_btn:
-        if balance_type == "収入" and category == "給与":
+        if balance_type == "収入" and category in ["給与", "賞与"]:
             try:
-                # 切り出した関数で書き込み処理を行う
-                process_salary_entry(worksheet, date, salary_vals, memo)
-                st.success('給与・各種控除を一括登録しました。')
+                process_salary_entry(worksheet, date, salary_vals, memo, category_name=category)
+                st.success(f'{category}・各種控除を一括登録しました。')
                 st.balloons()
                 time.sleep(3)
                 st.rerun()

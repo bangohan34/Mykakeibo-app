@@ -141,7 +141,6 @@ def render(df, df_investment, today_ts, worksheet):
             tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
             
             with tab_day:
-                # 日ごと: ぴったり30日前から現在まで
                 start_30d = today_ts - pd.Timedelta(days=30)
                 df_day = graph_df[graph_df['日付'] >= start_30d]
                 if not df_day.empty:
@@ -151,7 +150,6 @@ def render(df, df_investment, today_ts, worksheet):
                     st.altair_chart(charts.create_expense_chart(df_day, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                     
             with tab_week:
-                # 週ごと: ぴったり24週前から現在まで
                 start_24w = today_ts - pd.Timedelta(weeks=24)
                 df_week = graph_df[graph_df['週'] >= start_24w]
                 if not df_week.empty:
@@ -161,7 +159,6 @@ def render(df, df_investment, today_ts, worksheet):
                     st.altair_chart(charts.create_expense_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
             
             with tab_month:
-                # 月ごと: ぴったり12ヶ月前から現在まで
                 start_12m = today_ts - pd.DateOffset(months=12)
                 df_month = graph_df[graph_df['年月'] >= start_12m]
                 if not df_month.empty:
@@ -171,7 +168,6 @@ def render(df, df_investment, today_ts, worksheet):
                     st.altair_chart(charts.create_expense_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
                     
             with tab_all:
-                # 全期間: 2026/01/01から現在まで日ごと
                 st.caption("現金残高推移 (全期間・日ごと)")
                 st.altair_chart(charts.create_balance_chart(graph_df, '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                 st.caption("支出推移 (全期間・日ごと)")
@@ -195,7 +191,6 @@ def render(df, df_investment, today_ts, worksheet):
         
         if not utils_df.empty:
             utils_df['年月'] = utils_df['日付'].apply(lambda x: x.replace(day=1).strftime('%Y-%m'))
-            # 未来の光熱費予定などを防ぐためにここでも現在までに絞る
             utils_df = utils_df[utils_df['日付'] <= today_ts]
             utils_grouped = utils_df.groupby(['年月', '種類'])['金額'].sum().reset_index()
             st.altair_chart(charts.create_utilities_chart(utils_grouped), use_container_width=True)
@@ -219,14 +214,21 @@ def render(df, df_investment, today_ts, worksheet):
                     st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計", value=f"{month_total:,} 円")
                     
                     if month_total > 0:
-                        cat_grouped = target_month_df.groupby('カテゴリー')['金額'].sum().sort_values(ascending=False)
+                        cat_grouped = target_month_df.groupby('カテゴリー')['金額'].sum()
+                        
+                        # --- 並び順を EXPENSE_CATEGORIES の順序に固定 ---
+                        ordered_cats = [cat for cat in c.EXPENSE_CATEGORIES if cat in cat_grouped]
+                        other_cats = [cat for cat in cat_grouped.index if cat not in ordered_cats]
+                        cat_grouped = cat_grouped.reindex(ordered_cats + other_cats).dropna()
+                        
                         bars_html = ""
                         legend_html = ""
                         for cat, val in cat_grouped.items():
-                            ratio = (val / month_total) * 100
-                            color = c.PIE_CHART_CATEGORIES_COLORS.get(cat, '#CFCFCF')
-                            bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{cat}: {ratio:.1f}%"></div>'
-                            legend_html += f' <span style="display:inline-block; margin: 4px 10px 4px 0;"><span style="color:{color};">■</span> {cat} ({val:,}円)</span>'
+                            if val > 0:
+                                ratio = (val / month_total) * 100
+                                color = c.PIE_CHART_CATEGORIES_COLORS.get(cat, '#CFCFCF')
+                                bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{cat}: {ratio:.1f}%"></div>'
+                                legend_html += f' <span style="display:inline-block; margin: 4px 10px 4px 0;"><span style="color:{color};">■</span> {cat} ({val:,}円)</span>'
                         
                         st.markdown(f"""
                         <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">{bars_html}</div>
