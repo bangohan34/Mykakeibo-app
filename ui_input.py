@@ -89,6 +89,12 @@ def process_bonus_entry(worksheet, date, vals, memo):
 
 def render(worksheet, today_jst):
     st.subheader("収支入力")
+
+    # --- 区分とカテゴリー選択 ---
+    balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
+    category, amount, memo, sub_category = None, 0, "", ""
+    investment_name, investment_amount = "", 0.0000
+    entry_vals = {}
     
     # --- 日付選択 ---
     offset = st.radio("日付を選んでください", ["今日", "1日前", "2日前"], horizontal=True)
@@ -101,12 +107,6 @@ def render(worksheet, today_jst):
         target_date = today_jst - datetime.timedelta(days=2)
         
     date = st.date_input(" ", value=target_date, label_visibility="collapsed")
-
-    # --- 区分とカテゴリー選択 ---
-    balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
-    category, amount, memo, sub_category = None, 0, "", ""
-    investment_name, investment_amount = "", 0.0000
-    entry_vals = {}
 
     if balance_type == "支出":
         st.caption("支出の詳細を選んでください")
