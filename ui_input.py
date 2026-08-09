@@ -4,12 +4,59 @@ import time
 import const as c
 import gsheets
 
+def render_salary_form():
+    """給与内訳の入力フォームを描画し、入力された辞書を返す"""
+    st.markdown("**【給与内訳入力】**")
+    col_a, col_b, col_c = st.columns(3)
+    vals = {}
+    defs = c.SALARY_DEFAULTS # constから初期値を取得
+    
+    with col_a:
+        st.caption("支給")
+        vals['本給'] = st.number_input('本給', min_value=0, step=1, value=defs['本給'])
+        vals['超勤手当'] = st.number_input('超勤手当', min_value=0, step=1, value=defs['超勤手当'])
+        vals['リモートワーク手当'] = st.number_input('リモートワーク手当', min_value=0, step=1, value=defs['リモートワーク手当'])
+        vals['通勤手当'] = st.number_input('通勤手当', min_value=0, step=1, value=defs['通勤手当'])
+    with col_b:
+        st.caption("法定控除")
+        vals['健康保険'] = st.number_input('健康保険', min_value=0, step=1, value=defs['健康保険'])
+        vals['厚年保険'] = st.number_input('厚年保険', min_value=0, step=1, value=defs['厚年保険'])
+        vals['雇用保険'] = st.number_input('雇用保険', min_value=0, step=1, value=defs['雇用保険'])
+        vals['所得税'] = st.number_input('所得税', min_value=0, step=1, value=defs['所得税'])
+    with col_c:
+        st.caption("控除")
+        vals['持株積立'] = st.number_input('持株積立', min_value=0, step=1, value=defs['持株積立'])
+        vals['社宅利用料'] = st.number_input('社宅利用料', min_value=0, step=1, value=defs['社宅利用料'])
+        vals['生命保険'] = st.number_input('生命保険', min_value=0, step=1, value=defs['生命保険'])
+        vals['組合費'] = st.number_input('組合費', min_value=0, step=1, value=defs['組合費'])
+        vals['食堂喫食代'] = st.number_input('食堂喫食代', min_value=0, step=1, value=defs['食堂喫食代'])
+        
+    return vals
+
+def process_salary_entry(worksheet, date, vals, memo):
+    """給与内訳のスプレッドシートへの書き込み処理"""
+    if vals['本給'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['本給'], f"本給 {memo}".strip())
+    if vals['超勤手当'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['超勤手当'], f"超勤手当 {memo}".strip())
+    if vals['リモートワーク手当'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['リモートワーク手当'], f"リモートワーク手当 {memo}".strip())
+    if vals['通勤手当'] > 0: gsheets.add_entry(worksheet, date, '収入', '給与', vals['通勤手当'], f"通勤手当 {memo}".strip())
+    
+    if vals['健康保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['健康保険'], f"保険 健康保険 {memo}".strip())
+    if vals['厚年保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['厚年保険'], f"保険 厚年保険 {memo}".strip())
+    if vals['雇用保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['雇用保険'], f"保険 雇用保険 {memo}".strip())
+    if vals['所得税'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['所得税'], f"税金 所得税 {memo}".strip())
+    
+    if vals['持株積立'] > 0: gsheets.add_entry(worksheet, date, '支出', '投資費', vals['持株積立'], f"株 持株積立 {memo}".strip())
+    if vals['社宅利用料'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['社宅利用料'], f"その他 社宅利用料 {memo}".strip())
+    if vals['生命保険'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['生命保険'], f"保険 生命保険 {memo}".strip())
+    if vals['組合費'] > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', vals['組合費'], f"その他 組合費 {memo}".strip())
+    if vals['食堂喫食代'] > 0: gsheets.add_entry(worksheet, date, '支出', '食費', vals['食堂喫食代'], f"社食 食堂喫食代 {memo}".strip())
+
 def render(worksheet, today_jst):
     st.subheader("収支入力")
     
-    # --- 絶対にスマホで崩れない日付ショートカット ---
-    # radioボタンを使うことで、スマホでも綺麗に横に並びます
-    offset = st.radio("日付ショートカット", ["今日", "1日前", "2日前"], horizontal=True)
+    # --- 日付選択 ---
+    # 表記を「日付ショートカット」から「日付を選んでください」に変更
+    offset = st.radio("日付を選んでください", ["今日", "1日前", "2日前"], horizontal=True)
     
     if offset == "今日":
         target_date = today_jst
@@ -18,11 +65,14 @@ def render(worksheet, today_jst):
     else:
         target_date = today_jst - datetime.timedelta(days=2)
         
-    date = st.date_input("日付を選択", value=target_date)
+    # カレンダーの上の「日付を選択」という文字を削除（label_visibility="collapsed"）
+    date = st.date_input(" ", value=target_date, label_visibility="collapsed")
 
+    # --- 区分とカテゴリー選択 ---
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
+    salary_vals = {}
 
     if balance_type == "支出":
         st.caption("支出の詳細を選んでください")
@@ -35,29 +85,11 @@ def render(worksheet, today_jst):
         st.caption("収入の詳細を選んでください")
         category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
 
+    # --- 入力フォーム ---
     with st.form(key='entry_form', clear_on_submit=True):
         if balance_type == "収入" and category == "給与":
-            st.markdown("**【給与内訳入力】**")
-            col_a, col_b, col_c = st.columns(3)
-            with col_a:
-                st.caption("支給")
-                s_honkyu = st.number_input('本給', min_value=0, step=1, value=0)
-                s_choukin = st.number_input('超勤手当', min_value=0, step=1, value=0)
-                s_remote = st.number_input('リモートワーク手当', min_value=0, step=1, value=0)
-                s_tsukin = st.number_input('通勤手当', min_value=0, step=1, value=0)
-            with col_b:
-                st.caption("法定控除")
-                d_kenpo = st.number_input('健康保険', min_value=0, step=1, value=0)
-                d_kousei = st.number_input('厚年保険', min_value=0, step=1, value=0)
-                d_koyou = st.number_input('雇用保険', min_value=0, step=1, value=0)
-                d_shotoku = st.number_input('所得税', min_value=0, step=1, value=0)
-            with col_c:
-                st.caption("控除")
-                d_mochikabu = st.number_input('持株積立', min_value=0, step=1, value=0)
-                d_shataku = st.number_input('社宅利用料', min_value=0, step=1, value=0)
-                d_seimei = st.number_input('生命保険', min_value=0, step=1, value=0)
-                d_kumiai = st.number_input('組合費', min_value=0, step=1, value=0)
-                d_shokudou = st.number_input('食堂喫食代', min_value=0, step=1, value=0)
+            # 切り出した関数でフォームを描画し、入力値の辞書を受け取る
+            salary_vals = render_salary_form()
             memo = st.text_input('メモ（任意）')
             submit_btn = st.form_submit_button('一括登録する')
             
@@ -72,22 +104,12 @@ def render(worksheet, today_jst):
             memo = st.text_input('メモ（任意）')
             submit_btn = st.form_submit_button('登録する')
 
+    # --- 送信処理 ---
     if submit_btn:
         if balance_type == "収入" and category == "給与":
             try:
-                if s_honkyu > 0: gsheets.add_entry(worksheet, date, '収入', '給与', s_honkyu, f"本給 {memo}".strip())
-                if s_choukin > 0: gsheets.add_entry(worksheet, date, '収入', '給与', s_choukin, f"超勤手当 {memo}".strip())
-                if s_remote > 0: gsheets.add_entry(worksheet, date, '収入', '給与', s_remote, f"リモートワーク手当 {memo}".strip())
-                if s_tsukin > 0: gsheets.add_entry(worksheet, date, '収入', '給与', s_tsukin, f"通勤手当 {memo}".strip())
-                if d_kenpo > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_kenpo, f"保険 健康保険 {memo}".strip())
-                if d_kousei > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_kousei, f"保険 厚年保険 {memo}".strip())
-                if d_koyou > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_koyou, f"保険 雇用保険 {memo}".strip())
-                if d_shotoku > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_shotoku, f"税金 所得税 {memo}".strip())
-                if d_mochikabu > 0: gsheets.add_entry(worksheet, date, '支出', '投資費', d_mochikabu, f"株 持株積立 {memo}".strip())
-                if d_shataku > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_shataku, f"その他 社宅利用料 {memo}".strip())
-                if d_seimei > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_seimei, f"保険 生命保険 {memo}".strip())
-                if d_kumiai > 0: gsheets.add_entry(worksheet, date, '支出', '生活費', d_kumiai, f"その他 組合費 {memo}".strip())
-                if d_shokudou > 0: gsheets.add_entry(worksheet, date, '支出', '食費', d_shokudou, f"社食 食堂喫食代 {memo}".strip())
+                # 切り出した関数で書き込み処理を行う
+                process_salary_entry(worksheet, date, salary_vals, memo)
                 st.success('給与・各種控除を一括登録しました。')
                 st.balloons()
                 time.sleep(3)
