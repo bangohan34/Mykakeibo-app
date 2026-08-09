@@ -14,7 +14,6 @@ def render(df, df_investment, today_ts, worksheet):
     else:
         yen_assets = 0
 
-    # ── 新設: 投資資産APIのフォールバック・キャッシュ処理 ──
     total_investment_assets = 0
     timestamp_display = ""
     
@@ -39,7 +38,6 @@ def render(df, df_investment, today_ts, worksheet):
         JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
         current_time_str = datetime.datetime.now(JST).strftime("%Y/%m/%d %H:%M:%S")
 
-        # 成功なら保存、失敗ならキャッシュ呼び出し
         if api_success:
             gsheets.save_price_cache(worksheet, all_prices, current_time_str)
             timestamp_display = f"{current_time_str} 取得"
@@ -132,15 +130,14 @@ def render(df, df_investment, today_ts, worksheet):
         base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
         base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
         
-        # すべてのグラフを 2026/01/01 から先のみ対象とする
+        # ▼▼▼【修正箇所】現在(today_ts) より未来のデータは完全に除外する ▼▼▼
         start_date = pd.to_datetime('2026-01-01')
-        graph_df = base_df[base_df['日付'] >= start_date]
+        graph_df = base_df[(base_df['日付'] >= start_date) & (base_df['日付'] <= today_ts)]
 
         if not graph_df.empty:
             tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
             
             with tab_month:
-                # 12ヶ月前まで
                 start_12m = max(today_ts - pd.DateOffset(months=12), start_date)
                 df_month = graph_df[graph_df['年月'] >= start_12m]
                 if not df_month.empty:
@@ -150,7 +147,6 @@ def render(df, df_investment, today_ts, worksheet):
                     st.altair_chart(charts.create_expense_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
                     
             with tab_week:
-                # 24週前まで
                 start_24w = max(today_ts - pd.Timedelta(weeks=24), start_date)
                 df_week = graph_df[graph_df['週'] >= start_24w]
                 if not df_week.empty:
@@ -160,7 +156,6 @@ def render(df, df_investment, today_ts, worksheet):
                     st.altair_chart(charts.create_expense_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                     
             with tab_day:
-                # 30日前まで
                 start_30d = max(today_ts - pd.Timedelta(days=30), start_date)
                 df_day = graph_df[graph_df['日付'] >= start_30d]
                 if not df_day.empty:
@@ -170,7 +165,6 @@ def render(df, df_investment, today_ts, worksheet):
                     st.altair_chart(charts.create_expense_chart(df_day, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                     
             with tab_all:
-                # 全期間を日ごとで表示
                 st.caption("現金残高推移 (全期間・日ごと)")
                 st.altair_chart(charts.create_balance_chart(graph_df, '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                 st.caption("支出推移 (全期間・日ごと)")
