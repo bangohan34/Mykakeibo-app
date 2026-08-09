@@ -10,6 +10,8 @@ scopes = [
     'https://www.googleapis.com/auth/drive'
 ]
 
+# ★ キャッシュを追加して、Google認証の時間をスキップ（劇的に速くなります）
+@st.cache_resource(ttl=3600)
 def get_worksheet(sheet_name):
     try:
         if "gcp_service_account" in st.secrets:
@@ -151,6 +153,8 @@ def auto_add_subscriptions(worksheet, df_kakeibo):
         return 0
     if df_sub.empty:
         return 0
+    
+    # ★ ここもJSTで現在時刻を取得
     now = pd.Timestamp.now(tz='Asia/Tokyo')
     year = now.year
     month = now.month
