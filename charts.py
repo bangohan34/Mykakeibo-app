@@ -38,14 +38,14 @@ def create_utilities_chart(data):
     ).properties(height=250)
     return chart.configure_view(stroke='transparent').configure_axis(labelColor='#703B3B', titleColor='#703B3B', gridColor='#e0e0e0')
 
-# --- 新規追加：給与の推移グラフ（積み上げ） ---
+# --- 追加：給与の推移グラフ（指定色で色分け） ---
 def create_salary_chart(data):
     chart = alt.Chart(data).mark_bar().encode(
         x=alt.X('年月:O', title=None, axis=alt.Axis(labelAngle=0)),
         y=alt.Y('金額:Q', axis=alt.Axis(title='金額 (円)', grid=True)),
         color=alt.Color('項目:N', scale=alt.Scale(
             domain=['本給', '超勤手当', 'リモートワーク手当', '通勤手当', 'その他（収入）'],
-            range=['#4caf50', '#f44336', '#2196f3', '#ffeb3b', '#9e9e9e'] # 緑、赤、青、黄、灰
+            range=['#4caf50', '#f44336', '#2196f3', '#ffeb3b', '#9e9e9e']
         )),
         tooltip=[
             alt.Tooltip('年月:O', title='月'),
@@ -55,13 +55,13 @@ def create_salary_chart(data):
     ).properties(height=250)
     return chart.configure_view(stroke='transparent').configure_axis(labelColor='#703B3B', titleColor='#703B3B', gridColor='#e0e0e0')
 
-# --- 新規追加：投資資産の推移グラフ ---
+# --- 追加：投資資産の推移グラフ ---
 def create_investment_history_chart(data):
     line = alt.Chart(data).mark_line(color="#ff8c00", point=True).encode(
-        x=alt.X('日付:T', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45)),
+        x=alt.X('日付:T', axis=alt.Axis(format='%m/%d %H:%M', title=None, labelAngle=-45)),
         y=alt.Y('評価額:Q', scale=alt.Scale(zero=False), axis=alt.Axis(title='評価額 (円)', grid=True)),
         tooltip=[
-            alt.Tooltip('日付:T', format='%Y/%m/%d', title='日付'),
+            alt.Tooltip('日付:T', format='%Y/%m/%d %H:%M', title='日時'),
             alt.Tooltip('評価額:Q', format=',', title='総評価額')
         ]
     ).properties(height=250)

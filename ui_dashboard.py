@@ -6,7 +6,6 @@ import charts
 import const as c
 import gsheets
 
-# メモ欄から給与の種類を特定する関数
 def extract_salary_type(memo):
     memo_str = str(memo)
     if '本給' in memo_str: return '本給'
@@ -15,7 +14,6 @@ def extract_salary_type(memo):
     if '通勤手当' in memo_str: return '通勤手当'
     return 'その他（収入）'
 
-# 日付からボーナスの時期を特定する関数
 def get_bonus_season(date_val):
     month = date_val.month
     if 6 <= month <= 8: return f"{date_val.year}年 夏季"
@@ -27,14 +25,14 @@ def render(df, df_investment, today_ts, worksheet):
     if not df.empty:
         df_current = df[df['日付'] <= today_ts]
         totals = df_current.groupby('区分')['金額'].sum()
-        # ★ 残高計算（税金は口座から引かれているので、支出としてマイナスする）
+        # 現金残高は「税金」を含めた全ての支出を引いて算出（手取り基準）
         yen_assets = totals.get('収入', 0) - totals.get('支出', 0)
     else:
         yen_assets = 0
 
     total_investment_assets = 0
     timestamp_display = ""
-    df_hist = pd.DataFrame() # 投資履歴
+    df_hist = pd.DataFrame()
     
     if not df_investment.empty:
         all_prices = {}
@@ -57,17 +55,18 @@ def render(df, df_investment, today_ts, worksheet):
         JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
         current_time_str = datetime.datetime.now(JST).strftime("%Y/%m/%d %H:%M:%S")
 
-        # ★ API取得後は履歴として追記し、全履歴を読み込む
+        # API取得できた場合はスプレッドシートへ1時間に1回の記録を試みる
         if api_success:
             gsheets.save_price_cache(worksheet, all_prices, current_time_str)
-            timestamp_display = f"{current_time_str} 取得"
+            timestamp_display = f"{current_time_str} 更新"
             
         cached_prices, cached_time, df_hist = gsheets.load_price_cache(worksheet)
         
+        # エラー時はスプレッドシートの履歴から引っ張る
         if not api_success:
             if cached_prices:
                 all_prices = cached_prices
-                timestamp_display = f"{cached_time} の履歴データを使用"
+                timestamp_display = f"{cached_time} の履歴データを表示中"
             else:
                 timestamp_display = "取得失敗"
 
@@ -75,11 +74,10 @@ def render(df, df_investment, today_ts, worksheet):
         df_investment['評価額(円)'] = df_investment['数量'] * df_investment['現在レート']
         total_investment_assets = df_investment['評価額(円)'].sum()
 
-    # --- ヘッダー・資産合計 ---
     st.markdown(f"""
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
-            <div style="font-size: 14px; color: gray;">手取り・現金残高</div>
+            <div style="font-size: 14px; color: gray;">現金・預金</div>
             <div style="font-size: 30px; font-weight: bold; color: #0068c9;">{int(yen_assets):,} 円</div>
         </div>
         <div style="flex: 1; padding: 10px; text-align: center;">
@@ -142,7 +140,7 @@ def render(df, df_investment, today_ts, worksheet):
     st.divider()
 
     # ==================================================
-    # ★ 新設：投資資産の推移グラフ
+    # 投資資産の推移グラフ (Hourly)
     # ==================================================
     st.subheader("投資資産の推移")
     if not df_hist.empty and not df_investment.empty:
@@ -152,7 +150,6 @@ def render(df, df_investment, today_ts, worksheet):
         hist_dates = sorted(df_hist['日付'].unique())
         trend_data = []
         
-        # 各日付時点での「保有数量」と「過去のレート」を掛け合わせて評価額を算出
         for d in hist_dates:
             current_inv = df_inv[df_inv['日付'] <= d]
             qty_sum = current_inv.groupby('銘柄')['数量'].sum()
@@ -170,18 +167,17 @@ def render(df, df_investment, today_ts, worksheet):
             df_trend = pd.DataFrame(trend_data)
             st.altair_chart(charts.create_investment_history_chart(df_trend), use_container_width=True)
         else:
-            st.info("まだ投資履歴データが十分にありません。明日以降にグラフが生成されます。")
+            st.info("投資履歴データがまだありません。")
     else:
-        st.info("投資推移データがまだありません。明日以降にグラフが生成されます。")
+        st.info("投資推移データがまだありません。1時間ごとのレート取得後に表示されます。")
 
     st.divider()
 
     # ==================================================
-    # ★ 新設：収入の推移（給与推移グラフとボーナス一覧）
+    # 収入の推移（給与推移グラフとボーナス一覧）
     # ==================================================
     st.subheader("収入の推移")
     
-    # 1. 給与推移グラフ
     if not df.empty:
         df_salary = df[(df['区分'] == '収入') & (df['カテゴリー'] == '給与')].copy()
         if not df_salary.empty:
@@ -191,10 +187,9 @@ def render(df, df_investment, today_ts, worksheet):
             st.caption("月別 給与推移")
             st.altair_chart(charts.create_salary_chart(sal_grouped), use_container_width=True)
             
-        # 2. ボーナス（賞与）一覧の表
         df_bonus = df[(df['区分'] == '収入') & (df['カテゴリー'] == '賞与')].copy()
         if not df_bonus.empty:
-            with st.expander("賞与（ボーナス）一覧", expanded=False):
+            with st.expander("賞与（ボーナス）一覧を見る", expanded=False):
                 df_bonus['時期'] = df_bonus['日付'].apply(get_bonus_season)
                 df_bonus_disp = df_bonus[['日付', '時期', '金額', 'メモ']].copy()
                 df_bonus_disp['日付'] = df_bonus_disp['日付'].dt.strftime('%Y/%m/%d')
@@ -211,7 +206,7 @@ def render(df, df_investment, today_ts, worksheet):
         base_df = df.copy()
         base_df['グラフ金額'] = base_df.apply(lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], axis=1)
         base_df = base_df.sort_values('日付')
-        # ★ 現金残高は税金が引かれた状態（手取り）で計算される
+        # 残高推移は税金も含んだリアルな数値を計算
         base_df['現金推移'] = base_df['グラフ金額'].cumsum()
         base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
         base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
@@ -228,8 +223,7 @@ def render(df, df_investment, today_ts, worksheet):
                 if not df_day.empty:
                     st.caption("現金残高推移")
                     st.altair_chart(charts.create_balance_chart(df_day, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                    st.caption("支出推移（※税金を除く）")
-                    # ★ 支出グラフからは「税金」カテゴリーを完全に除外
+                    st.caption("支出推移（※税金を除外）")
                     st.altair_chart(charts.create_expense_chart(df_day[df_day['カテゴリー'] != '税金'], '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
                     
             with tab_week:
@@ -238,7 +232,7 @@ def render(df, df_investment, today_ts, worksheet):
                 if not df_week.empty:
                     st.caption("現金残高推移")
                     st.altair_chart(charts.create_balance_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                    st.caption("支出推移（※税金を除く）")
+                    st.caption("支出推移（※税金を除外）")
                     st.altair_chart(charts.create_expense_chart(df_week[df_week['カテゴリー'] != '税金'], '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
             
             with tab_month:
@@ -247,13 +241,13 @@ def render(df, df_investment, today_ts, worksheet):
                 if not df_month.empty:
                     st.caption("現金残高推移")
                     st.altair_chart(charts.create_balance_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
-                    st.caption("支出推移（※税金を除く）")
+                    st.caption("支出推移（※税金を除外）")
                     st.altair_chart(charts.create_expense_chart(df_month[df_month['カテゴリー'] != '税金'], '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
                     
             with tab_all:
                 st.caption("現金残高推移 (全期間・日ごと)")
                 st.altair_chart(charts.create_balance_chart(graph_df, '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                st.caption("支出推移（※税金を除く）")
+                st.caption("支出推移（※税金を除外）")
                 st.altair_chart(charts.create_expense_chart(graph_df[graph_df['カテゴリー'] != '税金'], '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
 
     st.divider()
@@ -292,7 +286,7 @@ def render(df, df_investment, today_ts, worksheet):
             tabs = st.tabs(months_list.dt.strftime('%Y/%m').tolist())
             for tab, month_date in zip(tabs, months_list):
                 with tab:
-                    # ★ 支出内訳からも「税金」を除外して計算する
+                    # 支出内訳からも税金カテゴリを除外
                     target_month_df = pie_df[(pie_df['年月'] == month_date) & (pie_df['区分'] == '支出') & (pie_df['カテゴリー'] != '税金')]
                     month_total = target_month_df['金額'].sum()
                     st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計 (税金を除く)", value=f"{month_total:,} 円")
