@@ -135,15 +135,26 @@ def process_bonus_entry(worksheet, date, vals, memo):
 
 def render(worksheet, today_jst):
     st.subheader("収支入力")
-    
-    # --- 区分を一番上に ---
+
+    # --- スマホ用に縦の余白を限界までギュッと詰めるCSS ---
+    st.markdown("""
+        <style>
+        /* 各入力パーツの下の無駄な余白をカット */
+        div[data-testid="stRadio"] { margin-bottom: -15px; }
+        div[data-testid="stDateInput"] { margin-bottom: -15px; }
+        /* フォーム全体を少し上に詰める */
+        div[data-testid="stForm"] { margin-top: 10px; padding: 15px; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 1. 区分
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
     entry_vals = {}
 
-    # --- その次に日付選択 ---
-    offset = st.radio("日付を選んでください", ["今日", "1日前", "2日前", "3日前"], horizontal=True)
+    # 2. 日付選択 (キャプションなし)
+    offset = st.radio("日付", ["今日", "1日前", "2日前", "3日前"], horizontal=True, label_visibility="collapsed")
     
     if offset == "今日":
         target_date = today_jst
@@ -156,28 +167,25 @@ def render(worksheet, today_jst):
         
     date = st.date_input(" ", value=target_date, label_visibility="collapsed")
 
-    # --- 最後にカテゴリー選択 ---
+    # 3. カテゴリー選択 (キャプションなし)
     if balance_type == "支出":
-        st.caption("支出の詳細を選んでください")
         category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
         sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
         if sub_options:
-            st.caption(f"{category}の詳細を選んでください")
             sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
     elif balance_type == "収入":
-        st.caption("収入の詳細を選んでください")
         category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
 
-    # --- 入力フォーム ---
+    # 4. 入力フォーム
     with st.form(key='entry_form', clear_on_submit=True):
         if balance_type == "収入" and category == "給与":
             entry_vals = render_salary_form()
             memo = st.text_input('メモ（任意）')
-            submit_btn = st.form_submit_button('一括登録する')
+            submit_btn = st.form_submit_button('一括登録する', use_container_width=True)
         elif balance_type == "収入" and category == "賞与":
             entry_vals = render_bonus_form()
             memo = st.text_input('メモ（任意）')
-            submit_btn = st.form_submit_button('一括登録する')
+            submit_btn = st.form_submit_button('一括登録する', use_container_width=True)
         else:
             if balance_type in ["支出", "収入"]:
                 amount = st.number_input('金額', min_value=0, step=1, value=None, placeholder="0")
@@ -187,9 +195,9 @@ def render(worksheet, today_jst):
                 investment_amount = st.number_input('数量', min_value=0.0, step=0.00000001, value=None, placeholder="0.0",format="%.8f")
                 amount = st.number_input('支払い金額', min_value=0, step=1, value=None, placeholder="0")
             memo = st.text_input('メモ（任意）')
-            submit_btn = st.form_submit_button('登録する')
+            submit_btn = st.form_submit_button('登録する', use_container_width=True)
 
-    # --- 送信処理 ---
+    # 5. 送信処理
     if submit_btn:
         if balance_type == "収入" and category == "給与":
             try:
