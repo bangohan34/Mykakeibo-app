@@ -74,23 +74,6 @@ def delete_entry(sh, row_index):
         if current_data:
             ws.update(range_name='A1', values=current_data)
 
-def delete_callback():
-    target_no = st.session_state.get("delete_input_no")
-    if target_no:
-        try:
-            real_row_index = int(target_no) + 1
-            target_sheet_name = st.session_state.get("target_sheet")
-            if not target_sheet_name:
-                raise Exception("ログイン情報が見つかりません")
-            sh = get_worksheet(target_sheet_name)
-            delete_entry(sh, real_row_index)
-            st.session_state["delete_input_no"] = None
-            st.session_state["del_confirm_ckeck"] = False
-            st.session_state["menu_reset_id"] += 1
-            st.session_state["delete_msg"] = f"No.{target_no} を削除しました！"
-        except Exception as e:
-            st.session_state["delete_msg"] = f"削除エラー: {e}"
-
 def load_investment_data(sh):
     cols = ['日付','銘柄','数量','支払金額','メモ']
     try:
@@ -220,9 +203,6 @@ def color_coding(val):
         return 'color: #A03333; font-weight: bold;'
     return ''
 
-# ==========================================
-# ★ 変更：投資資産の価格キャッシュを「1時間ごとの履歴蓄積型」に変更
-# ==========================================
 def save_price_cache(sh, prices_dict, timestamp):
     try:
         ws = sh.worksheet('レート履歴')
@@ -230,13 +210,10 @@ def save_price_cache(sh, prices_dict, timestamp):
         ws = sh.add_worksheet(title='レート履歴', rows="1000", cols="3")
         ws.update(range_name='A1:C1', values=[['日時', '銘柄', '価格']])
 
-    # "2026/10/11 15:44:00" の 先頭13文字 "2026/10/11 15"（時間単位）を取得
     current_hour_str = str(timestamp)[:13]
-    
     all_values = ws.get_all_values()
     existing_hours = [str(row[0])[:13] for row in all_values[1:]] if len(all_values) > 1 else []
     
-    # この1時間以内にまだ記録されていなければ追記
     if current_hour_str not in existing_hours:
         data_to_append = []
         for symbol, price in prices_dict.items():
@@ -255,7 +232,6 @@ def load_price_cache(sh):
         df_hist['価格'] = pd.to_numeric(df_hist['価格'], errors='coerce')
         df_hist['日付'] = pd.to_datetime(df_hist['日時'], errors='coerce')
         
-        # 最も新しい日時の価格データを取得
         latest_date = df_hist['日付'].max()
         df_latest = df_hist[df_hist['日付'] == latest_date]
         prices_dict = dict(zip(df_latest['銘柄'], df_latest['価格']))
@@ -264,3 +240,14 @@ def load_price_cache(sh):
         return prices_dict, timestamp, df_hist
     except Exception:
         return {}, None, pd.DataFrame()
+
+# ==========================================
+# ★ 新設：データを上書き（編集）する関数
+# ==========================================
+def update_entry(sh, target_no, date, balance_type, category, amount, memo):
+    ws = sh.worksheet('家計簿')
+    # No=1のデータはエクセル上で2行目になるため、+1する
+    real_row_index = int(target_no) + 1
+    row_data = [[str(date), balance_type, category, amount, memo]]
+    # 該当の行を上書き保存する
+    ws.update(range_name=f"A{real_row_index}:E{real_row_index}", values=row_data)

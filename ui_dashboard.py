@@ -7,7 +7,6 @@ import const as c
 import gsheets
 
 def extract_salary_type(memo):
-    """給与内訳を3種類（本給・超勤手当・その他）に分類する"""
     memo_str = str(memo)
     if '本給' in memo_str: return '本給'
     if '超勤手当' in memo_str: return '超勤手当'
@@ -24,7 +23,6 @@ def render(df, df_investment, today_ts, worksheet):
     if not df.empty:
         df_current = df[df['日付'] <= today_ts]
         totals = df_current.groupby('区分')['金額'].sum()
-        # 現金残高は「税金」を含めた全ての支出を引いて算出（手取り基準）
         yen_assets = totals.get('収入', 0) - totals.get('支出', 0)
     else:
         yen_assets = 0
@@ -71,6 +69,9 @@ def render(df, df_investment, today_ts, worksheet):
         df_investment['評価額(円)'] = df_investment['数量'] * df_investment['現在レート']
         total_investment_assets = df_investment['評価額(円)'].sum()
 
+    # ==================================================
+    # 1. 資産合計（一番上）
+    # ==================================================
     st.markdown(f"""
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
@@ -123,8 +124,10 @@ def render(df, df_investment, today_ts, worksheet):
         """, unsafe_allow_html=True)
 
     st.write("")
+    
+    # ★ 投資グラフを「資産の内訳を見る」の中に格納
     if not df_investment.empty:
-        with st.expander("資産の内訳を見る", expanded=False):
+        with st.expander("資産の内訳・投資推移を見る", expanded=False):
             display_df = df_investment[['銘柄', '評価額(円)']].copy().rename(columns={'評価額(円)': '評価額'})
             display_df = display_df.groupby('銘柄', as_index=False).sum(numeric_only=True)
             display_df['評価額'] = display_df['評価額'].astype(int)
@@ -133,48 +136,34 @@ def render(df, df_investment, today_ts, worksheet):
                 display_df.style.format({"評価額": "{:,} 円"}).set_properties(**{'background-color': '#ede4ce', 'border-color': '#A1A3A6', 'border-style': 'solid'}),
                 hide_index=True, use_container_width=True
             )
+            
+            st.write("")
+            st.caption("投資資産の推移")
+            if not df_hist.empty:
+                df_inv = df_investment.copy()
+                df_inv['日付'] = pd.to_datetime(df_inv['日付'])
+                hist_dates = sorted(df_hist['日付'].unique())
+                trend_data = []
+                for d in hist_dates:
+                    current_inv = df_inv[df_inv['日付'] <= d]
+                    qty_sum = current_inv.groupby('銘柄')['数量'].sum()
+                    prices_on_d = df_hist[df_hist['日付'] == d].set_index('銘柄')['価格']
+                    total_val = sum(qty * prices_on_d.get(sym, 0) for sym, qty in qty_sum.items())
+                    if total_val > 0:
+                        trend_data.append({'日付': d, '評価額': int(total_val)})
+                
+                if trend_data:
+                    df_trend = pd.DataFrame(trend_data)
+                    st.altair_chart(charts.create_investment_history_chart(df_trend), use_container_width=True)
+                else:
+                    st.info("投資推移データがまだありません。")
 
     st.divider()
 
     # ==================================================
-    # 投資資産の推移グラフ
-    # ==================================================
-    st.subheader("投資資産の推移")
-    if not df_hist.empty and not df_investment.empty:
-        df_inv = df_investment.copy()
-        df_inv['日付'] = pd.to_datetime(df_inv['日付'])
-        
-        hist_dates = sorted(df_hist['日付'].unique())
-        trend_data = []
-        
-        for d in hist_dates:
-            current_inv = df_inv[df_inv['日付'] <= d]
-            qty_sum = current_inv.groupby('銘柄')['数量'].sum()
-            prices_on_d = df_hist[df_hist['日付'] == d].set_index('銘柄')['価格']
-            
-            total_val = 0
-            for sym, qty in qty_sum.items():
-                price = prices_on_d.get(sym, 0)
-                total_val += qty * price
-            
-            if total_val > 0:
-                trend_data.append({'日付': d, '評価額': int(total_val)})
-        
-        if trend_data:
-            df_trend = pd.DataFrame(trend_data)
-            st.altair_chart(charts.create_investment_history_chart(df_trend), use_container_width=True)
-        else:
-            st.info("投資履歴データがまだありません。")
-    else:
-        st.info("投資推移データがまだありません。1時間ごとのレート取得後に表示されます。")
-
-    st.divider()
-
-    # ==================================================
-    # 収入の推移（給与推移グラフとボーナス一覧）
+    # 2. 収入の推移
     # ==================================================
     st.subheader("収入の推移")
-    
     if not df.empty:
         df_salary = df[(df['区分'] == '収入') & (df['カテゴリー'] == '給与')].copy()
         if not df_salary.empty:
@@ -188,7 +177,6 @@ def render(df, df_investment, today_ts, worksheet):
         if not df_bonus.empty:
             with st.expander("賞与（ボーナス）一覧を見る", expanded=False):
                 df_bonus['時期'] = df_bonus['日付'].apply(get_bonus_season)
-                # 日付を除外し、時期・金額・メモだけを表示する
                 df_bonus_disp = df_bonus[['時期', '金額', 'メモ']].copy()
                 df_bonus_disp['金額'] = df_bonus_disp['金額'].apply(lambda x: f"{int(x):,} 円")
                 st.dataframe(df_bonus_disp.style.set_properties(**{'background-color': '#ede4ce', 'border-color': '#A1A3A6', 'border-style': 'solid'}), hide_index=True, use_container_width=True)
@@ -196,14 +184,55 @@ def render(df, df_investment, today_ts, worksheet):
     st.divider()
 
     # ==================================================
-    # グラフ表示 ── 税金を除外した支出推移 ──
+    # 3. 支出内訳 (月別)
+    # ==================================================
+    st.subheader("支出内訳 (月別)")
+    if not df.empty:
+        pie_df = df.copy()
+        pie_df['年月'] = pie_df['日付'].apply(lambda x: x.replace(day=1))
+        months_series = pie_df['年月'].drop_duplicates()
+        months_list = months_series[(months_series >= pd.to_datetime('2026-01-01')) & (months_series <= today_ts.replace(day=1))].sort_values(ascending=False)
+        
+        if not months_list.empty:
+            tabs = st.tabs(months_list.dt.strftime('%Y/%m').tolist())
+            for tab, month_date in zip(tabs, months_list):
+                with tab:
+                    target_month_df = pie_df[(pie_df['年月'] == month_date) & (pie_df['区分'] == '支出') & (pie_df['カテゴリー'] != '税金')]
+                    month_total = target_month_df['金額'].sum()
+                    st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計 (税金を除く)", value=f"{month_total:,} 円")
+                    
+                    if month_total > 0:
+                        cat_grouped = target_month_df.groupby('カテゴリー')['金額'].sum()
+                        ordered_cats = [cat for cat in c.EXPENSE_CATEGORIES if cat in cat_grouped]
+                        other_cats = [cat for cat in cat_grouped.index if cat not in ordered_cats]
+                        cat_grouped = cat_grouped.reindex(ordered_cats + other_cats).dropna()
+                        
+                        bars_html = ""
+                        legend_html = ""
+                        for cat, val in cat_grouped.items():
+                            if val > 0:
+                                ratio = (val / month_total) * 100
+                                color = c.PIE_CHART_CATEGORIES_COLORS.get(cat, '#CFCFCF')
+                                bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{cat}: {ratio:.1f}%"></div>'
+                                legend_html += f' <span style="display:inline-block; margin: 4px 10px 4px 0;"><span style="color:{color};">■</span> {cat} ({val:,}円)</span>'
+                        
+                        st.markdown(f"""
+                        <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">{bars_html}</div>
+                        <div style="font-size: 13px; color: #333; line-height: 1.5;">{legend_html}</div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.info(f"{month_date.strftime('%Y/%m')} の支出データはありません")
+
+    st.divider()
+
+    # ==================================================
+    # 4. 資産・支出推移
     # ==================================================
     st.subheader("資産・支出推移")
     if not df.empty:
         base_df = df.copy()
         base_df['グラフ金額'] = base_df.apply(lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], axis=1)
         base_df = base_df.sort_values('日付')
-        # 残高推移は税金も含んだリアルな数値を計算
         base_df['現金推移'] = base_df['グラフ金額'].cumsum()
         base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
         base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
@@ -249,7 +278,9 @@ def render(df, df_investment, today_ts, worksheet):
 
     st.divider()
 
-    # --- 光熱費の比較 ---
+    # ==================================================
+    # 5. 光熱費の比較
+    # ==================================================
     st.subheader("光熱費の比較")
     if not df.empty:
         utils_df = df[(df['区分'] == '支出') & (df['カテゴリー'] == '生活費')].copy()
@@ -268,46 +299,5 @@ def render(df, df_investment, today_ts, worksheet):
             utils_df = utils_df[utils_df['日付'] <= today_ts]
             utils_grouped = utils_df.groupby(['年月', '種類'])['金額'].sum().reset_index()
             st.altair_chart(charts.create_utilities_chart(utils_grouped), use_container_width=True)
-
-    st.divider()
-
-    # --- 支出内訳 (横棒グラフ) ---
-    st.subheader("支出内訳 (月別)")
-    if not df.empty:
-        pie_df = df.copy()
-        pie_df['年月'] = pie_df['日付'].apply(lambda x: x.replace(day=1))
-        months_series = pie_df['年月'].drop_duplicates()
-        months_list = months_series[(months_series >= pd.to_datetime('2026-01-01')) & (months_series <= today_ts.replace(day=1))].sort_values(ascending=False)
-        
-        if not months_list.empty:
-            tabs = st.tabs(months_list.dt.strftime('%Y/%m').tolist())
-            for tab, month_date in zip(tabs, months_list):
-                with tab:
-                    target_month_df = pie_df[(pie_df['年月'] == month_date) & (pie_df['区分'] == '支出') & (pie_df['カテゴリー'] != '税金')]
-                    month_total = target_month_df['金額'].sum()
-                    st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計 (税金を除く)", value=f"{month_total:,} 円")
-                    
-                    if month_total > 0:
-                        cat_grouped = target_month_df.groupby('カテゴリー')['金額'].sum()
-                        
-                        ordered_cats = [cat for cat in c.EXPENSE_CATEGORIES if cat in cat_grouped]
-                        other_cats = [cat for cat in cat_grouped.index if cat not in ordered_cats]
-                        cat_grouped = cat_grouped.reindex(ordered_cats + other_cats).dropna()
-                        
-                        bars_html = ""
-                        legend_html = ""
-                        for cat, val in cat_grouped.items():
-                            if val > 0:
-                                ratio = (val / month_total) * 100
-                                color = c.PIE_CHART_CATEGORIES_COLORS.get(cat, '#CFCFCF')
-                                bars_html += f'<div style="width: {ratio}%; background-color: {color};" title="{cat}: {ratio:.1f}%"></div>'
-                                legend_html += f' <span style="display:inline-block; margin: 4px 10px 4px 0;"><span style="color:{color};">■</span> {cat} ({val:,}円)</span>'
-                        
-                        st.markdown(f"""
-                        <div style="display: flex; width: 100%; height: 24px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; margin-bottom: 8px;">{bars_html}</div>
-                        <div style="font-size: 13px; color: #333; line-height: 1.5;">{legend_html}</div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.info(f"{month_date.strftime('%Y/%m')} の支出データはありません")
 
     return yen_assets
