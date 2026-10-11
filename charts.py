@@ -45,7 +45,7 @@ def create_salary_chart(data):
         color=alt.Color('項目:N', scale=alt.Scale(
             domain=['本給', '超勤手当', 'その他'],
             # アプリの雰囲気に合わせた落ち着いた色味（くすんだ緑、くすんだ赤、ウォームグレー）
-            range=["#77e897", "#e46767", '#8c857d']
+            range=["#42a25fff", "#e46767", '#8c857d']
         )),
         tooltip=[
             alt.Tooltip('年月:O', title='月'),
