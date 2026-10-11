@@ -156,18 +156,17 @@ def render(worksheet, today_jst):
 
     st.write("") # 少し隙間
 
-    # 2. カテゴリー選択 (枠で囲む)
+    # 2. カテゴリー選択
     if balance_type in ["支出", "収入"]:
-        with st.container(border=True):
-            st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 項目</div>", unsafe_allow_html=True)
-            if balance_type == "支出":
-                category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
-                sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
-                if sub_options:
-                    st.markdown("<div style='font-size: 12px; color: gray; margin-top: 10px; margin-bottom: -10px;'>▼ 詳細</div>", unsafe_allow_html=True)
-                    sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
-            elif balance_type == "収入":
-                category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
+        st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 項目</div>", unsafe_allow_html=True)
+        if balance_type == "支出":
+            category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
+            sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
+            if sub_options:
+                st.markdown("<div style='font-size: 12px; color: gray; margin-top: 10px; margin-bottom: -10px;'>▼ 詳細</div>", unsafe_allow_html=True)
+                sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
+        elif balance_type == "収入":
+            category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
     
     st.write("") # 少し隙間
 
