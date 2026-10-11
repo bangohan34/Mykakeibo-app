@@ -3,9 +3,7 @@ import altair as alt
 def create_balance_chart(data, x_col, x_format, tooltip_format, x_label_angle=0):
     line_data = data.groupby(x_col)['現金推移'].last().reset_index()
     line = alt.Chart(line_data).mark_line(color="#498dd1", point=True).encode(
-        # X軸の後ろに :T (Temporal) を付与
         x=alt.X(f"{x_col}:T", axis=alt.Axis(format=x_format, title=None, labelAngle=x_label_angle)),
-        # scale=alt.Scale(zero=False) により、縦軸の最小値・最大値がデータに合わせて自動調整されます
         y=alt.Y('現金推移:Q', scale=alt.Scale(zero=False), axis=alt.Axis(title='現金残高 (円)', grid=True)),
         tooltip=[
             alt.Tooltip(f"{x_col}:T", format=tooltip_format, title='期間'),
@@ -39,3 +37,32 @@ def create_utilities_chart(data):
         ]
     ).properties(height=250)
     return chart.configure_view(stroke='transparent').configure_axis(labelColor='#703B3B', titleColor='#703B3B', gridColor='#e0e0e0')
+
+# --- 新規追加：給与の推移グラフ（積み上げ） ---
+def create_salary_chart(data):
+    chart = alt.Chart(data).mark_bar().encode(
+        x=alt.X('年月:O', title=None, axis=alt.Axis(labelAngle=0)),
+        y=alt.Y('金額:Q', axis=alt.Axis(title='金額 (円)', grid=True)),
+        color=alt.Color('項目:N', scale=alt.Scale(
+            domain=['本給', '超勤手当', 'リモートワーク手当', '通勤手当', 'その他（収入）'],
+            range=['#4caf50', '#f44336', '#2196f3', '#ffeb3b', '#9e9e9e'] # 緑、赤、青、黄、灰
+        )),
+        tooltip=[
+            alt.Tooltip('年月:O', title='月'),
+            alt.Tooltip('項目:N', title='内訳'),
+            alt.Tooltip('金額:Q', format=',', title='金額')
+        ]
+    ).properties(height=250)
+    return chart.configure_view(stroke='transparent').configure_axis(labelColor='#703B3B', titleColor='#703B3B', gridColor='#e0e0e0')
+
+# --- 新規追加：投資資産の推移グラフ ---
+def create_investment_history_chart(data):
+    line = alt.Chart(data).mark_line(color="#ff8c00", point=True).encode(
+        x=alt.X('日付:T', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45)),
+        y=alt.Y('評価額:Q', scale=alt.Scale(zero=False), axis=alt.Axis(title='評価額 (円)', grid=True)),
+        tooltip=[
+            alt.Tooltip('日付:T', format='%Y/%m/%d', title='日付'),
+            alt.Tooltip('評価額:Q', format=',', title='総評価額')
+        ]
+    ).properties(height=250)
+    return line.configure_axis(labelColor='#703B3B', titleColor='#703B3B', gridColor='#e0e0e0')
