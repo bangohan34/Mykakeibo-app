@@ -115,7 +115,7 @@ def render(df, df_investment, today_ts, worksheet):
     # ==================================================
     # 🏦 1. 資産セクション
     # ==================================================
-    
+    st.subheader("保有資産")
     st.markdown(f"""
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
