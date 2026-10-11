@@ -148,7 +148,7 @@ def render(worksheet, today_jst):
     """, unsafe_allow_html=True)
 
     # 1. 区分
-    st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 区分</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: 0px;'>▼ 区分</div>", unsafe_allow_html=True)
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
@@ -158,12 +158,12 @@ def render(worksheet, today_jst):
 
     # 2. カテゴリー選択
     if balance_type in ["支出", "収入"]:
-        st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 項目</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: 0px;'>▼ 項目</div>", unsafe_allow_html=True)
         if balance_type == "支出":
             category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
             sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
             if sub_options:
-                st.markdown("<div style='font-size: 12px; color: gray; margin-top: 10px; margin-bottom: -10px;'>▼ 詳細</div>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size: 12px; color: gray; margin-top: 5px; margin-bottom: 0px;'>▼ 詳細</div>", unsafe_allow_html=True)
                 sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
         elif balance_type == "収入":
             category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
@@ -171,7 +171,7 @@ def render(worksheet, today_jst):
     st.write("") # 少し隙間
 
     # 3. 日付選択
-    st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 日付</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: 0px;'>▼ 日付</div>", unsafe_allow_html=True)
     offset = st.radio("日付", ["今日", "1日前", "2日前", "3日前"], horizontal=True, label_visibility="collapsed")
     
     if offset == "今日":
