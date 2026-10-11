@@ -45,7 +45,7 @@ def create_salary_chart(data):
         color=alt.Color('項目:N', scale=alt.Scale(
             domain=['本給', '超勤手当', 'その他'],
             # アプリの雰囲気に合わせた落ち着いた色味（くすんだ緑、くすんだ赤、ウォームグレー）
-            range=['#5f8a6b', '#b86868', '#8c857d']
+            range=["#77e897", "#e46767", '#8c857d']
         )),
         tooltip=[
             alt.Tooltip('年月:O', title='月'),
@@ -63,7 +63,7 @@ def create_investment_history_chart(data):
         tooltip=[
             alt.Tooltip('日付:T', format='%Y/%m/%d', title='日付'),
             # 小数点以下を非表示にし、整数（,d）でフォーマット
-            alt.Tooltip('評価額:Q', format=',d', title='総評価額')
+            alt.Tooltip('評価額:Q', format=',.0f', title='総評価額')
         ]
     ).properties(height=250)
     return line.configure_axis(labelColor='#703B3B', titleColor='#703B3B', gridColor='#e0e0e0')
