@@ -229,14 +229,13 @@ def render(df, df_investment, today_ts, worksheet):
     # ==================================================
     # 💼 2. 収入セクション
     # ==================================================
-    
+    st.subheader("給与推移")
     if not df.empty:
         df_salary = df[(df['区分'] == '収入') & (df['カテゴリー'] == '給与')].copy()
         if not df_salary.empty:
             df_salary['項目'] = df_salary['メモ'].apply(extract_salary_type)
             df_salary['年月'] = df_salary['日付'].dt.strftime('%Y/%m')
             sal_grouped = df_salary.groupby(['年月', '項目'])['金額'].sum().reset_index()
-            st.caption("給与推移 (月別)")
             st.altair_chart(charts.create_salary_chart(sal_grouped), use_container_width=True)
             
         df_bonus = df[(df['区分'] == '収入') & (df['カテゴリー'] == '賞与')].copy()
