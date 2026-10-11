@@ -81,6 +81,16 @@ def render(df, df_investment, today_ts, worksheet):
         base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
         base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
         
+        # ★ 給与天引きの税金・保険料かどうかを判定するフラグ
+        def is_payroll_tax(row):
+            if row['カテゴリー'] == '税金':
+                memo = str(row['メモ'])
+                if '健康保険' in memo or '厚年保険' in memo or '雇用保険' in memo or '所得税' in memo:
+                    return True
+            return False
+            
+        base_df['給与天引き税金'] = base_df.apply(is_payroll_tax, axis=1)
+        
         start_date = pd.to_datetime('2026-01-01')
         graph_df = base_df[(base_df['日付'] >= start_date) & (base_df['日付'] <= today_ts)]
 
@@ -229,7 +239,7 @@ def render(df, df_investment, today_ts, worksheet):
     # ==================================================
     st.header("🛒 支出")
     
-    st.subheader("支出推移（※税金を除外）")
+    st.subheader("支出推移（※給与天引き分を除く）")
     if not graph_df.empty:
         tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
         
@@ -237,25 +247,33 @@ def render(df, df_investment, today_ts, worksheet):
             start_30d = today_ts - pd.Timedelta(days=30)
             df_day = graph_df[graph_df['日付'] >= start_30d]
             if not df_day.empty:
-                st.altair_chart(charts.create_expense_chart(df_day[df_day['カテゴリー'] != '税金'], '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+                # ★ 給与天引き分だけを除外して描画
+                st.altair_chart(charts.create_expense_chart(df_day[~df_day['給与天引き税金']], '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
         with tab_week:
             start_24w = today_ts - pd.Timedelta(weeks=24)
             df_week = graph_df[graph_df['週'] >= start_24w]
             if not df_week.empty:
-                st.altair_chart(charts.create_expense_chart(df_week[df_week['カテゴリー'] != '税金'], '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+                st.altair_chart(charts.create_expense_chart(df_week[~df_week['給与天引き税金']], '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
         with tab_month:
             start_12m = today_ts - pd.DateOffset(months=12)
             df_month = graph_df[graph_df['年月'] >= start_12m]
             if not df_month.empty:
-                st.altair_chart(charts.create_expense_chart(df_month[df_month['カテゴリー'] != '税金'], '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+                st.altair_chart(charts.create_expense_chart(df_month[~df_month['給与天引き税金']], '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
         with tab_all:
-            st.altair_chart(charts.create_expense_chart(graph_df[graph_df['カテゴリー'] != '税金'], '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+            st.altair_chart(charts.create_expense_chart(graph_df[~graph_df['給与天引き税金']], '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
 
     st.write("")
     st.subheader("支出内訳 (月別)")
     if not df.empty:
         pie_df = df.copy()
         pie_df['年月'] = pie_df['日付'].apply(lambda x: x.replace(day=1))
+        
+        # 内訳計算用にもフラグを追加
+        pie_df['給与天引き税金'] = pie_df.apply(
+            lambda row: True if row['カテゴリー'] == '税金' and any(k in str(row['メモ']) for k in ['健康保険', '厚年保険', '雇用保険', '所得税']) else False, 
+            axis=1
+        )
+
         months_series = pie_df['年月'].drop_duplicates()
         months_list = months_series[(months_series >= pd.to_datetime('2026-01-01')) & (months_series <= today_ts.replace(day=1))].sort_values(ascending=False)
         
@@ -263,9 +281,10 @@ def render(df, df_investment, today_ts, worksheet):
             tabs = st.tabs(months_list.dt.strftime('%Y/%m').tolist())
             for tab, month_date in zip(tabs, months_list):
                 with tab:
-                    target_month_df = pie_df[(pie_df['年月'] == month_date) & (pie_df['区分'] == '支出') & (pie_df['カテゴリー'] != '税金')]
+                    # ★ 給与天引き分だけを除外して内訳を計算
+                    target_month_df = pie_df[(pie_df['年月'] == month_date) & (pie_df['区分'] == '支出') & (~pie_df['給与天引き税金'])]
                     month_total = target_month_df['金額'].sum()
-                    st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計 (税金を除く)", value=f"{month_total:,} 円")
+                    st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計 (給与天引き分を除く)", value=f"{month_total:,} 円")
                     
                     if month_total > 0:
                         cat_grouped = target_month_df.groupby('カテゴリー')['金額'].sum()
