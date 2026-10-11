@@ -153,7 +153,16 @@ def render(worksheet, today_jst):
     investment_name, investment_amount = "", 0.0000
     entry_vals = {}
 
-    # 2. 日付選択 (キャプションなし)
+    # 2. カテゴリー選択 (キャプションなし)
+    if balance_type == "支出":
+        category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
+        sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
+        if sub_options:
+            sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
+    elif balance_type == "収入":
+        category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
+
+    # 3. 日付選択 (キャプションなし)
     offset = st.radio("日付", ["今日", "1日前", "2日前", "3日前"], horizontal=True, label_visibility="collapsed")
     
     if offset == "今日":
@@ -166,15 +175,6 @@ def render(worksheet, today_jst):
         target_date = today_jst - datetime.timedelta(days=3)
         
     date = st.date_input(" ", value=target_date, label_visibility="collapsed")
-
-    # 3. カテゴリー選択 (キャプションなし)
-    if balance_type == "支出":
-        category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
-        sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
-        if sub_options:
-            sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
-    elif balance_type == "収入":
-        category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
 
     # 4. 入力フォーム
     with st.form(key='entry_form', clear_on_submit=True):
