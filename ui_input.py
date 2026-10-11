@@ -140,29 +140,39 @@ def render(worksheet, today_jst):
     st.markdown("""
         <style>
         /* 各入力パーツの下の無駄な余白をカット */
-        div[data-testid="stRadio"] { margin-bottom: -15px; }
-        div[data-testid="stDateInput"] { margin-bottom: -15px; }
+        div[data-testid="stRadio"] { margin-bottom: -10px; }
+        div[data-testid="stDateInput"] { margin-bottom: -10px; }
         /* フォーム全体を少し上に詰める */
-        div[data-testid="stForm"] { margin-top: 10px; padding: 15px; }
+        div[data-testid="stForm"] { margin-top: 5px; padding: 15px; }
         </style>
     """, unsafe_allow_html=True)
 
-    # 1. 区分 (キャプションなし)
+    # 1. 区分
+    st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 区分</div>", unsafe_allow_html=True)
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
     entry_vals = {}
 
-    # 2. カテゴリー選択 (キャプションなし)
-    if balance_type == "支出":
-        category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
-        sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
-        if sub_options:
-            sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
-    elif balance_type == "収入":
-        category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
+    st.write("") # 少し隙間
 
-    # 3. 日付選択 (キャプションなし)
+    # 2. カテゴリー選択 (枠で囲む)
+    if balance_type in ["支出", "収入"]:
+        with st.container(border=True):
+            st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 項目</div>", unsafe_allow_html=True)
+            if balance_type == "支出":
+                category = st.radio('項目', c.EXPENSE_CATEGORIES, horizontal=True, label_visibility="collapsed")
+                sub_options = c.EXPENSE_SUB_CATEGORIES.get(category)
+                if sub_options:
+                    st.markdown("<div style='font-size: 12px; color: gray; margin-top: 10px; margin-bottom: -10px;'>▼ 詳細</div>", unsafe_allow_html=True)
+                    sub_category = st.radio(f"{category}詳細", sub_options, horizontal=True, label_visibility="collapsed")
+            elif balance_type == "収入":
+                category = st.radio('項目', c.INCOME_CATEGORIES, horizontal=True, label_visibility="collapsed")
+    
+    st.write("") # 少し隙間
+
+    # 3. 日付選択
+    st.markdown("<div style='font-size: 12px; color: gray; margin-bottom: -10px;'>▼ 日付</div>", unsafe_allow_html=True)
     offset = st.radio("日付", ["今日", "1日前", "2日前", "3日前"], horizontal=True, label_visibility="collapsed")
     
     if offset == "今日":
