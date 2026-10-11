@@ -39,14 +39,19 @@ def create_utilities_chart(data):
     return chart.configure_view(stroke='transparent').configure_axis(labelColor='#703B3B', titleColor='#703B3B', gridColor='#e0e0e0')
 
 def create_salary_chart(data):
-    chart = alt.Chart(data).mark_bar().encode(
+    # ★ 積み上げ順を制御するために、裏側でソート用の番号を振る
+    df = data.copy()
+    df['並び順'] = df['項目'].map({'本給': 1, '超勤手当': 2, 'その他': 3}).fillna(4)
+
+    chart = alt.Chart(df).mark_bar().encode(
         x=alt.X('年月:O', title=None, axis=alt.Axis(labelAngle=0)),
         y=alt.Y('金額:Q', axis=alt.Axis(title='金額 (円)', grid=True)),
         color=alt.Color('項目:N', scale=alt.Scale(
             domain=['本給', '超勤手当', 'その他'],
-            # アプリの雰囲気に合わせた落ち着いた色味（くすんだ緑、くすんだ赤、ウォームグレー）
-            range=["#7cdf99ff", "#e46767", '#8c857d']
-        )),
+            range=['#5f8a6b', '#b86868', '#8c857d']
+        ), sort=['本給', '超勤手当', 'その他']),
+        # ★ ここで「1(本給)」が一番下に来るように指定
+        order=alt.Order('並び順:Q', sort='descending'),
         tooltip=[
             alt.Tooltip('年月:O', title='月'),
             alt.Tooltip('項目:N', title='内訳'),
@@ -57,12 +62,10 @@ def create_salary_chart(data):
 
 def create_investment_history_chart(data):
     line = alt.Chart(data).mark_line(color="#ff8c00", point=True).encode(
-        # 横軸を日付（%m/%d）だけに変更
         x=alt.X('日付:T', axis=alt.Axis(format='%m/%d', title=None, labelAngle=-45)),
         y=alt.Y('評価額:Q', scale=alt.Scale(zero=False), axis=alt.Axis(title='評価額 (円)', grid=True)),
         tooltip=[
             alt.Tooltip('日付:T', format='%Y/%m/%d', title='日付'),
-            # 小数点以下を非表示にし、整数（,d）でフォーマット
             alt.Tooltip('評価額:Q', format=',.0f', title='総評価額')
         ]
     ).properties(height=250)
