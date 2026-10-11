@@ -7,9 +7,11 @@ import ui_dashboard
 import ui_history
 import ui_subscription
 import ui_tools
+import const as c
 
 # --- 画面設定 ---
 st.set_page_config(page_title="家計簿", page_icon="💰", layout="centered")
+st.markdown(c.hide_streamlit_style, unsafe_allow_html=True)
 
 try:
     with open("style.css", "r", encoding="utf-8") as f:
@@ -18,25 +20,19 @@ except FileNotFoundError:
     pass
 
 # ==========================================
-# セキュリティー: ログイン画面
+# 元のURL認証方式（?u=...）に戻す
 # ==========================================
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False
+query_params = st.query_params
+url_user_id = query_params.get("u", None)
+users_cfg = st.secrets.get("users", {})
 
-if not st.session_state["logged_in"]:
-    st.markdown("<h3 style='text-align: center; margin-top: 50px;'>🔒 家計簿ログイン</h3>", unsafe_allow_html=True)
-    pwd = st.text_input("パスワードを入力してください", type="password")
-    
-    if st.button("ログイン", use_container_width=True):
-        if pwd == st.secrets.get("users", {}).get("password", "1234"): 
-            st.session_state["logged_in"] = True
-            st.rerun()
-        else:
-            st.error("パスワードが違います")
+if url_user_id not in users_cfg:
+    st.error("⚠️ アクセス権限がありません。正しいURLからアクセスしてください。")
     st.stop()
 
+st.session_state["target_sheet"] = users_cfg[url_user_id]["sheet"]
+
 # --- データの準備 ---
-st.session_state["target_sheet"] = st.secrets.get("users", {}).get("sheet", "")
 JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 today_jst = datetime.datetime.now(JST).date()
 today_ts = pd.Timestamp.now(tz='Asia/Tokyo').normalize().tz_localize(None)
@@ -53,20 +49,20 @@ if "subscriptions_auto_added" not in st.session_state:
     st.session_state["subscriptions_auto_added"] = True
 
 # ==========================================
-# ご指定の順番で画面を描画
+# 画面の描画（ご指定の順番）
 # ==========================================
 # 1. 収支入力
 ui_input.render(worksheet, today_jst)
 
-# 2. 入力履歴（アコーディオン）
+# 2. 入力履歴（タップして編集可能なアコーディオン）
 ui_history.render(df, worksheet)
 st.divider()
 
-# 3. ダッシュボード（資産状況、収入、支出内訳、推移、光熱費）
+# 3. ダッシュボード（資産状況、収入、支出内訳、推移、光熱費の順に ui_dashboard 側で並んでいます）
 yen_assets = ui_dashboard.render(df, df_investment, today_ts, worksheet)
 st.divider()
 
-# 4. その他管理ツール
+# 4. サブスク管理・資産確認・メモ
 ui_subscription.render(worksheet)
 st.divider()
 ui_tools.render_asset_check(worksheet, yen_assets, today_jst)
