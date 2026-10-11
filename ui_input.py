@@ -147,7 +147,7 @@ def render(worksheet, today_jst):
         </style>
     """, unsafe_allow_html=True)
 
-    # 1. 区分
+    # 1. 区分 (キャプションなし)
     balance_type = st.radio("区分", ["支出","収入","投資"], horizontal=True, label_visibility="collapsed")
     category, amount, memo, sub_category = None, 0, "", ""
     investment_name, investment_amount = "", 0.0000
