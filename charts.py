@@ -48,10 +48,10 @@ def create_salary_chart(data):
         y=alt.Y('金額:Q', axis=alt.Axis(title='金額 (円)', grid=True)),
         color=alt.Color('項目:N', scale=alt.Scale(
             domain=['本給', '超勤手当', 'その他'],
-            range=['#5f8a6b', '#b86868', '#8c857d']
+            range=["#61da83", "#d46767", '#8c857d']
         ), sort=['本給', '超勤手当', 'その他']),
         # ★ ここで「1(本給)」が一番下に来るように指定
-        order=alt.Order('並び順:Q', sort='descending'),
+        order=alt.Order('並び順:Q', sort='ascending'),
         tooltip=[
             alt.Tooltip('年月:O', title='月'),
             alt.Tooltip('項目:N', title='内訳'),
