@@ -115,7 +115,6 @@ def render(df, df_investment, today_ts, worksheet):
     # ==================================================
     # 🏦 1. 資産セクション
     # ==================================================
-    st.header("🏦 資産")
     
     st.markdown(f"""
     <div style="display: flex; gap: 10px; justify-content: space-between;">
@@ -182,7 +181,7 @@ def render(df, df_investment, today_ts, worksheet):
             )
             
             st.write("")
-            st.caption("投資資産の推移")
+            st.caption("投資資産推移")
             if not df_hist.empty:
                 df_inv = df_investment.copy()
                 df_inv['日付'] = pd.to_datetime(df_inv['日付'])
@@ -230,7 +229,6 @@ def render(df, df_investment, today_ts, worksheet):
     # ==================================================
     # 💼 2. 収入セクション
     # ==================================================
-    st.header("💼 収入")
     
     if not df.empty:
         df_salary = df[(df['区分'] == '収入') & (df['カテゴリー'] == '給与')].copy()
@@ -254,9 +252,8 @@ def render(df, df_investment, today_ts, worksheet):
     # ==================================================
     # 🛒 3. 支出セクション
     # ==================================================
-    st.header("🛒 支出")
     
-    st.subheader("支出推移（※給与天引き分を除く）")
+    st.subheader("支出推移")
     if not graph_df.empty:
         tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
         
@@ -323,7 +320,7 @@ def render(df, df_investment, today_ts, worksheet):
                         st.info(f"{month_date.strftime('%Y/%m')} の支出データはありません")
 
     st.write("")
-    st.subheader("光熱費の比較")
+    st.subheader("光熱費")
     if not df.empty:
         utils_df = df[(df['区分'] == '支出') & (df['カテゴリー'] == '生活費')].copy()
         def classify_utility(memo):
