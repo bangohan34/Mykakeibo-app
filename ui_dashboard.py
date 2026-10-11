@@ -32,41 +32,60 @@ def render(df, df_investment, today_ts, worksheet):
     timestamp_display = ""
     df_hist = pd.DataFrame()
     
-    # --- 投資API処理 ---
+    # --- 投資APIとスプレッドシートの通信処理（キャッシュ化でエラー回避！） ---
     if not df_investment.empty:
-        all_prices = {}
-        symbols = df_investment['銘柄'].unique().tolist()
-        api_success = True
-        
-        try:
-            prices1 = api.get_crypto_prices(symbols)
-            prices2 = api.get_meme_prices(symbols)
-            prices3 = api.get_metal_prices(symbols)
-            if isinstance(prices1, dict): all_prices.update(prices1)
-            if isinstance(prices2, dict): all_prices.update(prices2)
-            if isinstance(prices3, dict): all_prices.update(prices3)
-            
-            if not all_prices or all(v == 0 for v in all_prices.values()):
-                api_success = False
-        except Exception:
-            api_success = False
-
         JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
-        current_time_str = datetime.datetime.now(JST).strftime("%Y/%m/%d %H:%M:%S")
-
-        if api_success:
-            gsheets.save_price_cache(worksheet, all_prices, current_time_str)
-            timestamp_display = f"{current_time_str} 更新"
-            
-        cached_prices, cached_time, df_hist = gsheets.load_price_cache(worksheet)
+        now_jst = datetime.datetime.now(JST)
+        current_time_str = now_jst.strftime("%Y/%m/%d %H:%M:%S")
+        # 1時間単位の文字列（例："2026/10/11 15"）を作成
+        current_hour_str = now_jst.strftime("%Y/%m/%d %H")
         
-        if not api_success:
-            if cached_prices:
-                all_prices = cached_prices
-                timestamp_display = f"{cached_time} の履歴データを表示中"
-            else:
-                timestamp_display = "取得失敗"
+        # セッションに保存された時間と現在時間が違う場合（＝新しい1時間になったら）だけ通信する
+        if "inv_cache_hour" not in st.session_state or st.session_state["inv_cache_hour"] != current_hour_str:
+            all_prices = {}
+            symbols = df_investment['銘柄'].unique().tolist()
+            api_success = True
+            
+            try:
+                prices1 = api.get_crypto_prices(symbols)
+                prices2 = api.get_meme_prices(symbols)
+                prices3 = api.get_metal_prices(symbols)
+                if isinstance(prices1, dict): all_prices.update(prices1)
+                if isinstance(prices2, dict): all_prices.update(prices2)
+                if isinstance(prices3, dict): all_prices.update(prices3)
+                
+                if not all_prices or all(v == 0 for v in all_prices.values()):
+                    api_success = False
+            except Exception:
+                api_success = False
 
+            # スプレッドシートへ書き込み
+            if api_success:
+                gsheets.save_price_cache(worksheet, all_prices, current_time_str)
+                tmp_display = f"{current_time_str} 更新"
+                
+            # スプレッドシートから履歴を読み込み
+            cached_prices, cached_time, loaded_df_hist = gsheets.load_price_cache(worksheet)
+            
+            if not api_success:
+                if cached_prices:
+                    all_prices = cached_prices
+                    tmp_display = f"{cached_time} の履歴データを表示中"
+                else:
+                    tmp_display = "取得失敗"
+
+            # 結果をセッション（一時記憶）に保存する
+            st.session_state["inv_all_prices"] = all_prices
+            st.session_state["inv_timestamp_display"] = tmp_display
+            st.session_state["inv_df_hist"] = loaded_df_hist
+            st.session_state["inv_cache_hour"] = current_hour_str
+        
+        # 毎回通信せず、セッションからデータを一瞬で取り出す
+        all_prices = st.session_state.get("inv_all_prices", {})
+        timestamp_display = st.session_state.get("inv_timestamp_display", "")
+        df_hist = st.session_state.get("inv_df_hist", pd.DataFrame())
+
+        # 計算
         df_investment['現在レート'] = df_investment['銘柄'].map(all_prices).fillna(0)
         df_investment['評価額(円)'] = df_investment['数量'] * df_investment['現在レート']
         total_investment_assets = df_investment['評価額(円)'].sum()
@@ -81,7 +100,6 @@ def render(df, df_investment, today_ts, worksheet):
         base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
         base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
         
-        # ★ 給与天引きの税金・保険料かどうかを判定するフラグ
         def is_payroll_tax(row):
             if row['カテゴリー'] == '税金':
                 memo = str(row['メモ'])
@@ -90,7 +108,6 @@ def render(df, df_investment, today_ts, worksheet):
             return False
             
         base_df['給与天引き税金'] = base_df.apply(is_payroll_tax, axis=1)
-        
         start_date = pd.to_datetime('2026-01-01')
         graph_df = base_df[(base_df['日付'] >= start_date) & (base_df['日付'] <= today_ts)]
 
@@ -247,7 +264,6 @@ def render(df, df_investment, today_ts, worksheet):
             start_30d = today_ts - pd.Timedelta(days=30)
             df_day = graph_df[graph_df['日付'] >= start_30d]
             if not df_day.empty:
-                # ★ 給与天引き分だけを除外して描画
                 st.altair_chart(charts.create_expense_chart(df_day[~df_day['給与天引き税金']], '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
         with tab_week:
             start_24w = today_ts - pd.Timedelta(weeks=24)
@@ -268,7 +284,6 @@ def render(df, df_investment, today_ts, worksheet):
         pie_df = df.copy()
         pie_df['年月'] = pie_df['日付'].apply(lambda x: x.replace(day=1))
         
-        # 内訳計算用にもフラグを追加
         pie_df['給与天引き税金'] = pie_df.apply(
             lambda row: True if row['カテゴリー'] == '税金' and any(k in str(row['メモ']) for k in ['健康保険', '厚年保険', '雇用保険', '所得税']) else False, 
             axis=1
@@ -281,7 +296,6 @@ def render(df, df_investment, today_ts, worksheet):
             tabs = st.tabs(months_list.dt.strftime('%Y/%m').tolist())
             for tab, month_date in zip(tabs, months_list):
                 with tab:
-                    # ★ 給与天引き分だけを除外して内訳を計算
                     target_month_df = pie_df[(pie_df['年月'] == month_date) & (pie_df['区分'] == '支出') & (~pie_df['給与天引き税金'])]
                     month_total = target_month_df['金額'].sum()
                     st.metric(label=f"{month_date.strftime('%Y/%m')}の支出合計 (給与天引き分を除く)", value=f"{month_total:,} 円")

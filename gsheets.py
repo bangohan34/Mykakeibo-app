@@ -74,6 +74,12 @@ def delete_entry(sh, row_index):
         if current_data:
             ws.update(range_name='A1', values=current_data)
 
+def update_entry(sh, target_no, date, balance_type, category, amount, memo):
+    ws = sh.worksheet('家計簿')
+    real_row_index = int(target_no) + 1
+    row_data = [[str(date), balance_type, category, amount, memo]]
+    ws.update(range_name=f"A{real_row_index}:E{real_row_index}", values=row_data)
+
 def load_investment_data(sh):
     cols = ['日付','銘柄','数量','支払金額','メモ']
     try:
@@ -203,23 +209,29 @@ def color_coding(val):
         return 'color: #A03333; font-weight: bold;'
     return ''
 
+# ★ 修正: エラーの書き方をgspreadの安全なものに変更
 def save_price_cache(sh, prices_dict, timestamp):
     try:
         ws = sh.worksheet('レート履歴')
-    except Exception:
+    except gspread.exceptions.WorksheetNotFound:
         ws = sh.add_worksheet(title='レート履歴', rows="1000", cols="3")
         ws.update(range_name='A1:C1', values=[['日時', '銘柄', '価格']])
+    except Exception:
+        return
 
-    current_hour_str = str(timestamp)[:13]
-    all_values = ws.get_all_values()
-    existing_hours = [str(row[0])[:13] for row in all_values[1:]] if len(all_values) > 1 else []
-    
-    if current_hour_str not in existing_hours:
-        data_to_append = []
-        for symbol, price in prices_dict.items():
-            data_to_append.append([str(timestamp), symbol, price])
-        if data_to_append:
-            ws.append_rows(data_to_append)
+    try:
+        current_hour_str = str(timestamp)[:13]
+        all_values = ws.get_all_values()
+        existing_hours = [str(row[0])[:13] for row in all_values[1:]] if len(all_values) > 1 else []
+        
+        if current_hour_str not in existing_hours:
+            data_to_append = []
+            for symbol, price in prices_dict.items():
+                data_to_append.append([str(timestamp), symbol, price])
+            if data_to_append:
+                ws.append_rows(data_to_append)
+    except Exception:
+        pass
 
 def load_price_cache(sh):
     try:
@@ -240,14 +252,3 @@ def load_price_cache(sh):
         return prices_dict, timestamp, df_hist
     except Exception:
         return {}, None, pd.DataFrame()
-
-# ==========================================
-# ★ 新設：データを上書き（編集）する関数
-# ==========================================
-def update_entry(sh, target_no, date, balance_type, category, amount, memo):
-    ws = sh.worksheet('家計簿')
-    # No=1のデータはエクセル上で2行目になるため、+1する
-    real_row_index = int(target_no) + 1
-    row_data = [[str(date), balance_type, category, amount, memo]]
-    # 該当の行を上書き保存する
-    ws.update(range_name=f"A{real_row_index}:E{real_row_index}", values=row_data)
