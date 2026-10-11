@@ -56,15 +56,13 @@ ui_input.render(worksheet, today_jst)
 
 # 2. 入力履歴（タップして編集可能なアコーディオン）
 ui_history.render(df, worksheet)
-st.divider()
 
 # 3. ダッシュボード（資産状況、収入、支出内訳、推移、光熱費の順に ui_dashboard 側で並んでいます）
 yen_assets = ui_dashboard.render(df, df_investment, today_ts, worksheet)
-st.divider()
 
 # 4. サブスク管理・資産確認・メモ
 ui_subscription.render(worksheet)
-st.divider()
+
 ui_tools.render_asset_check(worksheet, yen_assets, today_jst)
-st.divider()
+
 ui_tools.render_memo(worksheet)
