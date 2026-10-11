@@ -20,6 +20,7 @@ def get_bonus_season(date_val):
     return f"{date_val.year}年 {month}月"
 
 def render(df, df_investment, today_ts, worksheet):
+    # --- 全体の残高計算 ---
     if not df.empty:
         df_current = df[df['日付'] <= today_ts]
         totals = df_current.groupby('区分')['金額'].sum()
@@ -31,6 +32,7 @@ def render(df, df_investment, today_ts, worksheet):
     timestamp_display = ""
     df_hist = pd.DataFrame()
     
+    # --- 投資API処理 ---
     if not df_investment.empty:
         all_prices = {}
         symbols = df_investment['銘柄'].unique().tolist()
@@ -69,9 +71,25 @@ def render(df, df_investment, today_ts, worksheet):
         df_investment['評価額(円)'] = df_investment['数量'] * df_investment['現在レート']
         total_investment_assets = df_investment['評価額(円)'].sum()
 
+    # --- 推移グラフ用ベースデータ作成 ---
+    graph_df = pd.DataFrame()
+    if not df.empty:
+        base_df = df.copy()
+        base_df['グラフ金額'] = base_df.apply(lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], axis=1)
+        base_df = base_df.sort_values('日付')
+        base_df['現金推移'] = base_df['グラフ金額'].cumsum()
+        base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
+        base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
+        
+        start_date = pd.to_datetime('2026-01-01')
+        graph_df = base_df[(base_df['日付'] >= start_date) & (base_df['日付'] <= today_ts)]
+
+
     # ==================================================
-    # 1. 資産合計（一番上）
+    # 🏦 1. 資産セクション
     # ==================================================
+    st.header("🏦 資産")
+    
     st.markdown(f"""
     <div style="display: flex; gap: 10px; justify-content: space-between;">
         <div style="flex: 1; padding: 10px; text-align: center;">
@@ -125,7 +143,6 @@ def render(df, df_investment, today_ts, worksheet):
 
     st.write("")
     
-    # ★ 投資グラフを「資産の内訳を見る」の中に格納
     if not df_investment.empty:
         with st.expander("資産の内訳・投資推移を見る", expanded=False):
             display_df = df_investment[['銘柄', '評価額(円)']].copy().rename(columns={'評価額(円)': '評価額'})
@@ -158,19 +175,43 @@ def render(df, df_investment, today_ts, worksheet):
                 else:
                     st.info("投資推移データがまだありません。")
 
+    st.write("")
+    st.subheader("現金残高推移")
+    if not graph_df.empty:
+        tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
+        
+        with tab_day:
+            start_30d = today_ts - pd.Timedelta(days=30)
+            df_day = graph_df[graph_df['日付'] >= start_30d]
+            if not df_day.empty:
+                st.altair_chart(charts.create_balance_chart(df_day, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+        with tab_week:
+            start_24w = today_ts - pd.Timedelta(weeks=24)
+            df_week = graph_df[graph_df['週'] >= start_24w]
+            if not df_week.empty:
+                st.altair_chart(charts.create_balance_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+        with tab_month:
+            start_12m = today_ts - pd.DateOffset(months=12)
+            df_month = graph_df[graph_df['年月'] >= start_12m]
+            if not df_month.empty:
+                st.altair_chart(charts.create_balance_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+        with tab_all:
+            st.altair_chart(charts.create_balance_chart(graph_df, '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+
     st.divider()
 
     # ==================================================
-    # 2. 収入の推移
+    # 💼 2. 収入セクション
     # ==================================================
-    st.subheader("収入の推移")
+    st.header("💼 収入")
+    
     if not df.empty:
         df_salary = df[(df['区分'] == '収入') & (df['カテゴリー'] == '給与')].copy()
         if not df_salary.empty:
             df_salary['項目'] = df_salary['メモ'].apply(extract_salary_type)
             df_salary['年月'] = df_salary['日付'].dt.strftime('%Y/%m')
             sal_grouped = df_salary.groupby(['年月', '項目'])['金額'].sum().reset_index()
-            st.caption("月別 給与推移")
+            st.caption("給与推移 (月別)")
             st.altair_chart(charts.create_salary_chart(sal_grouped), use_container_width=True)
             
         df_bonus = df[(df['区分'] == '収入') & (df['カテゴリー'] == '賞与')].copy()
@@ -184,8 +225,33 @@ def render(df, df_investment, today_ts, worksheet):
     st.divider()
 
     # ==================================================
-    # 3. 支出内訳 (月別)
+    # 🛒 3. 支出セクション
     # ==================================================
+    st.header("🛒 支出")
+    
+    st.subheader("支出推移（※税金を除外）")
+    if not graph_df.empty:
+        tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
+        
+        with tab_day:
+            start_30d = today_ts - pd.Timedelta(days=30)
+            df_day = graph_df[graph_df['日付'] >= start_30d]
+            if not df_day.empty:
+                st.altair_chart(charts.create_expense_chart(df_day[df_day['カテゴリー'] != '税金'], '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+        with tab_week:
+            start_24w = today_ts - pd.Timedelta(weeks=24)
+            df_week = graph_df[graph_df['週'] >= start_24w]
+            if not df_week.empty:
+                st.altair_chart(charts.create_expense_chart(df_week[df_week['カテゴリー'] != '税金'], '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+        with tab_month:
+            start_12m = today_ts - pd.DateOffset(months=12)
+            df_month = graph_df[graph_df['年月'] >= start_12m]
+            if not df_month.empty:
+                st.altair_chart(charts.create_expense_chart(df_month[df_month['カテゴリー'] != '税金'], '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
+        with tab_all:
+            st.altair_chart(charts.create_expense_chart(graph_df[graph_df['カテゴリー'] != '税金'], '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
+
+    st.write("")
     st.subheader("支出内訳 (月別)")
     if not df.empty:
         pie_df = df.copy()
@@ -223,64 +289,7 @@ def render(df, df_investment, today_ts, worksheet):
                     else:
                         st.info(f"{month_date.strftime('%Y/%m')} の支出データはありません")
 
-    st.divider()
-
-    # ==================================================
-    # 4. 資産・支出推移
-    # ==================================================
-    st.subheader("資産・支出推移")
-    if not df.empty:
-        base_df = df.copy()
-        base_df['グラフ金額'] = base_df.apply(lambda x: -x['金額'] if x['区分'] == '支出' else x['金額'], axis=1)
-        base_df = base_df.sort_values('日付')
-        base_df['現金推移'] = base_df['グラフ金額'].cumsum()
-        base_df['年月'] = base_df['日付'].apply(lambda x: x.replace(day=1))
-        base_df['週'] = base_df['日付'] - pd.to_timedelta(base_df['日付'].dt.weekday, unit='D')
-        
-        start_date = pd.to_datetime('2026-01-01')
-        graph_df = base_df[(base_df['日付'] >= start_date) & (base_df['日付'] <= today_ts)]
-
-        if not graph_df.empty:
-            tab_day, tab_week, tab_month, tab_all = st.tabs(["日ごと", "週ごと", "月ごと", "全期間"])
-            
-            with tab_day:
-                start_30d = today_ts - pd.Timedelta(days=30)
-                df_day = graph_df[graph_df['日付'] >= start_30d]
-                if not df_day.empty:
-                    st.caption("現金残高推移")
-                    st.altair_chart(charts.create_balance_chart(df_day, '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                    st.caption("支出推移（※税金を除外）")
-                    st.altair_chart(charts.create_expense_chart(df_day[df_day['カテゴリー'] != '税金'], '日付', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                    
-            with tab_week:
-                start_24w = today_ts - pd.Timedelta(weeks=24)
-                df_week = graph_df[graph_df['週'] >= start_24w]
-                if not df_week.empty:
-                    st.caption("現金残高推移")
-                    st.altair_chart(charts.create_balance_chart(df_week, '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                    st.caption("支出推移（※税金を除外）")
-                    st.altair_chart(charts.create_expense_chart(df_week[df_week['カテゴリー'] != '税金'], '週', '%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-            
-            with tab_month:
-                start_12m = today_ts - pd.DateOffset(months=12)
-                df_month = graph_df[graph_df['年月'] >= start_12m]
-                if not df_month.empty:
-                    st.caption("現金残高推移")
-                    st.altair_chart(charts.create_balance_chart(df_month, '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
-                    st.caption("支出推移（※税金を除外）")
-                    st.altair_chart(charts.create_expense_chart(df_month[df_month['カテゴリー'] != '税金'], '年月', '%Y-%m', '%Y-%m', 0), use_container_width=True)
-                    
-            with tab_all:
-                st.caption("現金残高推移 (全期間・日ごと)")
-                st.altair_chart(charts.create_balance_chart(graph_df, '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-                st.caption("支出推移（※税金を除外）")
-                st.altair_chart(charts.create_expense_chart(graph_df[graph_df['カテゴリー'] != '税金'], '日付', '%Y/%m/%d', '%Y-%m-%d', -45), use_container_width=True)
-
-    st.divider()
-
-    # ==================================================
-    # 5. 光熱費の比較
-    # ==================================================
+    st.write("")
     st.subheader("光熱費の比較")
     if not df.empty:
         utils_df = df[(df['区分'] == '支出') & (df['カテゴリー'] == '生活費')].copy()
