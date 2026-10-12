@@ -37,61 +37,48 @@ def render(df, df_investment, today_ts, worksheet):
         JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
         now_jst = datetime.datetime.now(JST)
         current_time_str = now_jst.strftime("%Y/%m/%d %H:%M:%S")
-        # 1時間単位の文字列（例："2026/10/11 15"）を作成
         current_hour_str = now_jst.strftime("%Y/%m/%d %H")
         
-        # セッションに保存された時間と現在時間が違う場合（＝新しい1時間になったら）だけ通信する
         if "inv_cache_hour" not in st.session_state or st.session_state["inv_cache_hour"] != current_hour_str:
+            all_prices = {}
             symbols = df_investment['銘柄'].unique().tolist()
-            api_prices = {}
+            api_success = True
             
-            # 1. まず前回のキャッシュを読み込む
-            cached_prices, cached_time, loaded_df_hist = gsheets.load_price_cache(worksheet)
-            
-            # 2. APIから最新レートを取得
             try:
                 prices1 = api.get_crypto_prices(symbols)
                 prices2 = api.get_meme_prices(symbols)
                 prices3 = api.get_metal_prices(symbols)
-                if isinstance(prices1, dict): api_prices.update(prices1)
-                if isinstance(prices2, dict): api_prices.update(prices2)
-                if isinstance(prices3, dict): api_prices.update(prices3)
+                if isinstance(prices1, dict): all_prices.update(prices1)
+                if isinstance(prices2, dict): all_prices.update(prices2)
+                if isinstance(prices3, dict): all_prices.update(prices3)
+                
+                if not all_prices or all(v == 0 for v in all_prices.values()):
+                    api_success = False
             except Exception:
-                pass
+                api_success = False
 
-            # 3. 取得失敗（または0円）の銘柄を、前回のキャッシュで補完する
-            all_prices = {}
-            for sym in symbols:
-                val = api_prices.get(sym, 0)
-                if val == 0 and cached_prices and sym in cached_prices:
-                    all_prices[sym] = cached_prices[sym]
-                else:
-                    all_prices[sym] = val
-                    
-            # 4. 判定と保存
-            if not all_prices or all(v == 0 for v in all_prices.values()):
+            if api_success:
+                gsheets.save_price_cache(worksheet, all_prices, current_time_str)
+                tmp_display = f"{current_time_str} 更新"
+                
+            cached_prices, cached_time, loaded_df_hist = gsheets.load_price_cache(worksheet)
+            
+            if not api_success:
                 if cached_prices:
                     all_prices = cached_prices
                     tmp_display = f"{cached_time} の履歴データを表示中"
                 else:
                     tmp_display = "取得失敗"
-            else:
-                gsheets.save_price_cache(worksheet, all_prices, current_time_str)
-                tmp_display = f"{current_time_str} 更新"
-                _, _, loaded_df_hist = gsheets.load_price_cache(worksheet)
 
-            # 5. セッションに保存
             st.session_state["inv_all_prices"] = all_prices
             st.session_state["inv_timestamp_display"] = tmp_display
             st.session_state["inv_df_hist"] = loaded_df_hist
             st.session_state["inv_cache_hour"] = current_hour_str
         
-        # 毎回通信せず、セッションからデータを一瞬で取り出す
         all_prices = st.session_state.get("inv_all_prices", {})
         timestamp_display = st.session_state.get("inv_timestamp_display", "")
         df_hist = st.session_state.get("inv_df_hist", pd.DataFrame())
 
-        # 計算
         df_investment['現在レート'] = df_investment['銘柄'].map(all_prices).fillna(0)
         df_investment['評価額(円)'] = df_investment['数量'] * df_investment['現在レート']
         total_investment_assets = df_investment['評価額(円)'].sum()
@@ -192,9 +179,15 @@ def render(df, df_investment, today_ts, worksheet):
                 df_inv = df_investment.copy()
                 df_inv['日付'] = pd.to_datetime(df_inv['日付'])
                 
-                # ★ 過去の「0円」記録を、前回の正常な価格で穴埋め（ffill）してグラフを修復する処理
                 try:
-                    pivot_hist = df_hist.pivot_table(index='日付', columns='銘柄', values='価格', aggfunc='last')
+                    # ★ 修正ポイント：細かい時間を切り捨てて「1日単位」にまとめる
+                    temp_hist = df_hist.copy()
+                    temp_hist['年月日'] = temp_hist['日付'].dt.normalize()
+                    
+                    # 1日の中で一番最後（最新）のデータを採用する
+                    pivot_hist = temp_hist.pivot_table(index='年月日', columns='銘柄', values='価格', aggfunc='last')
+                    
+                    # 欠損があれば前日のデータで埋める（暴落防止）
                     pivot_hist = pivot_hist.replace(0, float('nan')).ffill().fillna(0)
                     hist_dates = sorted(pivot_hist.index)
                     
