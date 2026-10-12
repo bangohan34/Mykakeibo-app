@@ -32,13 +32,15 @@ def render(df, df_investment, today_ts, worksheet):
     timestamp_display = ""
     df_hist = pd.DataFrame()
     
-    # --- 投資APIとスプレッドシートの通信処理（キャッシュ化＆欠損補完） ---
+    # --- 投資APIとスプレッドシートの通信処理（キャッシュ化でエラー回避！） ---
     if not df_investment.empty:
         JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
         now_jst = datetime.datetime.now(JST)
         current_time_str = now_jst.strftime("%Y/%m/%d %H:%M:%S")
+        # 1時間単位の文字列（例："2026/10/11 15"）を作成
         current_hour_str = now_jst.strftime("%Y/%m/%d %H")
         
+        # セッションに保存された時間と現在時間が違う場合（＝新しい1時間になったら）だけ通信する
         if "inv_cache_hour" not in st.session_state or st.session_state["inv_cache_hour"] != current_hour_str:
             symbols = df_investment['銘柄'].unique().tolist()
             api_prices = {}
@@ -57,29 +59,25 @@ def render(df, df_investment, today_ts, worksheet):
             except Exception:
                 pass
 
-            # 3. ★修正ポイント: APIで取得失敗（または0円）の銘柄を、前回のキャッシュで補完する
+            # 3. 取得失敗（または0円）の銘柄を、前回のキャッシュで補完する
             all_prices = {}
             for sym in symbols:
                 val = api_prices.get(sym, 0)
                 if val == 0 and cached_prices and sym in cached_prices:
-                    # APIで取れなかったら前回のキャッシュ値を使う
                     all_prices[sym] = cached_prices[sym]
                 else:
                     all_prices[sym] = val
                     
             # 4. 判定と保存
             if not all_prices or all(v == 0 for v in all_prices.values()):
-                # 全部0なら完全失敗
                 if cached_prices:
                     all_prices = cached_prices
                     tmp_display = f"{cached_time} の履歴データを表示中"
                 else:
                     tmp_display = "取得失敗"
             else:
-                # 1つでも取得（または補完）できていれば、それを最新として保存
                 gsheets.save_price_cache(worksheet, all_prices, current_time_str)
                 tmp_display = f"{current_time_str} 更新"
-                # 保存したので履歴を読み込み直す
                 _, _, loaded_df_hist = gsheets.load_price_cache(worksheet)
 
             # 5. セッションに保存
@@ -88,6 +86,7 @@ def render(df, df_investment, today_ts, worksheet):
             st.session_state["inv_df_hist"] = loaded_df_hist
             st.session_state["inv_cache_hour"] = current_hour_str
         
+        # 毎回通信せず、セッションからデータを一瞬で取り出す
         all_prices = st.session_state.get("inv_all_prices", {})
         timestamp_display = st.session_state.get("inv_timestamp_display", "")
         df_hist = st.session_state.get("inv_df_hist", pd.DataFrame())
@@ -192,21 +191,29 @@ def render(df, df_investment, today_ts, worksheet):
             if not df_hist.empty:
                 df_inv = df_investment.copy()
                 df_inv['日付'] = pd.to_datetime(df_inv['日付'])
-                hist_dates = sorted(df_hist['日付'].unique())
-                trend_data = []
-                for d in hist_dates:
-                    current_inv = df_inv[df_inv['日付'] <= d]
-                    qty_sum = current_inv.groupby('銘柄')['数量'].sum()
-                    prices_on_d = df_hist[df_hist['日付'] == d].set_index('銘柄')['価格']
-                    total_val = sum(qty * prices_on_d.get(sym, 0) for sym, qty in qty_sum.items())
-                    if total_val > 0:
-                        trend_data.append({'日付': d, '評価額': int(total_val)})
                 
-                if trend_data:
-                    df_trend = pd.DataFrame(trend_data)
-                    st.altair_chart(charts.create_investment_history_chart(df_trend), use_container_width=True)
-                else:
-                    st.info("投資推移データがまだありません。")
+                # ★ 過去の「0円」記録を、前回の正常な価格で穴埋め（ffill）してグラフを修復する処理
+                try:
+                    pivot_hist = df_hist.pivot_table(index='日付', columns='銘柄', values='価格', aggfunc='last')
+                    pivot_hist = pivot_hist.replace(0, float('nan')).ffill().fillna(0)
+                    hist_dates = sorted(pivot_hist.index)
+                    
+                    trend_data = []
+                    for d in hist_dates:
+                        current_inv = df_inv[df_inv['日付'] <= d]
+                        qty_sum = current_inv.groupby('銘柄')['数量'].sum()
+                        prices_on_d = pivot_hist.loc[d]
+                        total_val = sum(qty * prices_on_d.get(sym, 0) for sym, qty in qty_sum.items())
+                        if total_val > 0:
+                            trend_data.append({'日付': d, '評価額': int(total_val)})
+                    
+                    if trend_data:
+                        df_trend = pd.DataFrame(trend_data)
+                        st.altair_chart(charts.create_investment_history_chart(df_trend), use_container_width=True)
+                    else:
+                        st.info("投資推移データがまだありません。")
+                except Exception as e:
+                    st.info("グラフの描画準備中です...")
 
     st.write("")
     st.subheader("現金残高推移")
