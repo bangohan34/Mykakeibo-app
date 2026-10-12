@@ -32,55 +32,62 @@ def render(df, df_investment, today_ts, worksheet):
     timestamp_display = ""
     df_hist = pd.DataFrame()
     
-    # --- 投資APIとスプレッドシートの通信処理（キャッシュ化でエラー回避！） ---
+    # --- 投資APIとスプレッドシートの通信処理（キャッシュ化＆欠損補完） ---
     if not df_investment.empty:
         JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
         now_jst = datetime.datetime.now(JST)
         current_time_str = now_jst.strftime("%Y/%m/%d %H:%M:%S")
-        # 1時間単位の文字列（例："2026/10/11 15"）を作成
         current_hour_str = now_jst.strftime("%Y/%m/%d %H")
         
-        # セッションに保存された時間と現在時間が違う場合（＝新しい1時間になったら）だけ通信する
         if "inv_cache_hour" not in st.session_state or st.session_state["inv_cache_hour"] != current_hour_str:
-            all_prices = {}
             symbols = df_investment['銘柄'].unique().tolist()
-            api_success = True
+            api_prices = {}
             
+            # 1. まず前回のキャッシュを読み込む
+            cached_prices, cached_time, loaded_df_hist = gsheets.load_price_cache(worksheet)
+            
+            # 2. APIから最新レートを取得
             try:
                 prices1 = api.get_crypto_prices(symbols)
                 prices2 = api.get_meme_prices(symbols)
                 prices3 = api.get_metal_prices(symbols)
-                if isinstance(prices1, dict): all_prices.update(prices1)
-                if isinstance(prices2, dict): all_prices.update(prices2)
-                if isinstance(prices3, dict): all_prices.update(prices3)
-                
-                if not all_prices or all(v == 0 for v in all_prices.values()):
-                    api_success = False
+                if isinstance(prices1, dict): api_prices.update(prices1)
+                if isinstance(prices2, dict): api_prices.update(prices2)
+                if isinstance(prices3, dict): api_prices.update(prices3)
             except Exception:
-                api_success = False
+                pass
 
-            # スプレッドシートへ書き込み
-            if api_success:
-                gsheets.save_price_cache(worksheet, all_prices, current_time_str)
-                tmp_display = f"{current_time_str} 更新"
-                
-            # スプレッドシートから履歴を読み込み
-            cached_prices, cached_time, loaded_df_hist = gsheets.load_price_cache(worksheet)
-            
-            if not api_success:
+            # 3. ★修正ポイント: APIで取得失敗（または0円）の銘柄を、前回のキャッシュで補完する
+            all_prices = {}
+            for sym in symbols:
+                val = api_prices.get(sym, 0)
+                if val == 0 and cached_prices and sym in cached_prices:
+                    # APIで取れなかったら前回のキャッシュ値を使う
+                    all_prices[sym] = cached_prices[sym]
+                else:
+                    all_prices[sym] = val
+                    
+            # 4. 判定と保存
+            if not all_prices or all(v == 0 for v in all_prices.values()):
+                # 全部0なら完全失敗
                 if cached_prices:
                     all_prices = cached_prices
                     tmp_display = f"{cached_time} の履歴データを表示中"
                 else:
                     tmp_display = "取得失敗"
+            else:
+                # 1つでも取得（または補完）できていれば、それを最新として保存
+                gsheets.save_price_cache(worksheet, all_prices, current_time_str)
+                tmp_display = f"{current_time_str} 更新"
+                # 保存したので履歴を読み込み直す
+                _, _, loaded_df_hist = gsheets.load_price_cache(worksheet)
 
-            # 結果をセッション（一時記憶）に保存する
+            # 5. セッションに保存
             st.session_state["inv_all_prices"] = all_prices
             st.session_state["inv_timestamp_display"] = tmp_display
             st.session_state["inv_df_hist"] = loaded_df_hist
             st.session_state["inv_cache_hour"] = current_hour_str
         
-        # 毎回通信せず、セッションからデータを一瞬で取り出す
         all_prices = st.session_state.get("inv_all_prices", {})
         timestamp_display = st.session_state.get("inv_timestamp_display", "")
         df_hist = st.session_state.get("inv_df_hist", pd.DataFrame())
